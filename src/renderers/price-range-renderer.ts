@@ -64,39 +64,42 @@ export class PriceRangeRenderer implements IPaneRenderer {
 		const borderWidth = this._data?.border?.width || 0;
 		const borderColor = this._data?.border?.color;
 		const background = this._data?.background?.color;
-	
+
 		if (null === this._data || this._data.points.length < 2 || (borderWidth <= 0 && !background)) { return; }
-	
+
 		ctx.save();
 		const scaledBorderWidth = borderWidth ? Math.max(1, Math.floor(borderWidth * pixelRatio)) : 0;
 		const arrowSize = 10; // Customize the arrow size
 		const borderStyle = this._data.border?.style || LineStyle.Solid;
-		const [point0, point1] = this._data.points;
+		const [point0, point1] = this._getPointsInPhysicalSpace(pixelRatio);
 		const { left, right } = this._data.extend || {};
-	
+
 		// Draw the filled background
 		if (background !== undefined) {
 			ctx.fillStyle = background;
 			ctx.fillRect(point0.x, point0.y, point1.x - point0.x, point1.y - point0.y);
 		}
-	
+
 		// Draw the top and bottom borders
 		if (borderColor !== undefined && borderWidth > 0) {
 			ctx.beginPath();
 			setLineStyle(ctx, borderStyle || LineStyle.Solid);
 			ctx.lineWidth = scaledBorderWidth;
 			ctx.strokeStyle = borderColor;
-	
+
 			const adjustX = 0.5 * scaledBorderWidth;
-	
+			const physicalWidth = ctx.canvas.width;
+			const x1 = left ? 0 : point0.x;
+			const x2 = right ? physicalWidth : point1.x;
+
 			// Draw the top border
-			ctx.moveTo(point0.x - (left ? adjustX : 0), point0.y - adjustX);
-			ctx.lineTo(point1.x + (right ? adjustX : 0), point0.y - adjustX);
-	
+			ctx.moveTo(x1 - (left ? adjustX : 0), point0.y - adjustX);
+			ctx.lineTo(x2 + (right ? adjustX : 0), point0.y - adjustX);
+
 			// Draw the bottom border
-			ctx.moveTo(point0.x - (left ? adjustX : 0), point1.y + adjustX);
-			ctx.lineTo(point1.x + (right ? adjustX : 0), point1.y + adjustX);
-	
+			ctx.moveTo(x1 - (left ? adjustX : 0), point1.y + adjustX);
+			ctx.lineTo(x2 + (right ? adjustX : 0), point1.y + adjustX);
+
 			// Draw the vertical line in the center
 			if (this._data.showCenterVerticalLine) {
 				const centerX = (point0.x + point1.x) / 2;
@@ -108,7 +111,7 @@ export class PriceRangeRenderer implements IPaneRenderer {
 
 				// difference y between points
 				const yDiff = Math.abs(point0.y - point1.y);
-		
+
 				// arrow at top of box
 				if ((point0.y >= point1.y) && (yDiff > arrowSize)) {
 					arrowInitialY = point1.y + scaledBorderWidth;
@@ -136,7 +139,7 @@ export class PriceRangeRenderer implements IPaneRenderer {
 				// console.log('creating horizontal line in price range');
 				ctx.beginPath();
 				setLineStyle(ctx, this._data.centerHorizontalLineStyle as LineStyle);
-				
+
 				const scaledBorderWidthHorizontal = this._data.centerHorizontalLineWidth ? Math.max(1, Math.floor(this._data.centerHorizontalLineWidth * pixelRatio)) : 0;
 				ctx.lineWidth = scaledBorderWidthHorizontal;
 				ctx.strokeStyle = borderColor;
@@ -147,7 +150,7 @@ export class PriceRangeRenderer implements IPaneRenderer {
 				const leftX = point0.x;
 				const rightYCenter = (point0.y + point1.y) / 2;
 				const rightX = point1.x;
-	
+
 				// Draw the horizontal center line
 				ctx.moveTo(leftX - (left ? adjustX : 0), leftYCenter);
 				ctx.lineTo(rightX + (right ? adjustX : 0), rightYCenter);
@@ -155,9 +158,9 @@ export class PriceRangeRenderer implements IPaneRenderer {
 				ctx.stroke();
 			}
 		}
-	
+
 		ctx.restore();
-	}					
+	}
 
 	protected _getPointsInPhysicalSpace(pixelRatio: number): Segment {
 		const data = ensureNotNull(this._data);

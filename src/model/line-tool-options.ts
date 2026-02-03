@@ -284,29 +284,29 @@ export interface RectangleOptions {
 }
 
 export interface LongShortPositionOptions {
-    /**
-     * Rectangle config for the Entry to Stop Loss area.
-     */
-    entryStopLossRectangle: RectangleOptions;
-
-    /**
-     * Text config for the Entry to Stop Loss area.
-     */
-    entryStopLossText: TextOptions;
-
-    /**
-     * Rectangle config for the Entry to Profit Target area.
-     */
-    entryPtRectangle: RectangleOptions;
-
-    /**
-     * Text config for the Entry to Profit Target area.
-     */
-    entryPtText: TextOptions;
+	/**
+	 * Rectangle config for the Entry to Stop Loss area.
+	 */
+	entryStopLossRectangle: RectangleOptions;
 
 	/**
-     * Info about stop and pt will be displayed as text automatically
-     */
+	 * Text config for the Entry to Stop Loss area.
+	 */
+	entryStopLossText: TextOptions;
+
+	/**
+	 * Rectangle config for the Entry to Profit Target area.
+	 */
+	entryTpRectangle: RectangleOptions;
+
+	/**
+	 * Text config for the Entry to Profit Target area.
+	 */
+	entryTpText: TextOptions;
+
+	/**
+	 * Info about stop and tp will be displayed as text automatically
+	 */
 	showAutoText: boolean;
 }
 
@@ -373,28 +373,28 @@ export interface MarketDepthSingleAggregatesData {
 }
 
 export interface MarketDepthAggregatesData {
-    Bids: {
-        EarliestTime: string;
-        LatestTime: string;
-        Side: string;
-        Price: string;
-        TotalSize: string;
-        BiggestSize: string;
-        SmallestSize: string;
-        NumParticipants: number;
-        TotalOrderCount: number;
-    }[];
-    Asks: {
-        EarliestTime: string;
-        LatestTime: string;
-        Side: string;
-        Price: string;
-        TotalSize: string;
-        BiggestSize: string;
-        SmallestSize: string;
-        NumParticipants: number;
-        TotalOrderCount: number;
-    }[];
+	Bids: {
+		EarliestTime: string;
+		LatestTime: string;
+		Side: string;
+		Price: string;
+		TotalSize: string;
+		BiggestSize: string;
+		SmallestSize: string;
+		NumParticipants: number;
+		TotalOrderCount: number;
+	}[];
+	Asks: {
+		EarliestTime: string;
+		LatestTime: string;
+		Side: string;
+		Price: string;
+		TotalSize: string;
+		BiggestSize: string;
+		SmallestSize: string;
+		NumParticipants: number;
+		TotalOrderCount: number;
+	}[];
 }
 
 export interface MarketDepthOptions {
@@ -516,19 +516,19 @@ export interface FibRetracementLevel {
 	 */
 	color: string;
 
-    /**
-     * Opacity of the background.
-     */
+	/**
+	 * Opacity of the background.
+	 */
 	opacity: number;
 
-    /**
-     * enable or disable the ability to calulate distance from current coeff from x coeff.
-     */
+	/**
+	 * enable or disable the ability to calulate distance from current coeff from x coeff.
+	 */
 	distanceFromCoeffEnabled: boolean;
 
-    /**
-     * distance from current coeff from stated coeff in this option.
-     */
+	/**
+	 * distance from current coeff from stated coeff in this option.
+	 */
 	distanceFromCoeff: number;
 }
 
@@ -538,20 +538,20 @@ export interface FibRetracementLevel {
 
 export interface FibBracketOrder {
 	uniqueId: string | null;
-    conditionLevelCoeff: number | null;
-    conditionLevelPrice: number;
-    entryLevelCoeff: number | null;
-    entryLevelPrice: number;
-    stopMethod: 'fib' | 'price' | 'points'; // Use a union type for known string values
-    stopLevelCoeff: number | null; // Can be null if not using 'fib' method
-    stopPriceInput: number | null; // Can be null if not using 'price' method
-    stopPointsInput: number | null; // Can be null if not using 'points' method
-    finalStopPrice: number;
-    ptMethod: 'fib' | 'price' | 'points'; // Use a union type for known string values
-    ptLevelCoeff: number | null; // Can be null if not using 'fib' method
-    ptPriceInput: number | null; // Can be null if not using 'price' method
-    ptPointsInput: number | null; // Can be null if not using 'points' method
-    finalPtPrice: number;
+	conditionLevelCoeff: number | null;
+	conditionLevelPrice: number;
+	entryLevelCoeff: number | null;
+	entryLevelPrice: number;
+	stopMethod: 'fib' | 'price' | 'points'; // Use a union type for known string values
+	stopLevelCoeff: number | null; // Can be null if not using 'fib' method
+	stopPriceInput: number | null; // Can be null if not using 'price' method
+	stopPointsInput: number | null; // Can be null if not using 'points' method
+	finalStopPrice: number;
+	ptMethod: 'fib' | 'price' | 'points'; // Use a union type for known string values
+	ptLevelCoeff: number | null; // Can be null if not using 'fib' method
+	ptPriceInput: number | null; // Can be null if not using 'price' method
+	ptPointsInput: number | null; // Can be null if not using 'points' method
+	finalPtPrice: number;
 	isMoveStopToEnabled: boolean;
 	moveStopToMethod: 'fib' | 'price' | 'points';
 	moveStopToLevelCoeff: number | null;
@@ -565,9 +565,9 @@ export interface FibBracketOrder {
  * Represents fib blank trade strategy object to fill it with anything user wants.
  */
 export interface FibRetracementTradeStrategy {
-    enabled: boolean;
-    longOrShort: 'long' | 'short' | 'neutral' | ''; // Added '' for the "N/A" or initial state
-    fibBracketOrders: FibBracketOrder[]; // Array of the FibBracketOrder interface
+	enabled: boolean;
+	longOrShort: 'long' | 'short' | 'neutral' | ''; // Added '' for the "N/A" or initial state
+	fibBracketOrders: FibBracketOrder[]; // Array of the FibBracketOrder interface
 }
 
 export interface LineToolOptionsCommon {

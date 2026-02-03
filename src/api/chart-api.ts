@@ -445,10 +445,6 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 			return false;
 		}
 
-		if (lineTool.selected()) {
-			lineTool.setSelected(false);
-		}
-
 		lineTool.setPoints(newLineTool.points);
 		const lineToolApi = new LineToolApi(lineTool);
 		lineToolApi.applyOptions(newLineTool.options);
@@ -457,50 +453,50 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 	}
 
 	public createOrUpdateLineTool<T extends LineToolType>(
-        lineToolType: T,
-        points: LineToolPoint[],
-        options: LineToolPartialOptionsMap[T],
-        id: string
-    ): void {
+		lineToolType: T,
+		points: LineToolPoint[],
+		options: LineToolPartialOptionsMap[T],
+		id: string
+	): void {
 		const pane = this._getPane();
 		if (pane === null) { return; }
 
 		// get the current pane's tool by id.
-        const existingLineTool = pane.getLineTool(id);
+		const existingLineTool = pane.getLineTool(id);
 		// id exists, so update that line tool id
-        if (existingLineTool !== null) {
-            // Update existing line tool, assuming applyOptions will recalulate the pane by iteslf
-            const lineToolApi = new LineToolApi(existingLineTool);
-            lineToolApi.setPoints(points);
-            lineToolApi.applyOptions(options);
-        } else {
-            // Create new line tool
-            const lineToolApi = this.addLineTool(lineToolType, points, options);
-            lineToolApi.lineTool.setId(id);
-        }
+		if (existingLineTool !== null) {
+			// Update existing line tool, assuming applyOptions will recalulate the pane by iteslf
+			const lineToolApi = new LineToolApi(existingLineTool);
+			lineToolApi.setPoints(points);
+			lineToolApi.applyOptions(options);
+		} else {
+			// Create new line tool
+			const lineToolApi = this.addLineTool(lineToolType, points, options);
+			lineToolApi.lineTool.setId(id);
+		}
 		// Recalculate i dont think is needed, seems like it recalculates on it own
-        // pane.recalculate();
-    }
+		// pane.recalculate();
+	}
 
 	/**
 	 * Retrieves a LineTool by its ID.
 	 *
-     * @param id - The ID of the line tool to retrieve.
-     * @returns A JSON string representation of the LineTool, or an empty array as a string if no line tool is found.
-     */
-    public getLineToolByID(id: string): string {
-        const pane = this._getPane();
-        if (pane === null) {
-            return JSON.stringify([]); // Return empty array if no pane is active
-        }
+	 * @param id - The ID of the line tool to retrieve.
+	 * @returns A JSON string representation of the LineTool, or an empty array as a string if no line tool is found.
+	 */
+	public getLineToolByID(id: string): string {
+		const pane = this._getPane();
+		if (pane === null) {
+			return JSON.stringify([]); // Return empty array if no pane is active
+		}
 
-        const lineTool = pane.getLineTool(id);
-        if (lineTool === null) {
-            return JSON.stringify([]); // Return empty array if line tool not found
-        }
+		const lineTool = pane.getLineTool(id);
+		if (lineTool === null) {
+			return JSON.stringify([]); // Return empty array if line tool not found
+		}
 
-        return JSON.stringify([lineTool.exportLineToolToLineToolExport()]);
-    }
+		return JSON.stringify([lineTool.exportLineToolToLineToolExport()]);
+	}
 
 	/**
 	* Retrieves multiple LineTools whose IDs match a given regular expression.

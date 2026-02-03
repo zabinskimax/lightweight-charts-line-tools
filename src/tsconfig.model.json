@@ -5,8 +5,12 @@
 		{ "path": "./helpers/tsconfig.composite.json" }
 	],
 	"include": [
+		"./api/**/*.ts",
+		"./gui/**/*.ts",
 		"./model/**/*.ts",
 		"./renderers/**/*.ts",
-		"./views/**/*.ts"
+		"./views/**/*.ts",
+		"./index.ts",
+		"./standalone.ts"
 	]
 }

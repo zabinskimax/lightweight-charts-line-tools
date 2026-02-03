@@ -9,6 +9,11 @@
 		],
 		"module": "commonjs"
 	},
+	"references": [
+		{
+			"path": "../../src/tsconfig.composite.json"
+		}
+	],
 	"include": [
 		"./coverage/**/*.ts",
 		"./graphics/graphics-test-cases.ts",

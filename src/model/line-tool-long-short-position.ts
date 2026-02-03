@@ -10,13 +10,13 @@ import { ensureNotNull } from '../helpers/assertions';
 
 export class LineToolLongShortPosition extends LineTool<'LongShortPosition'> {
     public onFinalized: ((orderID: string) => void) | null = null; // Callback property to help fire getSelectedAndFireAfterEdit
-	protected override readonly _toolType: LineToolType = 'LongShortPosition';
+    protected override readonly _toolType: LineToolType = 'LongShortPosition';
 
-	private _isLong: boolean | null = null; // Track long/short state
+    private _isLong: boolean | null = null; // Track long/short state
     private _previewIsLong: boolean | null = null;
     private _clickCount: number = 0;
 
-	public constructor(model: ChartModel, options: LongShortPositionToolOptions, points: LineToolPoint[] = []) {
+    public constructor(model: ChartModel, options: LongShortPositionToolOptions, points: LineToolPoint[] = []) {
         super(model, options, points);
         this._setPaneViews([new LongShortPositionPaneView(this, model)]);
 
@@ -28,7 +28,7 @@ export class LineToolLongShortPosition extends LineTool<'LongShortPosition'> {
         }
     }
     public pointsCount(): number {
-        return 3; // Entry, Stop Loss, PT
+        return 3; // Entry, Stop Loss, TP
     }
 
     // Helper to determine if the current state is long
@@ -56,13 +56,13 @@ export class LineToolLongShortPosition extends LineTool<'LongShortPosition'> {
             super.addPoint(point); // Add to permanent points
             this._points.push(point); // Initialize temp Stop Loss with Entry point
             // eslint-disable-next-line unicorn/no-array-push-push
-            this._points.push(this.calculateThirdPoint(point, true)); // Calculate temporary PT
+            this._points.push(this.calculateThirdPoint(point, true)); // Calculate temporary TP
         } else if (!this._finished && this._clickCount === 1) { // Mouse move before second click
             this._points[1] = point; // Update temporary Stop Loss
-            this._points[2] = this.calculateThirdPoint(point, true); // Update temporary PT
+            this._points[2] = this.calculateThirdPoint(point, true); // Update temporary TP
         } else if (this._clickCount === 2 && !this._finished) { // 2nd click which is the stop so now call tryFinish (finalizes tool)
             this._points[1] = point; // Update temporary Stop Loss
-            this._points[2] = this.calculateThirdPoint(point, true); // Update temporary PT
+            this._points[2] = this.calculateThirdPoint(point, true); // Update temporary TP
             this.tryFinish();
 
             // Invoke the callback if the tool is finalized:
@@ -90,7 +90,7 @@ export class LineToolLongShortPosition extends LineTool<'LongShortPosition'> {
             // Determine if the preview is for a long or short position
             this._previewIsLong = this._points[0].price > point.price;
 
-            this._points[2] = this.calculateThirdPoint(point, true); // Update temporary PT
+            this._points[2] = this.calculateThirdPoint(point, true); // Update temporary TP
         }
     }
 
@@ -105,10 +105,10 @@ export class LineToolLongShortPosition extends LineTool<'LongShortPosition'> {
         // Update the point in the _points array
         super.setPoint(index, point);
 
-        // 5. Handle updates to the PT point during drags of ANY anchor
+        // 5. Handle updates to the TP point during drags of ANY anchor
         if (index === 0 || index === 1 || index === 2) {
             if (this._points.length === 3) {
-                // === ALWAYS RECALCULATE PT ===
+                // === ALWAYS RECALCULATE TP ===
                 const ptPoint = this.calculateThirdPoint(this._points[2]);
                 this._points[2] = ptPoint;
             }
@@ -118,7 +118,7 @@ export class LineToolLongShortPosition extends LineTool<'LongShortPosition'> {
     public override getPoint(index: number): LineToolPoint | null {
         if (index < this.pointsCount()) {
             return super.getPoint(index);
-        } else if (index === 3) { // PT right anchor
+        } else if (index === 3) { // TP right anchor
             return this.calculateThirdPoint(this.points()[2]);
         }
 
@@ -127,8 +127,8 @@ export class LineToolLongShortPosition extends LineTool<'LongShortPosition'> {
 
     // Has the direction of the tool (long/short) changed during a drag?
     public isFlipped(): boolean {
-		return this._isLong !== null && this._isLong !== this.isCurrentLong();
-	}
+        return this._isLong !== null && this._isLong !== this.isCurrentLong();
+    }
 
     // Detect if a flip between long/short has occurred during dragging
     public checkFlip(pointIndex: number, appliedPoint: Point, isLong: boolean | null): boolean {
@@ -166,13 +166,13 @@ export class LineToolLongShortPosition extends LineTool<'LongShortPosition'> {
         return flipDetected;
     }
 
-    // Update the PT anchor point to reflect changes to Entry or Stop Loss.
-	public updatePT(): void {
-		if (this._points.length === 3) {
-			const thirdPoint = this.calculateThirdPoint(this._points[2]);
-			super.setPoint(2, thirdPoint);
-		}
-	}
+    // Update the TP anchor point to reflect changes to Entry or Stop Loss.
+    public updateTP(): void {
+        if (this._points.length === 3) {
+            const thirdPoint = this.calculateThirdPoint(this._points[2]);
+            super.setPoint(2, thirdPoint);
+        }
+    }
 
     // Set the long/short direction of the tool.
     public setIsLong(isLong: boolean): void {
@@ -184,15 +184,12 @@ export class LineToolLongShortPosition extends LineTool<'LongShortPosition'> {
         return this._isLong;
     }
 
-    // Calculate the PT point, taking into account long/short direction and constraints.
+    // Calculate the TP point, taking into account long/short direction and constraints.
     public calculateThirdPoint(ptPoint: LineToolPoint, initialCreation: boolean = false): LineToolPoint {
-        // Only calculate PT if both Entry and Stop Loss are defined
+        // Only calculate TP if both Entry and Stop Loss are defined
         if (this._points.length < 2) {
             return { price: 0, timestamp: 0 }; // Return a dummy point
         }
-
-        // Get the price interval (minMove) using the minMove() method from LineTool
-        const minPriceMove = Number(this.minMove());
 
         const priceScale = ensureNotNull(this.priceScale());
         const firstValue = ensureNotNull(priceScale.firstValue());
@@ -204,9 +201,9 @@ export class LineToolLongShortPosition extends LineTool<'LongShortPosition'> {
 
         let ptPrice = Number(priceScale.formatPrice(ptPoint.price, firstValue));
 
-        // upon 1st click you are in a "preview" mode, so 3x the PT
+        // upon 1st click you are in a "preview" mode, so 3x the TP
         if (initialCreation) {
-            // Calculate PT price for initial creation based on _isLong
+            // Calculate TP price for initial creation based on _isLong
             ptPrice = this._previewIsLong
                 ? entryPrice + (currentDistance * 3)
                 : entryPrice - (currentDistance * 3);
@@ -214,35 +211,35 @@ export class LineToolLongShortPosition extends LineTool<'LongShortPosition'> {
             // not preview mode, so already created, check for ifSlipped or not
             const isFlipped = (this._paneViews[0] as LongShortPositionPaneView).isFlipped;
             if (isFlipped) {
-                // Recalculate PT price ONLY during a flipped drag
+                // Recalculate TP price ONLY during a flipped drag
                 ptPrice = this.isCurrentLong()
                     ? entryPrice + (currentDistance * 3)
                     : entryPrice - (currentDistance * 3);
             }
-            // Apply PT point constraint
+            // Apply TP point constraint
             if (this.isCurrentLong()) {
-                // For longs, PT must be at least minPriceMove ABOVE the Entry
-                ptPrice = Math.max(ptPrice, entryPrice + minPriceMove);
+                // For longs, TP must be at least at the Entry
+                ptPrice = Math.max(ptPrice, entryPrice);
             } else {
-                // For shorts, PT must be at least minPriceMove BELOW the Entry
-                ptPrice = Math.min(ptPrice, entryPrice - minPriceMove);
+                // For shorts, TP must be at least at the Entry
+                ptPrice = Math.min(ptPrice, entryPrice);
             }
         }
 
         return { price: ptPrice, timestamp: this._points[1].timestamp };
     }
 
-	protected _getAnchorPointForIndex(index: number): LineToolPoint {
+    protected _getAnchorPointForIndex(index: number): LineToolPoint {
         const start = this.points()[0];
         const end = this.points()[1];
         const pt = this.points()[2];
 
-        // Define the anchor points, including the hidden PT right anchor
+        // Define the anchor points, including the hidden TP right anchor
         return [
-			{ price: start.price, timestamp: start.timestamp as UTCTimestamp }, // Entry
-			{ price: end.price, timestamp: end.timestamp as UTCTimestamp }, // Stop Loss
-			{ price: pt.price, timestamp: pt.timestamp as UTCTimestamp }, // PT left
-			{ price: end.price, timestamp: pt.timestamp as UTCTimestamp }, // PT right (hidden)
+            { price: start.price, timestamp: start.timestamp as UTCTimestamp }, // Entry
+            { price: end.price, timestamp: end.timestamp as UTCTimestamp }, // Stop Loss
+            { price: pt.price, timestamp: pt.timestamp as UTCTimestamp }, // TP left
+            { price: end.price, timestamp: pt.timestamp as UTCTimestamp }, // TP right (hidden)
         ][index];
     }
 }

@@ -127,17 +127,17 @@ export const FibRetracementOptionDefaults: FibRetracementToolOptions = {
 	extend: { left: false, right: false },
 	line: { width: 1, style: LineStyle.Solid },
 	levels: [
-        { color: '#787b86', coeff: 0, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
-        { color: '#f23645', coeff: 0.236, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
-        { color: '#81c784', coeff: 0.382, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
-        { color: '#4caf50', coeff: 0.5, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
-        { color: '#089981', coeff: 0.618, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
-        { color: '#64b5f6', coeff: 0.786, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
-        { color: '#787b86', coeff: 1, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
-        { color: '#2962ff', coeff: 1.618, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
-        { color: '#f23645', coeff: 2.618, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
-        { color: '#9c27b0', coeff: 3.618, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
-        { color: '#e91e63', coeff: 4.236, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
+		{ color: '#787b86', coeff: 0, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
+		{ color: '#f23645', coeff: 0.236, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
+		{ color: '#81c784', coeff: 0.382, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
+		{ color: '#4caf50', coeff: 0.5, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
+		{ color: '#089981', coeff: 0.618, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
+		{ color: '#64b5f6', coeff: 0.786, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
+		{ color: '#787b86', coeff: 1, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
+		{ color: '#2962ff', coeff: 1.618, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
+		{ color: '#f23645', coeff: 2.618, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
+		{ color: '#9c27b0', coeff: 3.618, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
+		{ color: '#e91e63', coeff: 4.236, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
 	],
 	tradeStrategy: {
 		enabled: false,
@@ -198,18 +198,18 @@ export const LongShortPositionOptionDefaults: LongShortPositionToolOptions = {
 	visible: true,
 	editable: true,
 	showAutoText: true,
-    entryStopLossRectangle: {
-        background: { color: applyAlpha('red', 0.2) },
-        border: { width: 1, style: LineStyle.Solid, color: 'red' },
-        extend: { left: false, right: false },
-    },
-    entryPtRectangle: {
-        background: { color: applyAlpha('green', 0.2) },
-        border: { width: 1, style: LineStyle.Solid, color: 'green' },
-        extend: { left: false, right: false },
-    },
-    entryStopLossText: clone(TextDefaults),
-	entryPtText: clone(TextDefaults),
+	entryStopLossRectangle: {
+		background: { color: applyAlpha('red', 0.2) },
+		border: { width: 1, style: LineStyle.Solid, color: 'red' },
+		extend: { left: false, right: false },
+	},
+	entryTpRectangle: {
+		background: { color: applyAlpha('green', 0.2) },
+		border: { width: 1, style: LineStyle.Solid, color: 'green' },
+		extend: { left: false, right: false },
+	},
+	entryStopLossText: clone(TextDefaults),
+	entryTpText: clone(TextDefaults),
 };
 
 export const CircleOptionDefaults: CircleToolOptions = {
@@ -251,9 +251,9 @@ export const MarketDepthOptionDefaults: MarketDepthToolOptions = {
 		timestampStartOffset: 50,
 		totalBidAskCalcMethod: 'combined',
 		marketDepthData: {
-            Bids: [],
-            Asks: [],
-        },
+			Bids: [],
+			Asks: [],
+		},
 	},
 	text: TextDefaults,
 };

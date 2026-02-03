@@ -223,7 +223,7 @@ export function drawCircleEnd(point: Point, ctx: CanvasRenderingContext2D, width
 }
 
 export function drawArrowEnd(point0: Point, point1: Point, ctx: CanvasRenderingContext2D, width: number, pixelRatio: number): void {
-	if (point1.subtract(point0).length() < 1) {return;}
+	if (point1.subtract(point0).length() < 1) { return; }
 	const arrowPoints = getArrowPoints(point0, point1, width);
 	for (let e = 0; e < arrowPoints.length; ++e) {
 		const first = arrowPoints[e][0];

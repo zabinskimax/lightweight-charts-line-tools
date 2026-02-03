@@ -8,6 +8,7 @@ import { Coordinate } from '../../model/coordinate';
 import { LineTool, LineToolOptionsInternal } from '../../model/line-tool';
 import { BoxHorizontalAlignment, BoxVerticalAlignment, LineToolType } from '../../model/line-tool-options';
 import { PaneCursorType } from '../../model/pane';
+import { toPercent } from '../../model/price-scale-conversions';
 import { CompositeRenderer } from '../../renderers/composite-renderer';
 import { AnchorPoint } from '../../renderers/line-anchor-renderer';
 import { PriceRangeRenderer } from '../../renderers/price-range-renderer';
@@ -66,12 +67,12 @@ export class PriceRangePaneView extends LineToolPaneView {
 		const paneHeight = pane?.height() ?? 0;
 		// const paneWidth = pane?.width() ?? 0;
 
-        // Consolidated vertical top and bottom off-screen check
+		// Consolidated vertical top and bottom off-screen check
 		const isOffScreenTopVertical = (y0 < 0 && y1 < 0);
 		const isOffScreenBottomVertical = (y0 > paneHeight && y1 > paneHeight);
 		const isOffScreenVertical = isOffScreenTopVertical || isOffScreenBottomVertical;
 
-        // Consolidated horizontal right and left off-screen check
+		// Consolidated horizontal right and left off-screen check
 		const isOffScreenRightHorizontal = Math.min(points[0].timestamp, points[1].timestamp) > Number(visibleTimestampRange.to);
 		const isOffScreenLeftHorizontal = Math.max(points[0].timestamp, points[1].timestamp) < Number(visibleTimestampRange.from);
 		const isOffScreenHorizontal = isOffScreenRightHorizontal || isOffScreenLeftHorizontal;
@@ -161,10 +162,12 @@ export class PriceRangePaneView extends LineToolPaneView {
 				labelOptionsPermanent.box.alignment.vertical = BoxVerticalAlignment.Bottom;
 
 				if (firstValue !== null) {
-					// labelOptionsPermanent.value = String(priceScale.coordinateToPrice(point1.y, firstValue));
-					// const price = priceScale.coordinateToPrice(point1.y, firstValue);
-					// labelOptionsPermanent.value = String(priceScale.formatPrice(price, firstValue));
-					labelOptionsPermanent.value = String(Number(priceScale.formatPrice(priceScale.coordinateToPrice(point1.y, firstValue), firstValue)) - Number(priceScale.formatPrice(priceScale.coordinateToPrice(point0.y, firstValue), firstValue)));
+					const price0 = Number(priceScale.formatPrice(priceScale.coordinateToPrice(point0.y, firstValue), firstValue));
+					const price1 = Number(priceScale.formatPrice(priceScale.coordinateToPrice(point1.y, firstValue), firstValue));
+					const priceDifference = price1 - price0;
+					const percentageChange = toPercent(price1, price0);
+
+					labelOptionsPermanent.value = `${priceDifference.toFixed(2)} (${percentageChange.toFixed(2)}%)`;
 				}
 			}
 			// long - label at top
@@ -172,10 +175,12 @@ export class PriceRangePaneView extends LineToolPaneView {
 				labelOptionsPermanent.box.alignment.vertical = BoxVerticalAlignment.Top;
 
 				if (firstValue !== null) {
-					// labelOptionsPermanent.value = String(priceScale.coordinateToPrice(point1.y, firstValue));
-					// const price = priceScale.coordinateToPrice(point1.y, firstValue);
-					// labelOptionsPermanent.value = String(priceScale.formatPrice(price, firstValue));
-					labelOptionsPermanent.value = '+' + String(Number(priceScale.formatPrice(priceScale.coordinateToPrice(point1.y, firstValue), firstValue)) - Number(priceScale.formatPrice(priceScale.coordinateToPrice(point0.y, firstValue), firstValue)));
+					const price0 = Number(priceScale.formatPrice(priceScale.coordinateToPrice(point0.y, firstValue), firstValue));
+					const price1 = Number(priceScale.formatPrice(priceScale.coordinateToPrice(point1.y, firstValue), firstValue));
+					const priceDifference = price1 - price0;
+					const percentageChange = toPercent(price1, price0);
+
+					labelOptionsPermanent.value = `+${priceDifference.toFixed(2)} (+${percentageChange.toFixed(2)}%)`;
 				}
 			}
 

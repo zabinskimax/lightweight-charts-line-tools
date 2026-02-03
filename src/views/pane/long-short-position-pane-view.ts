@@ -3,7 +3,6 @@
 import { deepCopy } from '../../helpers/deep-copy';
 import { Coordinate } from '../../model/coordinate';
 import { ChartModel } from '../../model/chart-model';
-import { UTCTimestamp } from '../../model/time-data';
 import { LineTool, LineToolOptionsInternal } from '../../model/line-tool';
 import { BoxHorizontalAlignment, BoxVerticalAlignment, LineToolType, TextOptions } from '../../model/line-tool-options';
 import { PaneCursorType } from '../../model/pane';
@@ -18,31 +17,24 @@ import { ensureNotNull } from '../../helpers/assertions';
 import { clone } from '../../helpers/strict-type-checks';
 
 export class LongShortPositionPaneView extends LineToolPaneView {
-    // Renderers for the Entry-Stop Loss and PT rectangles
+    // Renderers for the Entry-Stop Loss and TP rectangles
     protected _entryStopLossRenderer: RectangleRenderer = new RectangleRenderer();
-    protected _ptRenderer: RectangleRenderer = new RectangleRenderer();
+    protected _tpRenderer: RectangleRenderer = new RectangleRenderer();
 
-    // Renderers for text labels (not currently used)
-    protected _labelRenderer: TextRenderer = new TextRenderer();
-
-    // Renderers for Entry-Stop Loss and PT text labels
+    // Renderers for text labels
     protected _entryStopLossLabelRenderer: TextRenderer = new TextRenderer();
-    protected _ptLabelRenderer: TextRenderer = new TextRenderer();
+    protected _tpLabelRenderer: TextRenderer = new TextRenderer();
 
     public constructor(source: LineTool<LineToolType>, model: ChartModel) {
         super(source, model);
         this._renderer = null;
-        // Set the callback in the constructor to handle the
-        // 'lineToolFinished' event after the LongShortPosition tool is finalized.
         (source as LineToolLongShortPosition).onFinalized = (orderID: string) => {
             this.triggerAfterEdit('lineToolFinished', orderID);
         };
     }
 
-    // used to execute callback so position tool can fire a lineToolFinished when the position tool is initially created
     public triggerAfterEdit(stage: string, orderID: string): void {
         const modifiedLineTool = this._source;
-
         const selectedLineTool = clone(modifiedLineTool.exportLineToolToLineToolExport());
         this._model.fireLineToolsAfterEdit(selectedLineTool, stage);
     }
@@ -51,8 +43,8 @@ export class LongShortPositionPaneView extends LineToolPaneView {
         const options = this._source.options() as LineToolOptionsInternal<'LongShortPosition'>;
 
         if (!options.visible) {
-			return;
-		}
+            return;
+        }
 
         this._renderer = null;
         this._invalidated = false;
@@ -65,54 +57,40 @@ export class LongShortPositionPaneView extends LineToolPaneView {
         if (visibleTimestampRange === null) { return; }
 
         const points = this._source.points();
+        if (points.length < 3) { return; }
+
         const point0Data = points[0];
-		const point1Data = points[1];
+        const point1Data = points[1];
         const point2Data = points[2];
 
-		if (!point0Data || !point1Data || !point2Data) {
-			return;
-		}
+        const ownerSource = this._source.ownerSource();
+        const firstValue = ownerSource?.firstValue();
+        if (!firstValue) { return; }
 
-		const ownerSource = this._source.ownerSource();
-		const firstValue = ownerSource?.firstValue();
-		if (!firstValue) { return; }
+        const y0 = priceScale.priceToCoordinate(point0Data.price, firstValue.value);
+        const y1 = priceScale.priceToCoordinate(point1Data.price, firstValue.value);
+        const y2 = priceScale.priceToCoordinate(point2Data.price, firstValue.value);
 
-		const point0ScreenY = priceScale.priceToCoordinate(point0Data.price, firstValue.value);
-		const point1ScreenY = priceScale.priceToCoordinate(point1Data.price, firstValue.value);
-        const point2ScreenY = priceScale.priceToCoordinate(point2Data.price, firstValue.value);
+        const pane = this._model.paneForSource(this._source);
+        const paneHeight = pane?.height() ?? 0;
 
-		const y0 = point0ScreenY;
-		const y1 = point1ScreenY;
-        const y2 = point2ScreenY;
+        const isOffScreenVertical = (y0 < 0 && y1 < 0 && y2 < 0) || (y0 > paneHeight && y1 > paneHeight && y2 > paneHeight);
+        const minTS = Math.min(points[0].timestamp, points[1].timestamp, points[2].timestamp);
+        const maxTS = Math.max(points[0].timestamp, points[1].timestamp, points[2].timestamp);
+        const isOffScreenHorizontal = minTS > Number(visibleTimestampRange.to) || maxTS < Number(visibleTimestampRange.from);
 
-		const pane = this._model.paneForSource(this._source);
-		const paneHeight = pane?.height() ?? 0;
-		// const paneWidth = pane?.width() ?? 0;
-
-        // Consolidated vertical top and bottom off-screen check
-		const isOffScreenTopVertical = (y0 < 0 && y1 < 0 && y2 < 0);
-		const isOffScreenBottomVertical = (y0 > paneHeight && y1 > paneHeight && y2 > paneHeight);
-		const isOffScreenVertical = isOffScreenTopVertical || isOffScreenBottomVertical;
-
-		// Consolidated horizontal right and left off-screen check
-		const isOffScreenRightHorizontal = Math.min(points[0].timestamp, points[1].timestamp, points[2].timestamp) > Number(visibleTimestampRange.to);
-		const isOffScreenLeftHorizontal = Math.max(points[0].timestamp, points[1].timestamp, points[2].timestamp) < Number(visibleTimestampRange.from);
-		const isOffScreenHorizontal = isOffScreenRightHorizontal || isOffScreenLeftHorizontal;
-
-		const isOutsideView = isOffScreenVertical || isOffScreenHorizontal;
-
-        if (!isOutsideView || options.entryStopLossRectangle.extend.left || options.entryStopLossRectangle.extend.right || options.entryPtRectangle.extend.left || options.entryPtRectangle.extend.right) {
-            // console.log('draw position tool');
-            // Ensure _points is updated even if the tool is not finalized
+        if (!isOffScreenVertical && !isOffScreenHorizontal ||
+            options.entryStopLossRectangle.extend.left || options.entryStopLossRectangle.extend.right ||
+            options.entryTpRectangle.extend.left || options.entryTpRectangle.extend.right) {
             super._updateImpl();
 
-            if (this._points.length === 0) { return; } // No points to work with
+            if (this._points.length < 3) { return; }
 
             const compositeRenderer = new CompositeRenderer();
 
-            // Prepare points for rectangle renderers
+            // Prepare points
             const entryStopLossPoints = [this._points[0], this._points[1]];
-            const ptPoints = [this._points[0], this._points[2]];
+            const tpPoints = [this._points[0], this._points[2]];
 
             // Entry to Stop Loss Rectangle
             this._entryStopLossRenderer.setData({
@@ -120,70 +98,39 @@ export class LongShortPositionPaneView extends LineToolPaneView {
                 background: options.entryStopLossRectangle.background,
                 border: options.entryStopLossRectangle.border,
                 extend: options.entryStopLossRectangle.extend,
-                hitTestBackground: false,
+                hitTestBackground: true,
             });
 
-                // Entry to PT Rectangle
-            this._ptRenderer.setData({
-                points: ptPoints,
-                background: options.entryPtRectangle.background,
-                border: options.entryPtRectangle.border,
-                extend: options.entryPtRectangle.extend,
-                hitTestBackground: false,
+            // Entry to TP Rectangle
+            this._tpRenderer.setData({
+                points: tpPoints,
+                background: options.entryTpRectangle.background,
+                border: options.entryTpRectangle.border,
+                extend: options.entryTpRectangle.extend,
+                hitTestBackground: true,
             });
 
             compositeRenderer.append(this._entryStopLossRenderer);
-            compositeRenderer.append(this._ptRenderer);
-
-            // Get the text data
-            const entryStopLossText = this._getText(options.entryStopLossText, entryStopLossPoints, false);
+            compositeRenderer.append(this._tpRenderer);
 
             // Entry to Stop Loss Text
-            if (options.entryStopLossText.value || entryStopLossText.text.value !== '') {
+            const entryStopLossTextData = this._getText(options.entryStopLossText, entryStopLossPoints, false);
+            if (options.entryStopLossText.value || entryStopLossTextData.text.value !== '') {
                 this._entryStopLossLabelRenderer.setData({
-                    text: entryStopLossText.text,
-                    points: [entryStopLossText.point],
+                    text: entryStopLossTextData.text,
+                    points: [entryStopLossTextData.point],
                 });
                 compositeRenderer.append(this._entryStopLossLabelRenderer);
             }
 
-            // Get the text data
-            const entryPtText = this._getText(options.entryPtText, ptPoints, true);
-
-            // Entry to PT Text
-            if (options.entryPtText.value || entryPtText.text.value !== '') {
-                this._ptLabelRenderer.setData({
-                    text: entryPtText.text,
-                    points: [entryPtText.point],
+            // Entry to TP Text
+            const entryTpTextData = this._getText(options.entryTpText, tpPoints, true);
+            if (options.entryTpText.value || entryTpTextData.text.value !== '') {
+                this._tpLabelRenderer.setData({
+                    text: entryTpTextData.text,
+                    points: [entryTpTextData.point],
                 });
-                compositeRenderer.append(this._ptLabelRenderer);
-            }
-
-            // PT Constraint and Anchor Update Logic
-            if (this._source.points().length >= 3) {
-                const minPriceMove = Number(this._source.minMove());
-                let ptPrice = this._source.points()[2].price;
-                const entryPrice = this._source.points()[0].price;
-
-                // Adjust PT price based on long/short direction
-                if ((this._source as LineToolLongShortPosition).isCurrentLong()) {
-                    ptPrice = Math.max(ptPrice, entryPrice + minPriceMove); // Ensure PT above Entry for longs
-                } else {
-                    ptPrice = Math.min(ptPrice, entryPrice - minPriceMove); // Ensure PT below Entry for shorts
-                }
-
-                // Update the PT point in the source
-                this._source.setPoint(2, { price: ptPrice, timestamp: this._source.points()[2].timestamp });
-
-                // const firstValue = ensureNotNull(this._source.ownerSource()).firstValue();
-                if (firstValue !== null) {
-                    // Update the PT anchor point's coordinates
-                    const ptX = timeScale.timeToCoordinate({ timestamp: this._source.points()[2].timestamp as UTCTimestamp });
-                    const ptY = priceScale.priceToCoordinate(ptPrice, ensureNotNull(firstValue.value));
-
-                    this._points[2].x = ptX;
-                    this._points[2].y = ptY;
-                }
+                compositeRenderer.append(this._tpLabelRenderer);
             }
 
             this._addAnchors(compositeRenderer);
@@ -192,9 +139,8 @@ export class LongShortPositionPaneView extends LineToolPaneView {
     }
 
     protected _addAnchors(renderer: CompositeRenderer): void {
-        // Only create anchors for Entry, Stop Loss, and PT (point 1 of PT rectangle)
         renderer.append(this.createLineAnchor({
-            points: [this._points[0], this._points[1], this._points[2]], // PT anchor is now at index 2
+            points: [this._points[0], this._points[1], this._points[2]],
             pointsCursorType: [
                 PaneCursorType.DiagonalNwSeResize,
                 PaneCursorType.DiagonalNeSwResize,
@@ -203,7 +149,7 @@ export class LongShortPositionPaneView extends LineToolPaneView {
         }, 0));
     }
 
-    private _getText(textOptions: TextOptions, points: AnchorPoint[], isPtRectangle: boolean = false): { text: TextOptions; point: Point } {
+    private _getText(textOptions: TextOptions, points: AnchorPoint[], isTpRectangle: boolean = false): { text: TextOptions; point: Point } {
         const point0 = points[0];
         const point1 = points[1];
         const minX = Math.min(point0.x, point1.x);
@@ -244,108 +190,67 @@ export class LongShortPositionPaneView extends LineToolPaneView {
             labelOptions.box.maxHeight = maxY - minY;
         }
 
-        // Get the main options
         const options = this._source.options() as LineToolOptionsInternal<'LongShortPosition'>;
 
-        // LongShortPosition: Automatic Text and Styling
-        // If showAutoText is enabled, override user-provided text
-        // with automatically calculated text and apply specific styling.
         if (options.showAutoText) {
-            // Calculate point distances
             const priceScale = ensureNotNull(this._source.priceScale());
-            const firstValue = ensureNotNull(priceScale.firstValue()); // Assuming you have a firstValue
+            const firstValue = ensureNotNull(priceScale.firstValue());
 
-            let pointDistance = 0;
+            if (!isTpRectangle) {
+                const entryPrice = Number(priceScale.formatPrice(this._source.points()[0].price, firstValue));
+                const stopPrice = Number(priceScale.formatPrice(this._source.points()[1].price, firstValue));
+                const percentChange = ((stopPrice - entryPrice) / entryPrice) * 100;
 
-            if (!isPtRectangle) {
-                // Entry-Stop Loss rectangle:
-                // Calculate distance between Entry and Stop Loss prices
-                // Round prices to the nearest minPriceMove
-                const price1 = Number(priceScale.formatPrice(this._source.points()[0].price, firstValue));
-                const price2 = Number(priceScale.formatPrice(this._source.points()[1].price, firstValue));
-                pointDistance = Math.abs(price1 - price2);
-
-                // Format the text to display Entry, Stop Loss, and the distance
                 labelOptions.value =
                     'Entry: ' + priceScale.formatPrice(this._source.points()[0].price, firstValue) + '\n' +
                     'Stop: ' + priceScale.formatPrice(this._source.points()[1].price, firstValue) + '\n' +
-                    `(${pointDistance.toFixed(2)} pts)`;
+                    `(${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(2)}%)`;
             } else {
-                // PT rectangle:
-                // Calculate distance between Entry and PT prices
-                const price1 = Number(priceScale.formatPrice(this._source.points()[2].price, firstValue));
-                const price2 = Number(priceScale.formatPrice(this._source.points()[0].price, firstValue));
-                pointDistance = Math.abs(price1 - price2);
+                const entryPrice = Number(priceScale.formatPrice(this._source.points()[0].price, firstValue));
+                const tpPrice = Number(priceScale.formatPrice(this._source.points()[2].price, firstValue));
+                const percentChange = ((tpPrice - entryPrice) / entryPrice) * 100;
 
-                // Format text to display PT and the distance
                 labelOptions.value =
-                    'PT: ' + priceScale.formatPrice(this._source.points()[2].price, firstValue) + '\n' +
-                    `(${pointDistance.toFixed(2)} pts)`;
+                    'TP: ' + priceScale.formatPrice(this._source.points()[2].price, firstValue) + '\n' +
+                    `(${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(2)}%)`;
             }
-            // Apply font style for automatic text
+
             labelOptions.font = {
-                family: 'Arial', // Or your desired font family
+                family: 'Arial',
                 size: 14,
-                color: 'rgba(255, 255, 255, 1)', // White
+                color: 'rgba(255, 255, 255, 1)',
                 bold: false,
                 italic: false,
             };
 
-            // Determine text box alignment based on long/short direction
-            // if long
-            if ((this._source as LineToolLongShortPosition).isCurrentLong()) {
-                if (!isPtRectangle) {
-                    labelOptions.box.alignment = {
-                        vertical: BoxVerticalAlignment.Bottom,
-                        horizontal: BoxHorizontalAlignment.Center,
-                    };
+            const isLong = (this._source as LineToolLongShortPosition).isCurrentLong();
+            if (isLong) {
+                if (!isTpRectangle) {
+                    labelOptions.box.alignment = { vertical: BoxVerticalAlignment.Bottom, horizontal: BoxHorizontalAlignment.Center };
                 } else {
-                    labelOptions.box.alignment = {
-                        vertical: BoxVerticalAlignment.Top,
-                        horizontal: BoxHorizontalAlignment.Center,
-                    };
+                    labelOptions.box.alignment = { vertical: BoxVerticalAlignment.Top, horizontal: BoxHorizontalAlignment.Center };
                 }
             } else {
-                // short
-                if (!isPtRectangle) {
-                    labelOptions.box.alignment = {
-                        vertical: BoxVerticalAlignment.Top,
-                        horizontal: BoxHorizontalAlignment.Center,
-                    };
+                if (!isTpRectangle) {
+                    labelOptions.box.alignment = { vertical: BoxVerticalAlignment.Top, horizontal: BoxHorizontalAlignment.Center };
                 } else {
-                    labelOptions.box.alignment = {
-                        vertical: BoxVerticalAlignment.Bottom,
-                        horizontal: BoxHorizontalAlignment.Center,
-                    };
+                    labelOptions.box.alignment = { vertical: BoxVerticalAlignment.Bottom, horizontal: BoxHorizontalAlignment.Center };
                 }
             }
 
-            // ***RECALCULATE PIVOT BASED ON NEW ALIGNMENT***
+            // RECALCULATE PIVOT
             switch (labelOptions.box.alignment.horizontal) {
-                case BoxHorizontalAlignment.Center:
-                    pivot.x = (minX + maxX) / 2 as Coordinate;
-                    break;
-                case BoxHorizontalAlignment.Left:
-                    pivot.x = minX as Coordinate;
-                    break;
-                case BoxHorizontalAlignment.Right:
-                    pivot.x = maxX as Coordinate;
+                case BoxHorizontalAlignment.Center: pivot.x = (minX + maxX) / 2 as Coordinate; break;
+                case BoxHorizontalAlignment.Left: pivot.x = minX as Coordinate; break;
+                case BoxHorizontalAlignment.Right: pivot.x = maxX as Coordinate; break;
             }
             switch (labelOptions.box.alignment.vertical) {
-                case BoxVerticalAlignment.Middle:
-                    pivot.y = (minY + maxY) / 2 as Coordinate;
-                    break;
-                case BoxVerticalAlignment.Top:
-                    pivot.y = minY as Coordinate;
-                    break;
-                case BoxVerticalAlignment.Bottom:
-                    pivot.y = maxY as Coordinate;
+                case BoxVerticalAlignment.Middle: pivot.y = (minY + maxY) / 2 as Coordinate; break;
+                case BoxVerticalAlignment.Top: pivot.y = minY as Coordinate; break;
+                case BoxVerticalAlignment.Bottom: pivot.y = maxY as Coordinate; break;
             }
         }
 
-        return {
-            text: labelOptions,
-            point: pivot,
-        };
+        return { text: labelOptions, point: pivot };
     }
 }
