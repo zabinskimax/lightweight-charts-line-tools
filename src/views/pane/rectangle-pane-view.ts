@@ -62,7 +62,7 @@ export class RectanglePaneView extends LineToolPaneView {
 		const paneHeight = pane?.height() ?? 0;
 		// const paneWidth = pane?.width() ?? 0;
 
-        // Consolidated vertical top and bottom off-screen check
+		// Consolidated vertical top and bottom off-screen check
 		const isOffScreenTopVertical = (y0 < 0 && y1 < 0);
 		const isOffScreenBottomVertical = (y0 > paneHeight && y1 > paneHeight);
 		const isOffScreenVertical = isOffScreenTopVertical || isOffScreenBottomVertical;

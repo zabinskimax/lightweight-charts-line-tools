@@ -11,6 +11,7 @@ import { LineStyle } from '..';
 import { fillRectWithBorder } from './draw-rect';
 import { IPaneRenderer } from './ipane-renderer';
 import { AnchorPoint } from './line-anchor-renderer';
+import { interactionTolerance } from './optimal-bar-width';
 
 export type RectangleRendererData = DeepPartial<RectangleOptions> & { points: AnchorPoint[]; hitTestBackground?: boolean };
 
@@ -33,22 +34,23 @@ export class RectangleRenderer implements IPaneRenderer {
 		if (null === this._data || this._data.points.length < 2) { return null; }
 		const pixelRatio = ctx.canvas.ownerDocument && ctx.canvas.ownerDocument.defaultView && ctx.canvas.ownerDocument.defaultView.devicePixelRatio || 1;
 		const physicalWidth = ctx.canvas.width;
-		const scaledPoint = new Point(x, y);
+		const tolerance = interactionTolerance.line + 2;
+		const scaledPoint = new Point(x * pixelRatio, y * pixelRatio);
 		const [topLeft, bottomRight] = this._getPointsInPhysicalSpace(pixelRatio);
 		const topRight = new Point(bottomRight.x, topLeft.y);
 		const bottomLeft = new Point(topLeft.x, bottomRight.y);
 
-		const topLineHitResult = this._extendAndHitTestLineSegment(scaledPoint, topLeft, topRight, physicalWidth);
+		const topLineHitResult = this._extendAndHitTestLineSegment(scaledPoint, topLeft, topRight, physicalWidth, tolerance);
 		if (topLineHitResult !== null) { return topLineHitResult; }
 
-		const bottomLineHitResult = this._extendAndHitTestLineSegment(scaledPoint, bottomLeft, bottomRight, physicalWidth);
+		const bottomLineHitResult = this._extendAndHitTestLineSegment(scaledPoint, bottomLeft, bottomRight, physicalWidth, tolerance);
 		if (bottomLineHitResult !== null) { return bottomLineHitResult; }
 
 		const rightSegmentDistance = distanceToSegment(topRight, bottomRight, scaledPoint);
-		if (rightSegmentDistance.distance <= 3) { return this._hitTest; }
+		if (rightSegmentDistance.distance <= tolerance) { return this._hitTest; }
 
 		const leftSegmentDistance = distanceToSegment(topLeft, bottomLeft, scaledPoint);
-		if (leftSegmentDistance.distance <= 3) { return this._hitTest; }
+		if (leftSegmentDistance.distance <= tolerance) { return this._hitTest; }
 
 		const backgroundHitResult = this._hitTestBackground(scaledPoint, topLeft, bottomRight, physicalWidth);
 		if (this._data.hitTestBackground && backgroundHitResult !== null) { return backgroundHitResult; }
@@ -99,9 +101,9 @@ export class RectangleRenderer implements IPaneRenderer {
 		return x1 > x2 || x2 <= 0 || x1 >= physicalWidth ? null : [new Point(x1, end0.y), new Point(x2, end1.y)];
 	}
 
-	protected _extendAndHitTestLineSegment(point: Point, end0: Point, end1: Point, physicalWidth: number): HitTestResult<void> | null {
+	protected _extendAndHitTestLineSegment(point: Point, end0: Point, end1: Point, physicalWidth: number, tolerance: number): HitTestResult<void> | null {
 		const line = this._extendAndClipLineSegment(end0, end1, physicalWidth);
-		if (line !== null && distanceToSegment(line[0], line[1], point).distance <= 3) { return this._hitTest; }
+		if (line !== null && distanceToSegment(line[0], line[1], point).distance <= tolerance) { return this._hitTest; }
 		return null;
 	}
 

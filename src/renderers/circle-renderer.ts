@@ -15,6 +15,7 @@ import { LineStyle } from '..';
 import { IPaneRenderer } from './ipane-renderer';
 import { AnchorPoint } from './line-anchor-renderer';
 import { setLineStyle } from './draw-line';
+import { interactionTolerance } from './optimal-bar-width';
 
 export type CircleRendererData = DeepPartial<CircleOptions> & { points: AnchorPoint[]; hitTestBackground?: boolean };
 
@@ -39,7 +40,8 @@ export class CircleRenderer implements IPaneRenderer {
         }
 
         const pixelRatio = ctx.canvas.ownerDocument && ctx.canvas.ownerDocument.defaultView && ctx.canvas.ownerDocument.defaultView.devicePixelRatio || 1;
-        const scaledPoint = new Point(x, y);
+        const tolerance = interactionTolerance.line + 2;
+        const scaledPoint = new Point(x * pixelRatio, y * pixelRatio);
         const [point0, point1] = this._getPointsInPhysicalSpace(pixelRatio);
 
         // Calculate the distance from the point to the center (point0)
@@ -49,16 +51,13 @@ export class CircleRenderer implements IPaneRenderer {
         const distance = calculateDistance(point0, point1);
 
         // figure out the border width to use to get a thickness for dragging object
-        const scaledBorderWidth = this._calculateScaledBorderWidth(1);
-
-        // make the selectable area a little larger for ease of use
-        const hitTestThreshold = 12;
+        const scaledBorderWidth = this._calculateScaledBorderWidth(pixelRatio);
 
         // If the mouse is at the border of the circle, allow dragging
         // if the mouse is at the center and 2x away from if going outwards, then pass
-        if ((distanceToCenter >= distance + scaledBorderWidth - hitTestThreshold &&
-            distanceToCenter <= distance + scaledBorderWidth) ||
-            (distanceToCenter <= hitTestThreshold * 2)) {
+        if ((distanceToCenter >= distance - tolerance &&
+            distanceToCenter <= distance + scaledBorderWidth + tolerance) ||
+            (distanceToCenter <= tolerance * 2)) {
             return this._hitTest;
         }
 
