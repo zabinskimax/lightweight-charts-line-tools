@@ -278,7 +278,6 @@ export class TextRenderer implements IPaneRenderer {
 			}
 		}
 
-
 		if (!this._data.editing) {
 			ctx.fillStyle = textData.font?.color as string;
 			const { lines } = this._getLinesInfo();
@@ -515,7 +514,7 @@ function textWrap(text: string, font: string, lineWrapWidth: number | string | u
 				for (; cacheCanvas.measureText(splitedLine.slice(0, 3 * (space + 1) - 1).join('')).width <= lineWrapWidth;) { space++; }
 			} else {
 				// eslint-disable-next-line no-empty
-				for (; space > 0 && cacheCanvas.measureText(splitedLine.slice(0, 3 * --space - 1).join('')).width > lineWrapWidth;) { }
+				for (; space > 0 && cacheCanvas.measureText(splitedLine.slice(0, 3 * --space - 1).join('')).width > lineWrapWidth;) {}
 			}
 
 			if (space > 0) {
@@ -529,7 +528,7 @@ function textWrap(text: string, font: string, lineWrapWidth: number | string | u
 					for (; cacheCanvas.measureText(paragraph.substring(0, subspace + 1)).width <= lineWrapWidth;) { subspace++; }
 				} else {
 					// eslint-disable-next-line no-empty
-					for (; subspace > 1 && cacheCanvas.measureText(paragraph.substring(0, --subspace)).width > lineWrapWidth;) { }
+					for (; subspace > 1 && cacheCanvas.measureText(paragraph.substring(0, --subspace)).width > lineWrapWidth;) {}
 				}
 
 				subspace = Math.max(1, subspace);

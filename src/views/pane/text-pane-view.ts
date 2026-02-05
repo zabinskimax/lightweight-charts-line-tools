@@ -1,6 +1,8 @@
 /* eslint-disable complexity */
 import { TouchMouseEvent } from '../../gui/mouse-event-handler';
 import { PaneWidget } from '../../gui/pane-widget';
+import { TextEditor } from '../../gui/text-editor';
+
 import { deepCopy } from '../../helpers/deep-copy';
 
 import { ChartModel } from '../../model/chart-model';
@@ -9,7 +11,6 @@ import { BoxHorizontalAlignment, BoxVerticalAlignment, LineToolType, TextAlignme
 import { Point } from '../../model/point';
 import { CompositeRenderer } from '../../renderers/composite-renderer';
 import { TextRenderer } from '../../renderers/text-renderer';
-import { TextEditor } from '../../gui/text-editor';
 
 import { LineToolPaneView } from './line-tool-pane-view';
 
