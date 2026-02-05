@@ -108,7 +108,7 @@ export class TrendLinePaneView extends LineToolPaneView {
 				const labelOptions = deepCopy(options.text);
 				labelOptions.box = { ...labelOptions.box, angle };
 
-				this._labelRenderer.setData({ text: labelOptions, points: [pivot] });
+				this._labelRenderer.setData({ text: labelOptions, points: [pivot], editing: this._source.editing() });
 				compositeRenderer.append(this._labelRenderer);
 			}
 

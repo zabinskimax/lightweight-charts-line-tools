@@ -134,7 +134,7 @@ export class RectanglePaneView extends LineToolPaneView {
 					labelOptions.box.maxHeight = maxY - minY;
 				}
 
-				this._labelRenderer.setData({ text: labelOptions, points: [pivot] });
+				this._labelRenderer.setData({ text: labelOptions, points: [pivot], editing: this._source.editing() });
 				compositeRenderer.append(this._labelRenderer);
 			}
 
