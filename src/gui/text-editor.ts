@@ -110,6 +110,12 @@ export class TextEditor {
 		s.textAlign = this._alignment;
 		s.overflow = 'hidden';
 		s.resize = 'none';
+		// Use !important to override any global CSS rules (e.g., textarea { width: 100% })
+		s.setProperty('width', `${rect.width}px`, 'important');
+		s.setProperty('height', `${rect.height}px`, 'important');
+		s.setProperty('max-width', `${rect.width}px`, 'important');
+		s.setProperty('min-width', `${rect.width}px`, 'important');
+		s.pointerEvents = 'auto'; // Ensure textarea can receive events
 
 		// Ghost span style
 		const gs = this._ghostSpan.style;
@@ -141,15 +147,18 @@ export class TextEditor {
 		const paddingW = 8; // 2px padding + 2px border each side
 		const newWidth = Math.ceil(maxWidth + paddingW);
 
-		this._textarea.style.width = `${newWidth}px`;
+		// Use !important to override global CSS rules
+		this._textarea.style.setProperty('width', `${newWidth}px`, 'important');
+		this._textarea.style.setProperty('max-width', `${newWidth}px`, 'important');
+		this._textarea.style.setProperty('min-width', `${newWidth}px`, 'important');
 		this._textarea.style.textAlign = this._alignment;
 
 		// Handle height
 		this._ghostSpan.textContent = text || ' ';
-		this._ghostSpan.style.width = this._textarea.style.width;
+		this._ghostSpan.style.width = `${newWidth}px`;
 		this._ghostSpan.style.whiteSpace = 'pre-wrap';
 		const newHeight = Math.ceil(this._ghostSpan.getBoundingClientRect().height) + 4; // 2px padding each side
-		this._textarea.style.height = `${newHeight}px`;
+		this._textarea.style.setProperty('height', `${newHeight}px`, 'important');
 	};
 
 	private _onBlur = () => {

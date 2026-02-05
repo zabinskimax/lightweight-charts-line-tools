@@ -1,3 +1,7 @@
+import { TouchMouseEvent } from '../../gui/mouse-event-handler';
+import { PaneWidget } from '../../gui/pane-widget';
+import { TextEditor } from '../../gui/text-editor';
+
 import { deepCopy } from '../../helpers/deep-copy';
 
 import { ChartModel } from '../../model/chart-model';
@@ -17,6 +21,7 @@ import { LineToolPaneView } from './line-tool-pane-view';
 export class VerticalLinePaneView extends LineToolPaneView {
 	protected _lineRenderer: SegmentRenderer = new SegmentRenderer();
 	protected _labelRenderer: TextRenderer = new TextRenderer();
+	private _textEditor: TextEditor | null = null;
 
 	public constructor(source: LineTool<LineToolType>, model: ChartModel) {
 		super(source, model);
@@ -63,7 +68,7 @@ export class VerticalLinePaneView extends LineToolPaneView {
 				const align = options.text.box.alignment.horizontal;
 				const pivot = align === BoxHorizontalAlignment.Left
 					? start.clone() : align === BoxHorizontalAlignment.Right
-					? end.clone() : new Point((start.x + end.x) / 2, (start.y + end.y) / 2);
+						? end.clone() : new Point((start.x + end.x) / 2, (start.y + end.y) / 2);
 
 				const labelOptions = deepCopy(options.text);
 				labelOptions.box = { ...labelOptions.box, angle };
@@ -75,5 +80,77 @@ export class VerticalLinePaneView extends LineToolPaneView {
 			this.addAnchors(compositeRenderer);
 			this._renderer = compositeRenderer;
 		}
+	}
+
+	protected override _onMouseDoubleClick(paneWidget: PaneWidget, ctx: CanvasRenderingContext2D, originPoint: Point, appliedPoint: Point, event: TouchMouseEvent): boolean {
+		if (this._source.options().editable === false) {
+			return false;
+		}
+
+		const options = this._source.options() as LineToolOptionsInternal<'VerticalLine'>;
+		if (!options.text.value) {
+			return false;
+		}
+
+		// Hit test specifically on the label, not the entire tool
+		if (this._labelRenderer.hitTest(originPoint.x, originPoint.y)) {
+			if (this._textEditor) {
+				this._textEditor.destroy();
+			}
+
+			const rect = this._labelRenderer.textRect();
+			const pixelRatio = ctx.canvas.width / ctx.canvas.getBoundingClientRect().width;
+
+			this._source.setEditing(true);
+			this._source.updateAllViews();
+
+			const align = options.text.box.alignment.horizontal;
+			const alignment = align === BoxHorizontalAlignment.Left
+				? 'left' : align === BoxHorizontalAlignment.Right
+					? 'right' : 'center';
+			// textRect() already returns the positioned text rectangle
+			// For left: pivot is at rect.x
+			// For center: pivot is at rect.x + rect.width / 2
+			// For right: pivot is at rect.x + rect.width
+			const anchorX = align === BoxHorizontalAlignment.Left
+				? rect.x : align === BoxHorizontalAlignment.Right
+					? rect.x + rect.width : rect.x + rect.width / 2;
+
+			this._textEditor = new TextEditor({
+				container: paneWidget.canvasWrapper(),
+				text: options.text,
+				pixelRatio: pixelRatio,
+				pivotX: anchorX,
+				pivotY: rect.y - 4,
+				alignment: alignment,
+				rect: {
+					left: rect.x,
+					top: rect.y - 4,
+					width: rect.width,
+					height: rect.height,
+				},
+				onBlur: (newValue: string) => {
+					this._source.setEditing(false);
+					if (newValue !== options.text.value) {
+						this._source.applyOptions({
+							text: { value: newValue },
+						});
+					} else {
+						this._source.updateAllViews();
+					}
+					this._textEditor?.destroy();
+					this._textEditor = null;
+				},
+				onCancel: () => {
+					this._source.setEditing(false);
+					this._source.updateAllViews();
+					this._textEditor?.destroy();
+					this._textEditor = null;
+				},
+			});
+			return true;
+		}
+
+		return false;
 	}
 }

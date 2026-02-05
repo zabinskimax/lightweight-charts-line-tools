@@ -90,6 +90,7 @@ export class TextPaneView extends LineToolPaneView {
 	}
 
 	protected override _onMouseDoubleClick(paneWidget: PaneWidget, ctx: CanvasRenderingContext2D, originPoint: Point, appliedPoint: Point, event: TouchMouseEvent): boolean {
+		console.log('TextPaneView: _onMouseDoubleClick called');
 		if (this._source.options().editable === false) {
 			return false;
 		}
