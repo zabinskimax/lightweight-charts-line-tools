@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 import { IInputEventListener, InputEventType, TouchMouseEvent } from '../../gui/mouse-event-handler';
 import { PaneWidget } from '../../gui/pane-widget';
 
@@ -49,7 +48,7 @@ export abstract class LineToolPaneView implements IUpdatablePaneView, IInputEven
 
 		const crossHair = this._model.crosshairSource();
 		const appliedPoint = new Point(crossHair.appliedX(), crossHair.appliedY());
-		const originPoint = new Point(crossHair.originCoordX(), crossHair.originCoordY());
+		const originPoint = new Point(event.localX, event.localY);
 
 		const changed = eventType === InputEventType.PressedMouseMove && !event.consumed
 			? this._onPressedMouseMove(paneWidget, ctx, originPoint, appliedPoint, event)
@@ -59,7 +58,9 @@ export abstract class LineToolPaneView implements IUpdatablePaneView, IInputEven
 					? this._onMouseDown(paneWidget, ctx, originPoint, appliedPoint, event)
 					: eventType === InputEventType.MouseUp
 						? this._onMouseUp(paneWidget)
-						: false;
+						: eventType === InputEventType.MouseDoubleClick
+							? this._onMouseDoubleClick(paneWidget, ctx, originPoint, appliedPoint, event)
+							: false;
 
 		event.consumed ||= this._source.editing() || !this._source.finished();
 		if (changed || this._source.hovered() || this._source.editing() || !this._source.finished()) {
@@ -420,6 +421,10 @@ export abstract class LineToolPaneView implements IUpdatablePaneView, IInputEven
 			const hitResult = this._hitTest(paneWidget, ctx, originPoint);
 			return this._source.setSelected(hitResult !== null);
 		}
+		return false;
+	}
+
+	protected _onMouseDoubleClick(paneWidget: PaneWidget, ctx: CanvasRenderingContext2D, originPoint: Point, appliedPoint: Point, event: TouchMouseEvent): boolean {
 		return false;
 	}
 

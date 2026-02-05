@@ -60,8 +60,8 @@ export interface HitTestResult {
 }
 
 // interface HitTestPaneViewResult {
-	// view: IPaneView;
-	// object?: HitTestResult;
+// view: IPaneView;
+// object?: HitTestResult;
 // }
 
 interface StartScrollPosition extends Point {
@@ -202,6 +202,10 @@ export class PaneWidget implements IDestroyable, MouseEventHandlers {
 
 	public getElement(): HTMLElement {
 		return this._rowElement;
+	}
+
+	public canvasWrapper(): HTMLElement {
+		return this._canvasBinding.canvas.parentElement as HTMLElement;
 	}
 
 	public updatePriceAxisWidgetsStates(): void {
@@ -425,25 +429,25 @@ export class PaneWidget implements IDestroyable, MouseEventHandlers {
 	}
 
 	// public hitTest(x: Coordinate, y: Coordinate): HitTestResult | null {
-		// const state = this._state;
-		// if (state === null) {
-			// return null;
-		// }
+	// const state = this._state;
+	// if (state === null) {
+	// return null;
+	// }
 
-		// const sources = state.orderedSources();
-		// for (const source of sources) {
-			// const sourceResult = this._hitTestPaneView(source.paneViews(state), x, y);
-			// if (sourceResult !== null) {
-				// return {
-					// source: source,
-					// view: sourceResult.view,
-					// object: sourceResult.object,
-				// };
-				// //return sourceResult.object || null;
-			// }
-		// }
+	// const sources = state.orderedSources();
+	// for (const source of sources) {
+	// const sourceResult = this._hitTestPaneView(source.paneViews(state), x, y);
+	// if (sourceResult !== null) {
+	// return {
+	// source: source,
+	// view: sourceResult.view,
+	// object: sourceResult.object,
+	// };
+	// //return sourceResult.object || null;
+	// }
+	// }
 
-		// return null;
+	// return null;
 	// }
 
 	public setPriceAxisSize(width: number, position: PriceAxisWidgetSide): void {
@@ -674,20 +678,20 @@ export class PaneWidget implements IDestroyable, MouseEventHandlers {
 	}
 
 	// private _hitTestPaneView(paneViews: readonly IPaneView[], x: Coordinate, y: Coordinate): HitTestPaneViewResult | null {
-		// for (const paneView of paneViews) {
-			// const renderer = paneView.renderer(this._size.h, this._size.w);
-			// if (renderer !== null && renderer.hitTest) {
-				// const result = renderer.hitTest(x, y);
-				// if (result !== null) {
-					// return {
-						// view: paneView,
-						// object: result,
-					// };
-				// }
-			// }
-		// }
+	// for (const paneView of paneViews) {
+	// const renderer = paneView.renderer(this._size.h, this._size.w);
+	// if (renderer !== null && renderer.hitTest) {
+	// const result = renderer.hitTest(x, y);
+	// if (result !== null) {
+	// return {
+	// view: paneView,
+	// object: result,
+	// };
+	// }
+	// }
+	// }
 
-		// return null;
+	// return null;
 	// }
 
 	private _recreatePriceAxisWidgets(): void {
@@ -873,7 +877,7 @@ export class PaneWidget implements IDestroyable, MouseEventHandlers {
 			const newX = (origPoint.x + (x - this._startTrackPoint.x)) as Coordinate;
 			const newY = (origPoint.y + (y - this._startTrackPoint.y)) as Coordinate;
 			this._setCrosshairPosition(newX, newY);
-		// } else if (!this._preventCrosshairMove()) { // in case of mouse event, always return false in drawings repo
+			// } else if (!this._preventCrosshairMove()) { // in case of mouse event, always return false in drawings repo
 		} else {
 			this._setCrosshairPosition(x, y);
 		}

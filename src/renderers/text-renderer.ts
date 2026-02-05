@@ -4,12 +4,13 @@ import { DeepPartial } from '../helpers/strict-type-checks';
 
 import { Coordinate } from '../model/coordinate';
 import { HitTestResult, HitTestType } from '../model/hit-test-result';
-import { pointInBox, pointInPolygon } from '../model/interesection';
+import { distanceToSegment, pointInBox, pointInPolygon } from '../model/interesection';
 import { BoxHorizontalAlignment, BoxVerticalAlignment, TextAlignment, TextOptions } from '../model/line-tool-options';
 import { Box, Point, Rect } from '../model/point';
 
 import { drawRoundRect } from './draw-rect';
 import { IPaneRenderer } from './ipane-renderer';
+import { interactionTolerance } from './optimal-bar-width';
 
 interface LinesInfo {
 	lines: string[];
@@ -39,6 +40,7 @@ interface InternalData {
 export interface TextRendererData {
 	text: DeepPartial<TextOptions>;
 	points?: Point[];
+	editing?: boolean;
 }
 
 export class TextRenderer implements IPaneRenderer {
@@ -59,7 +61,7 @@ export class TextRenderer implements IPaneRenderer {
 	public setData(data: TextRendererData): void {
 		// eslint-disable-next-line complexity
 		function checkUnchanged(before: TextRendererData | null, after: TextRendererData | null): boolean {
-			if (null === before || null === after) { return null === before === (null === after);}
+			if (null === before || null === after) { return null === before === (null === after); }
 			if (before.points === undefined !== (after.points === undefined)) { return false; }
 
 			if (before.points !== undefined && after.points !== undefined) {
@@ -71,31 +73,32 @@ export class TextRenderer implements IPaneRenderer {
 			}
 
 			return before.text?.forceCalculateMaxLineWidth === after.text?.forceCalculateMaxLineWidth
-                && before.text?.forceTextAlign === after.text?.forceTextAlign
-                && before.text?.wordWrapWidth === after.text?.wordWrapWidth
-                && before.text?.padding === after.text?.padding
-                && before.text?.value === after.text?.value
-                && before.text?.alignment === after.text?.alignment
-                && before.text?.font?.bold === after.text?.font?.bold
-                && before.text?.font?.size === after.text?.font?.size
-                && before.text?.font?.family === after.text?.font?.family
-                && before.text?.font?.italic === after.text?.font?.italic
-                && before.text?.box?.angle === after.text?.box?.angle
-                && before.text?.box?.scale === after.text?.box?.scale
-                && before.text?.box?.offset?.x === after.text?.box?.offset?.x
-                && before.text?.box?.offset?.y === after.text?.box?.offset?.y
-                && before.text?.box?.maxHeight === after.text?.box?.maxHeight
-                && before.text?.box?.padding?.x === after.text?.box?.padding?.x
-                && before.text?.box?.padding?.y === after.text?.box?.padding?.y
-                && before.text?.box?.alignment?.vertical === after.text?.box?.alignment?.vertical
-                && before.text?.box?.alignment?.horizontal === after.text?.box?.alignment?.horizontal
-                && before.text?.box?.background?.inflation?.x === after.text?.box?.background?.inflation?.x
-                && before.text?.box?.background?.inflation?.y === after.text?.box?.background?.inflation?.y
-                && before.text?.box?.border?.highlight === after.text?.box?.border?.highlight
-                && before.text?.box?.border?.radius === after.text?.box?.border?.radius
-                && before.text?.box?.shadow?.offset === after.text?.box?.shadow?.offset
-                && before.text?.box?.shadow?.color === after.text?.box?.shadow?.color
-                && before.text?.box?.shadow?.blur === after.text?.box?.shadow?.blur;
+				&& before.text?.forceTextAlign === after.text?.forceTextAlign
+				&& before.text?.wordWrapWidth === after.text?.wordWrapWidth
+				&& before.text?.padding === after.text?.padding
+				&& before.text?.value === after.text?.value
+				&& before.text?.alignment === after.text?.alignment
+				&& before.text?.font?.bold === after.text?.font?.bold
+				&& before.text?.font?.size === after.text?.font?.size
+				&& before.text?.font?.family === after.text?.font?.family
+				&& before.text?.font?.italic === after.text?.font?.italic
+				&& before.text?.box?.angle === after.text?.box?.angle
+				&& before.text?.box?.scale === after.text?.box?.scale
+				&& before.text?.box?.offset?.x === after.text?.box?.offset?.x
+				&& before.text?.box?.offset?.y === after.text?.box?.offset?.y
+				&& before.text?.box?.maxHeight === after.text?.box?.maxHeight
+				&& before.text?.box?.padding?.x === after.text?.box?.padding?.x
+				&& before.text?.box?.padding?.y === after.text?.box?.padding?.y
+				&& before.text?.box?.alignment?.vertical === after.text?.box?.alignment?.vertical
+				&& before.text?.box?.alignment?.horizontal === after.text?.box?.alignment?.horizontal
+				&& before.text?.box?.background?.inflation?.x === after.text?.box?.background?.inflation?.x
+				&& before.text?.box?.background?.inflation?.y === after.text?.box?.background?.inflation?.y
+				&& before.text?.box?.border?.highlight === after.text?.box?.border?.highlight
+				&& before.text?.box?.border?.radius === after.text?.box?.border?.radius
+				&& before.text?.box?.shadow?.offset === after.text?.box?.shadow?.offset
+				&& before.text?.box?.shadow?.color === after.text?.box?.shadow?.color
+				&& before.text?.box?.shadow?.blur === after.text?.box?.shadow?.blur
+				&& before.editing === after.editing;
 		}
 
 		if (checkUnchanged(this._data, data)) {
@@ -113,9 +116,22 @@ export class TextRenderer implements IPaneRenderer {
 	public hitTest(x: Coordinate, y: Coordinate): HitTestResult<void> | null {
 		if (this._data === null || this._data.points === undefined || this._data.points.length === 0) {
 			return null;
-		} else if (pointInPolygon(new Point(x, y), this._getPolygonPoints())) {
-			return this._hitTest;
 		} else {
+			const tolerance = interactionTolerance.line + 5;
+			const points = this._getPolygonPoints();
+			if (pointInPolygon(new Point(x, y), points)) {
+				return this._hitTest;
+			}
+
+			// Add tolerance check
+			for (let i = 0; i < points.length; i++) {
+				const p1 = points[i];
+				const p2 = points[(i + 1) % points.length];
+				if (distanceToSegment(p1, p2, new Point(x, y)).distance <= tolerance) {
+					return this._hitTest;
+				}
+			}
+
 			return null;
 		}
 	}
@@ -137,6 +153,36 @@ export class TextRenderer implements IPaneRenderer {
 		if (this._data === null) { return { x: 0, y: 0, width: 0, height: 0 }; }
 		const internalData = this._getInternalData();
 		return { x: internalData.boxLeft, y: internalData.boxTop, width: internalData.boxWidth, height: internalData.boxHeight };
+	}
+
+	public textRect(): Rect {
+		if (this._data === null) { return { x: 0, y: 0, width: 0, height: 0 }; }
+		const internalData = this._getInternalData();
+		const linesInfo = this._getLinesInfo();
+		const fontInfo = this._getFontInfo();
+		const fontSize = fontInfo.fontSize;
+		const linePadding = getScaledPadding(this._data);
+
+		const width = linesInfo.linesMaxWidth;
+		const height = linesInfo.lines.length * fontSize + (linesInfo.lines.length - 1) * linePadding;
+
+		// Adjust for 'middle' baseline in internalData.textTop
+		// textTop is offset from boxTop to the middle of the first line
+		const textTop = internalData.boxTop + internalData.textTop - fontSize / 2;
+		let textLeft = internalData.boxLeft + internalData.textStart;
+
+		if (internalData.textAlign === 'center') {
+			textLeft -= width / 2;
+		} else if (internalData.textAlign === 'right' || internalData.textAlign === 'end') {
+			textLeft -= width;
+		}
+
+		return {
+			x: textLeft,
+			y: textTop,
+			width,
+			height,
+		};
 	}
 
 	public isOutOfScreen(width: number, height: number): boolean {
@@ -164,7 +210,7 @@ export class TextRenderer implements IPaneRenderer {
 		return textWrap(test, font || this.fontStyle(), wrapWidth);
 	}
 
-    // eslint-disable-next-line complexity
+	// eslint-disable-next-line complexity
 	public draw(ctx: CanvasRenderingContext2D, pixelRatio: number): void {
 		if (this._data === null || this._data.points === undefined || this._data.points.length === 0) { return; }
 		const cssWidth = ctx.canvas.width;
@@ -192,7 +238,7 @@ export class TextRenderer implements IPaneRenderer {
 		const scaledRight = scaledLeft + Math.round(internalData.boxWidth * pixelRatio);
 		const scaledBottom = scaledTop + Math.round(internalData.boxHeight * pixelRatio);
 
-		if (textData.box?.background?.color || textData.box?.border?.color || textData.box?.border?.highlight && textData.wordWrapWidth) {
+		if (!this._data.editing && (textData.box?.background?.color || textData.box?.border?.color || textData.box?.border?.highlight && textData.wordWrapWidth)) {
 			const borderWidth = Math.round((textData.box?.border?.width || Math.max(fontSize / 12, 1)) * pixelRatio);
 			const halfBorderWidth = borderWidth / 2;
 			let ctxUpdated = false;
@@ -232,22 +278,25 @@ export class TextRenderer implements IPaneRenderer {
 			}
 		}
 
-		ctx.fillStyle = textData.font?.color as string;
-		const { lines } = this._getLinesInfo();
-		const extraSpace = 0.05 * fontSize;
-		const linePadding = getScaledPadding(this._data);
-		const x = (scaledLeft + Math.round(internalData.textStart * pixelRatio)) / pixelRatio;
-		let y = (scaledTop + Math.round((internalData.textTop + extraSpace) * pixelRatio)) / pixelRatio;
 
-		for (const line of lines) {
-			// eslint-disable-next-line @typescript-eslint/no-loop-func
-			drawScaled(ctx, pixelRatio, () => ctx.fillText(line, x, y));
-			y += fontSize + linePadding;
+		if (!this._data.editing) {
+			ctx.fillStyle = textData.font?.color as string;
+			const { lines } = this._getLinesInfo();
+			const extraSpace = 0.05 * fontSize;
+			const linePadding = getScaledPadding(this._data);
+			const x = (scaledLeft + Math.round(internalData.textStart * pixelRatio)) / pixelRatio;
+			let y = (scaledTop + Math.round((internalData.textTop + extraSpace) * pixelRatio)) / pixelRatio;
+
+			for (const line of lines) {
+				// eslint-disable-next-line @typescript-eslint/no-loop-func
+				drawScaled(ctx, pixelRatio, () => ctx.fillText(line, x, y));
+				y += fontSize + linePadding;
+			}
 		}
 		ctx.restore();
 	}
 
-    // eslint-disable-next-line complexity
+	// eslint-disable-next-line complexity
 	private _getInternalData(): InternalData {
 		if (this._internalData !== null) { return this._internalData; }
 		const data = ensureNotNull(this._data);
@@ -389,8 +438,8 @@ export class TextRenderer implements IPaneRenderer {
 	}
 
 	private _getPolygonPoints(): Point[] {
-		if (null !== this._polygonPoints) {return this._polygonPoints;}
-		if (null === this._data) {return [];}
+		if (null !== this._polygonPoints) { return this._polygonPoints; }
+		if (null === this._data) { return []; }
 
 		const { boxLeft, boxTop, boxWidth, boxHeight } = this._getInternalData();
 		const pivot = this._getRotationPoint();
@@ -438,12 +487,12 @@ export class TextRenderer implements IPaneRenderer {
 
 // eslint-disable-next-line complexity
 function textWrap(text: string, font: string, lineWrapWidth: number | string | undefined): string[] {
-	if (!cacheCanvas) {createCacheCanvas();}
+	if (!cacheCanvas) { createCacheCanvas(); }
 	lineWrapWidth = Object.prototype.toString.call(lineWrapWidth) === '[object String]' ? parseInt(lineWrapWidth as string) : lineWrapWidth as number;
 	text += '';
 	const lines = !Number.isInteger(lineWrapWidth) || !isFinite(lineWrapWidth) || lineWrapWidth <= 0
-        ? text.split(/\r\n|\r|\n|$/)
-        : text.split(/[^\S\r\n]*(?:\r\n|\r|\n|$)/);
+		? text.split(/\r\n|\r|\n|$/)
+		: text.split(/[^\S\r\n]*(?:\r\n|\r|\n|$)/);
 
 	if (!lines[lines.length - 1]) { lines.pop(); }
 	if (!Number.isInteger(lineWrapWidth) || !isFinite(lineWrapWidth) || lineWrapWidth <= 0) { return lines; }
@@ -463,10 +512,10 @@ function textWrap(text: string, font: string, lineWrapWidth: number | string | u
 			let space = Math.floor(lineWrapWidth / lineWidth * (splitedLine.length + 2) / 3);
 
 			if (space <= 0 || cacheCanvas.measureText(splitedLine.slice(0, 3 * space - 1).join('')).width <= lineWrapWidth) {
-				for (; cacheCanvas.measureText(splitedLine.slice(0, 3 * (space + 1) - 1).join('')).width <= lineWrapWidth;) {space++;}
+				for (; cacheCanvas.measureText(splitedLine.slice(0, 3 * (space + 1) - 1).join('')).width <= lineWrapWidth;) { space++; }
 			} else {
 				// eslint-disable-next-line no-empty
-				for (; space > 0 && cacheCanvas.measureText(splitedLine.slice(0, 3 * --space - 1).join('')).width > lineWrapWidth;) {}
+				for (; space > 0 && cacheCanvas.measureText(splitedLine.slice(0, 3 * --space - 1).join('')).width > lineWrapWidth;) { }
 			}
 
 			if (space > 0) {
@@ -477,10 +526,10 @@ function textWrap(text: string, font: string, lineWrapWidth: number | string | u
 				let subspace = Math.floor(lineWrapWidth / cacheCanvas.measureText(paragraph).width * paragraph.length);
 
 				if (cacheCanvas.measureText(paragraph.substring(0, subspace)).width <= lineWrapWidth) {
-					for (; cacheCanvas.measureText(paragraph.substring(0, subspace + 1)).width <= lineWrapWidth;) {subspace++;}
+					for (; cacheCanvas.measureText(paragraph.substring(0, subspace + 1)).width <= lineWrapWidth;) { subspace++; }
 				} else {
 					// eslint-disable-next-line no-empty
-					for (; subspace > 1 && cacheCanvas.measureText(paragraph.substring(0, --subspace)).width > lineWrapWidth;) {}
+					for (; subspace > 1 && cacheCanvas.measureText(paragraph.substring(0, --subspace)).width > lineWrapWidth;) { }
 				}
 
 				subspace = Math.max(1, subspace);
@@ -551,7 +600,7 @@ function getFontSize(data: TextRendererData): number {
 
 function getFontAwareScale(data: TextRendererData): number {
 	const scale = Math.min(1, Math.max(0.2, data.text?.box?.scale || 1));
-	if (scale === 1) {return scale;}
+	if (scale === 1) { return scale; }
 	const fontSize = getFontSize(data);
 	return Math.ceil(scale * fontSize) / fontSize;
 }

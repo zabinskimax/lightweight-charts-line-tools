@@ -86,7 +86,7 @@ export class HorizontalLinePaneView extends LineToolPaneView {
 				const align = options.text.box.alignment.horizontal;
 				const pivot = align === BoxHorizontalAlignment.Left
 					? start.clone() : align === BoxHorizontalAlignment.Right
-					? end.clone() : new Point((start.x + end.x) / 2, (start.y + end.y) / 2);
+						? end.clone() : new Point((start.x + end.x) / 2, (start.y + end.y) / 2);
 
 				const labelOptions = deepCopy(options.text);
 				labelOptions.box = { ...labelOptions.box, angle };

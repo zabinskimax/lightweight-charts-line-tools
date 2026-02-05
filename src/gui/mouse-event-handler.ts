@@ -112,13 +112,13 @@ export interface Position {
 const enum Delay {
 	ResetClick = 500,
 	LongTap = 240,
-	PreventFiresTouchEvents= 500,
+	PreventFiresTouchEvents = 500,
 }
 
 const enum Constants {
 	CancelClickManhattanDistance = 5,
 	CancelTapManhattanDistance = 5,
-	DoubleClickManhattanDistance = 5,
+	DoubleClickManhattanDistance = 10,
 	DoubleTapManhattanDistance = 30,
 }
 
@@ -681,7 +681,7 @@ export class MouseEventHandler implements IDestroyable {
 		// it treats a touchstart and the following touchmove events as cancelable=false,
 		// so we can't prevent them (as soon we subscribe on touchmove inside touchstart's handler).
 		// And we'll get scroll of the page along with chart's one instead of only chart's scroll.
-		this._target.addEventListener('touchmove', () => {}, { passive: false });
+		this._target.addEventListener('touchmove', () => { }, { passive: false });
 	}
 
 	private _initPinch(): void {
