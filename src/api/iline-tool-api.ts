@@ -32,4 +32,8 @@ export interface ILineToolApi<TLineToolType extends LineToolType> {
 	 * @returns Type of the lineTool.
 	 */
 	toolType(): LineToolType;
+	/**
+	 * Returns the id of the line tool.
+	 */
+	id(): string;
 }

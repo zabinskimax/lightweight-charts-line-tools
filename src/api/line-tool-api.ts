@@ -27,4 +27,8 @@ export class LineToolApi<TLineToolType extends LineToolType> implements ILineToo
 	public toolType(): LineToolType {
 		return this.lineTool.toolType();
 	}
+
+	public id(): string {
+		return this.lineTool.id();
+	}
 }
