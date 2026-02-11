@@ -97,7 +97,7 @@ export class CalloutPaneView extends LineToolPaneView {
 				const labelOptions = deepCopy(options.text);
 				labelOptions.box = { ...labelOptions.box, angle };
 
-				this._labelRenderer.setData({ text: labelOptions, points: [pivot], editing: this._source.editing() });
+				this._labelRenderer.setData({ text: labelOptions, points: [pivot], editing: !!this._textEditor });
 				compositeRenderer.append(this._labelRenderer);
 			}
 

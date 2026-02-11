@@ -102,7 +102,7 @@ export class CirclePaneView extends LineToolPaneView {
 				labelOptions.box.maxHeight = maxY - minY;
 			}
 
-			this._labelRenderer.setData({ text: labelOptions, points: [pivot], editing: this._source.editing() });
+			this._labelRenderer.setData({ text: labelOptions, points: [pivot], editing: !!this._textEditor });
 			compositeRenderer.append(this._labelRenderer);
 		}
 

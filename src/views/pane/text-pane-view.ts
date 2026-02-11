@@ -81,7 +81,7 @@ export class TextPaneView extends LineToolPaneView {
 			const point = this._points[0].clone();
 
 			const compositeRenderer = new CompositeRenderer();
-			this._labelRenderer.setData({ text: data, points: [point], editing: this._source.editing() });
+			this._labelRenderer.setData({ text: data, points: [point], editing: !!this._textEditor });
 
 			compositeRenderer.append(this._labelRenderer);
 			this.addAnchors(compositeRenderer);
@@ -90,7 +90,6 @@ export class TextPaneView extends LineToolPaneView {
 	}
 
 	protected override _onMouseDoubleClick(paneWidget: PaneWidget, ctx: CanvasRenderingContext2D, originPoint: Point, appliedPoint: Point, event: TouchMouseEvent): boolean {
-		console.log('TextPaneView: _onMouseDoubleClick called');
 		if (this._source.options().editable === false) {
 			return false;
 		}

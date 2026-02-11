@@ -125,15 +125,13 @@ export class LineAnchorRenderer implements IPaneRenderer {
 			const point = points[d];
 			ctx.fillStyle = colors[d];
 
-			if (!(Number.isInteger(point.data) && data.editedPointIndex === point.data)) {
-				const x = Math.round(point.x * pixelRatio) + shift;
-				const y = Math.round(point.y * pixelRatio) + shift;
+			const x = Math.round(point.x * pixelRatio) + shift;
+			const y = Math.round(point.y * pixelRatio) + shift;
 
-				drawBody(ctx, new AnchorPoint(x, y, point.data, point.square), radius / 2, lineWidth);
-				if (point.subtract(currentPoint).length() <= data.radius + interactionTolerance.anchor) {
-					const hoveredLineWidth = Math.max(1, Math.floor(data.hoveredStrokeWidth * pixelRatio));
-					drawShadow(ctx, new AnchorPoint(x, y, point.data, point.square), radius / 2, hoveredLineWidth);
-				}
+			drawBody(ctx, new AnchorPoint(x, y, point.data, point.square), radius / 2, lineWidth);
+			if (point.subtract(currentPoint).length() <= data.radius + interactionTolerance.anchor) {
+				const hoveredLineWidth = Math.max(1, Math.floor(data.hoveredStrokeWidth * pixelRatio));
+				drawShadow(ctx, new AnchorPoint(x, y, point.data, point.square), radius / 2, hoveredLineWidth);
 			}
 		}
 	}

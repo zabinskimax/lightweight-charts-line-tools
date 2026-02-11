@@ -11,10 +11,11 @@ import { LineTool, LineToolOptionsInternal } from '../../model/line-tool';
 import { BoxHorizontalAlignment, LineToolType } from '../../model/line-tool-options';
 import { Point } from '../../model/point';
 import { CompositeRenderer } from '../../renderers/composite-renderer';
+import { LineEnd } from '../../renderers/draw-line';
 import { AnchorPoint } from '../../renderers/line-anchor-renderer';
 import { SegmentRenderer } from '../../renderers/segment-renderer';
 import { TextRenderer } from '../../renderers/text-renderer';
-import { LineEnd } from '../../renderers/draw-line';
+
 import { LineToolPaneView } from './line-tool-pane-view';
 
 export class VerticalLinePaneView extends LineToolPaneView {
@@ -72,7 +73,7 @@ export class VerticalLinePaneView extends LineToolPaneView {
 				const labelOptions = deepCopy(options.text);
 				labelOptions.box = { ...labelOptions.box, angle };
 
-				this._labelRenderer.setData({ text: labelOptions, points: [pivot], editing: this._source.editing() });
+				this._labelRenderer.setData({ text: labelOptions, points: [pivot], editing: !!this._textEditor });
 				compositeRenderer.append(this._labelRenderer);
 			}
 
