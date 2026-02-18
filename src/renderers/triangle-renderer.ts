@@ -24,7 +24,9 @@ export class TriangleRenderer extends ScaledRenderer {
 		if (null === this._data || this._data.points.length < 2) { return null; }
 		const pixelRatio = ctx.canvas.ownerDocument && ctx.canvas.ownerDocument.defaultView && ctx.canvas.ownerDocument.defaultView.devicePixelRatio || 1;
 		const tolerance = interactionTolerance.line + 2;
-		const [end0, end1] = this._data.points;
+		const [p0, p1] = this._data.points;
+		const end0 = new Point(p0.x * pixelRatio, p0.y * pixelRatio);
+		const end1 = new Point(p1.x * pixelRatio, p1.y * pixelRatio);
 		const point = new Point(x * pixelRatio, y * pixelRatio);
 
 		if (distanceToSegment(end0, end1, point).distance <= tolerance) {
@@ -32,7 +34,8 @@ export class TriangleRenderer extends ScaledRenderer {
 		}
 
 		if (this._data.points.length !== 3) { return null; }
-		const end3 = this._data.points[2];
+		const p2 = this._data.points[2];
+		const end3 = new Point(p2.x * pixelRatio, p2.y * pixelRatio);
 
 		if (distanceToSegment(end1, end3, point).distance <= tolerance) {
 			return new HitTestResult(HitTestType.MovePoint);

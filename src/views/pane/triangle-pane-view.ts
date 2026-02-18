@@ -81,7 +81,7 @@ export class TrianglePaneView extends LineToolPaneView {
 			super._updateImpl();
 			this._renderer = null;
 
-			this._triangleRenderer.setData({ ...options.triangle, points: this._points, hitTestBackground: false });
+			this._triangleRenderer.setData({ ...options.triangle, points: this._points, hitTestBackground: true });
 			const compositeRenderer = new CompositeRenderer();
 			compositeRenderer.append(this._triangleRenderer);
 			this.addAnchors(compositeRenderer);
