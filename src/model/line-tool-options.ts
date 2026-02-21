@@ -748,6 +748,10 @@ export interface LineToolMarketDepthOptions {
  */
 export interface LineToolTriangleOptions {
 	/**
+	 * Text config.
+	 */
+	text: TextOptions;
+	/**
 	 * Triangle config.
 	 */
 	triangle: TriangleOptions;

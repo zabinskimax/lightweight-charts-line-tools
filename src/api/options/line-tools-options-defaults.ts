@@ -265,6 +265,7 @@ export const TriangleOptionDefaults: TriangleToolOptions = {
 		background: { color: applyAlpha('#f57c00', 0.2) },
 		border: { width: 1, style: LineStyle.Solid, color: '#f57c00' },
 	},
+	text: TextDefaults,
 };
 
 export const VerticalLineOptionDefaults: VerticalLineToolOptions = {
