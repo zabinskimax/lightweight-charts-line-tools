@@ -12,6 +12,7 @@ export class LineToolHighlighter extends LineToolBrush {
 		return {
 			visible: options.visible,
 			editable: options.editable,
+			locked: options.locked,
 			line: {
 				width: 20 as LineWidth,
 				cap: LineCap.Round,

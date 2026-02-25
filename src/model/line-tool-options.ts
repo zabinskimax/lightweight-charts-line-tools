@@ -586,6 +586,13 @@ export interface LineToolOptionsCommon {
 	editable: boolean;
 
 	/**
+	 * Can the line be moved or edited.
+	 *
+	 * @defaultValue `false`
+	 */
+	locked: boolean;
+
+	/**
 	 * The owner source id.
 	 */
 	ownerSourceId?: string;
