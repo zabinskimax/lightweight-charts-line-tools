@@ -4,7 +4,7 @@ import { applyAlpha } from '../../helpers/color';
 import { defaultFontFamily } from '../../helpers/make-font';
 import { clone, merge } from '../../helpers/strict-type-checks';
 
-import { BoxHorizontalAlignment, BoxVerticalAlignment, BrushToolOptions, CalloutToolOptions, CircleToolOptions, CrossLineToolOptions, FibRetracementToolOptions, HighlighterToolOptions, HorizontalLineToolOptions, LineJoin, LongShortPositionToolOptions, MarketDepthToolOptions, ParallelChannelToolOptions, PathToolOptions, PriceRangeToolOptions, RectangleToolOptions, TextAlignment, TextOptions, TextToolOptions, TrendLineToolOptions, TriangleToolOptions, VerticalLineToolOptions } from '../../model/line-tool-options';
+import { BoxHorizontalAlignment, BoxVerticalAlignment, BrushToolOptions, CalloutToolOptions, CircleToolOptions, CrossLineToolOptions, FibCirclesToolOptions, FibRetracementToolOptions, FibSpiralToolOptions, HighlighterToolOptions, HorizontalLineToolOptions, LineJoin, LongShortPositionToolOptions, MarketDepthToolOptions, ParallelChannelToolOptions, PathToolOptions, PriceRangeToolOptions, RectangleToolOptions, TextAlignment, TextOptions, TextToolOptions, TrendLineToolOptions, TriangleToolOptions, VerticalLineToolOptions } from '../../model/line-tool-options';
 
 import { LineEnd, LineStyle } from '../..';
 
@@ -132,17 +132,17 @@ export const FibRetracementOptionDefaults: FibRetracementToolOptions = {
 	extend: { left: false, right: false },
 	line: { width: 1, style: LineStyle.Solid },
 	levels: [
-		{ color: '#787b86', coeff: 0, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
-		{ color: '#f23645', coeff: 0.236, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
-		{ color: '#81c784', coeff: 0.382, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
-		{ color: '#4caf50', coeff: 0.5, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
-		{ color: '#089981', coeff: 0.618, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
-		{ color: '#64b5f6', coeff: 0.786, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
-		{ color: '#787b86', coeff: 1, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
-		{ color: '#2962ff', coeff: 1.618, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
-		{ color: '#f23645', coeff: 2.618, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
-		{ color: '#9c27b0', coeff: 3.618, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
-		{ color: '#e91e63', coeff: 4.236, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0 },
+		{ color: '#787b86', coeff: 0, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#f23645', coeff: 0.236, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#81c784', coeff: 0.382, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#4caf50', coeff: 0.5, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#089981', coeff: 0.618, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#64b5f6', coeff: 0.786, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#787b86', coeff: 1, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#2962ff', coeff: 1.618, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#f23645', coeff: 2.618, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#9c27b0', coeff: 3.618, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#e91e63', coeff: 4.236, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
 	],
 	tradeStrategy: {
 		enabled: false,
@@ -321,6 +321,17 @@ export const TextOptionDefaults: TextToolOptions = {
 	text: merge(clone(TextDefaults), { value: 'Text' }) as TextOptions,
 };
 
+export const TrendBasedFibExtensionOptionDefaults = merge(clone(FibRetracementOptionDefaults), { tradeStrategy: undefined });
+export const FibChannelOptionDefaults = merge(clone(FibRetracementOptionDefaults), { tradeStrategy: undefined });
+export const FibTimeZoneOptionDefaults = merge(clone(FibRetracementOptionDefaults), { tradeStrategy: undefined, extend: { left: false, right: false } });
+export const FibSpeedResistanceFanOptionDefaults = merge(clone(FibRetracementOptionDefaults), { tradeStrategy: undefined, extend: { left: false, right: false } });
+export const TrendBasedFibTimeOptionDefaults = merge(clone(FibRetracementOptionDefaults), { tradeStrategy: undefined, extend: { left: false, right: false } });
+export const FibCirclesOptionDefaults = merge(clone(FibRetracementOptionDefaults), { tradeStrategy: undefined, extend: { left: false, right: false } }) as unknown as FibCirclesToolOptions;
+export const FibSpiralOptionDefaults = merge(clone(FibRetracementOptionDefaults), { tradeStrategy: undefined, extend: { left: false, right: false } }) as unknown as FibSpiralToolOptions;
+export const FibSpeedResistanceArcsOptionDefaults = merge(clone(FibRetracementOptionDefaults), { tradeStrategy: undefined, extend: { left: false, right: false } });
+export const FibWedgeOptionDefaults = merge(clone(FibRetracementOptionDefaults), { tradeStrategy: undefined, extend: { left: false, right: false } });
+export const PitchfanOptionDefaults = merge(clone(FibRetracementOptionDefaults), { tradeStrategy: undefined, extend: { left: false, right: false } });
+
 /** @public */
 export const LineToolsOptionDefaults = {
 	Ray: merge(clone(TrendLineOptionDefaults), { line: { extend: { right: true } } }),
@@ -329,6 +340,16 @@ export const LineToolsOptionDefaults = {
 	HorizontalRay: merge(clone(HorizontalLineOptionDefaults), { line: { extend: { left: false } } }),
 
 	FibRetracement: FibRetracementOptionDefaults,
+	TrendBasedFibExtension: TrendBasedFibExtensionOptionDefaults,
+	FibChannel: FibChannelOptionDefaults,
+	FibTimeZone: FibTimeZoneOptionDefaults,
+	FibSpeedResistanceFan: FibSpeedResistanceFanOptionDefaults,
+	TrendBasedFibTime: TrendBasedFibTimeOptionDefaults,
+	FibCircles: FibCirclesOptionDefaults,
+	FibSpiral: FibSpiralOptionDefaults,
+	FibSpeedResistanceArcs: FibSpeedResistanceArcsOptionDefaults,
+	FibWedge: FibWedgeOptionDefaults,
+	Pitchfan: PitchfanOptionDefaults,
 	ParallelChannel: ParallelChannelOptionDefaults,
 	HorizontalLine: HorizontalLineOptionDefaults,
 	VerticalLine: VerticalLineOptionDefaults,

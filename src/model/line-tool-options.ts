@@ -512,6 +512,11 @@ export interface FibRetracementLevel {
 	coeff: number;
 
 	/**
+	 * Level visibility.
+	 */
+	visible: boolean;
+
+	/**
 	 * Level color.
 	 */
 	color: string;
@@ -832,7 +837,206 @@ export interface LineToolFibRetracementOptions {
 	 * Fib tradeStrategy, left blank to just be a place data can be stored
 	 */
 	tradeStrategy: FibRetracementTradeStrategy;
+}
 
+/**
+ * Represents style options for a trend-based fib extension.
+ */
+export interface LineToolTrendBasedFibExtensionOptions {
+	/**
+	 * Line config.
+	 */
+	line: Omit<LineOptions, 'extend' | 'join' | 'color' | 'cap' | 'end'>;
+
+	/**
+	 * Lines extend.
+	 */
+	extend: ExtendOptions;
+
+	/**
+	 * Fib Levels.
+	 */
+	levels: FibRetracementLevel[];
+}
+
+/**
+ * Represents style options for a fib channel.
+ */
+export interface LineToolFibChannelOptions {
+	/**
+	 * Line config.
+	 */
+	line: Omit<LineOptions, 'extend' | 'join' | 'color' | 'cap' | 'end'>;
+
+	/**
+	 * Lines extend.
+	 */
+	extend: ExtendOptions;
+
+	/**
+	 * Fib Levels.
+	 */
+	levels: FibRetracementLevel[];
+}
+
+/**
+ * Represents style options for a fib time zone.
+ */
+export interface LineToolFibTimeZoneOptions {
+	/**
+	 * Line config.
+	 */
+	line: Omit<LineOptions, 'extend' | 'join' | 'color' | 'cap' | 'end'>;
+
+	/**
+	 * Lines extend.
+	 */
+	extend: ExtendOptions;
+
+	/**
+	 * Fib Levels.
+	 */
+	levels: FibRetracementLevel[];
+}
+
+/**
+ * Represents style options for a fib speed resistance fan.
+ */
+export interface LineToolFibSpeedResistanceFanOptions {
+	/**
+	 * Line config.
+	 */
+	line: Omit<LineOptions, 'extend' | 'join' | 'color' | 'cap' | 'end'>;
+
+	/**
+	 * Lines extend.
+	 */
+	extend: ExtendOptions;
+
+	/**
+	 * Fib Levels.
+	 */
+	levels: FibRetracementLevel[];
+}
+
+/**
+ * Represents style options for a trend-based fib time.
+ */
+export interface LineToolTrendBasedFibTimeOptions {
+	/**
+	 * Line config.
+	 */
+	line: Omit<LineOptions, 'extend' | 'join' | 'color' | 'cap' | 'end'>;
+
+	/**
+	 * Lines extend.
+	 */
+	extend: ExtendOptions;
+
+	/**
+	 * Fib Levels.
+	 */
+	levels: FibRetracementLevel[];
+}
+
+/**
+ * Represents style options for a fib circles.
+ */
+export interface LineToolFibCirclesOptions {
+	/**
+	 * Line config.
+	 */
+	line: Omit<LineOptions, 'extend' | 'join' | 'color' | 'cap' | 'end'>;
+
+	/**
+	 * Lines extend.
+	 */
+	extend: ExtendOptions;
+
+	/**
+	 * Fib Levels.
+	 */
+	levels: FibRetracementLevel[];
+}
+
+/**
+ * Represents style options for a fib spiral.
+ */
+export interface LineToolFibSpiralOptions {
+	/**
+	 * Line config.
+	 */
+	line: Omit<LineOptions, 'extend' | 'join' | 'color' | 'cap' | 'end'>;
+
+	/**
+	 * Lines extend.
+	 */
+	extend: ExtendOptions;
+
+	/**
+	 * Fib Levels.
+	 */
+	levels: FibRetracementLevel[];
+}
+
+/**
+ * Represents style options for a fib speed resistance arcs.
+ */
+export interface LineToolFibSpeedResistanceArcsOptions {
+	/**
+	 * Line config.
+	 */
+	line: Omit<LineOptions, 'extend' | 'join' | 'color' | 'cap' | 'end'>;
+
+	/**
+	 * Lines extend.
+	 */
+	extend: ExtendOptions;
+
+	/**
+	 * Fib Levels.
+	 */
+	levels: FibRetracementLevel[];
+}
+
+/**
+ * Represents style options for a fib wedge.
+ */
+export interface LineToolFibWedgeOptions {
+	/**
+	 * Line config.
+	 */
+	line: Omit<LineOptions, 'extend' | 'join' | 'color' | 'cap' | 'end'>;
+
+	/**
+	 * Lines extend.
+	 */
+	extend: ExtendOptions;
+
+	/**
+	 * Fib Levels.
+	 */
+	levels: FibRetracementLevel[];
+}
+
+/**
+ * Represents style options for a pitchfan.
+ */
+export interface LineToolPitchfanOptions {
+	/**
+	 * Line config.
+	 */
+	line: Omit<LineOptions, 'extend' | 'join' | 'color' | 'cap' | 'end'>;
+
+	/**
+	 * Lines extend.
+	 */
+	extend: ExtendOptions;
+
+	/**
+	 * Fib Levels.
+	 */
+	levels: FibRetracementLevel[];
 }
 
 /**
@@ -897,11 +1101,51 @@ export type ParallelChannelToolPartialOptions = LineToolPartialOptions<LineToolP
 export type FibRetracementToolOptions = LineToolOptions<LineToolFibRetracementOptions>;
 export type FibRetracementToolPartialOptions = LineToolPartialOptions<LineToolFibRetracementOptions>;
 
+export type TrendBasedFibExtensionToolOptions = LineToolOptions<LineToolTrendBasedFibExtensionOptions>;
+export type TrendBasedFibExtensionToolPartialOptions = LineToolPartialOptions<LineToolTrendBasedFibExtensionOptions>;
+
+export type FibChannelToolOptions = LineToolOptions<LineToolFibChannelOptions>;
+export type FibChannelToolPartialOptions = LineToolPartialOptions<LineToolFibChannelOptions>;
+
+export type FibTimeZoneToolOptions = LineToolOptions<LineToolFibTimeZoneOptions>;
+export type FibTimeZoneToolPartialOptions = LineToolPartialOptions<LineToolFibTimeZoneOptions>;
+
+export type FibSpeedResistanceFanToolOptions = LineToolOptions<LineToolFibSpeedResistanceFanOptions>;
+export type FibSpeedResistanceFanToolPartialOptions = LineToolPartialOptions<LineToolFibSpeedResistanceFanOptions>;
+
+export type TrendBasedFibTimeToolOptions = LineToolOptions<LineToolTrendBasedFibTimeOptions>;
+export type TrendBasedFibTimeToolPartialOptions = LineToolPartialOptions<LineToolTrendBasedFibTimeOptions>;
+
+export type FibCirclesToolOptions = LineToolOptions<LineToolFibCirclesOptions>;
+export type FibCirclesToolPartialOptions = LineToolPartialOptions<LineToolFibCirclesOptions>;
+
+export type FibSpiralToolOptions = LineToolOptions<LineToolFibSpiralOptions>;
+export type FibSpiralToolPartialOptions = LineToolPartialOptions<LineToolFibSpiralOptions>;
+
+export type FibSpeedResistanceArcsToolOptions = LineToolOptions<LineToolFibSpeedResistanceArcsOptions>;
+export type FibSpeedResistanceArcsToolPartialOptions = LineToolPartialOptions<LineToolFibSpeedResistanceArcsOptions>;
+
+export type FibWedgeToolOptions = LineToolOptions<LineToolFibWedgeOptions>;
+export type FibWedgeToolPartialOptions = LineToolPartialOptions<LineToolFibWedgeOptions>;
+
+export type PitchfanToolOptions = LineToolOptions<LineToolPitchfanOptions>;
+export type PitchfanToolPartialOptions = LineToolPartialOptions<LineToolPitchfanOptions>;
+
 /**
  * Represents the type of options for each line tool type.
  */
 export interface LineToolOptionsMap {
 	FibRetracement: FibRetracementToolOptions;
+	TrendBasedFibExtension: TrendBasedFibExtensionToolOptions;
+	FibChannel: FibChannelToolOptions;
+	FibTimeZone: FibTimeZoneToolOptions;
+	FibSpeedResistanceFan: FibSpeedResistanceFanToolOptions;
+	TrendBasedFibTime: TrendBasedFibTimeToolOptions;
+	FibCircles: FibCirclesToolOptions;
+	FibSpiral: FibSpiralToolOptions;
+	FibSpeedResistanceArcs: FibSpeedResistanceArcsToolOptions;
+	FibWedge: FibWedgeToolOptions;
+	Pitchfan: PitchfanToolOptions;
 	ParallelChannel: ParallelChannelToolOptions;
 	HorizontalLine: HorizontalLineToolOptions;
 	VerticalLine: VerticalLineToolOptions;
@@ -931,6 +1175,16 @@ export interface LineToolOptionsMap {
  */
 export interface LineToolPartialOptionsMap {
 	FibRetracement: FibRetracementToolPartialOptions;
+	TrendBasedFibExtension: TrendBasedFibExtensionToolPartialOptions;
+	FibChannel: FibChannelToolPartialOptions;
+	FibTimeZone: FibTimeZoneToolPartialOptions;
+	FibSpeedResistanceFan: FibSpeedResistanceFanToolPartialOptions;
+	TrendBasedFibTime: TrendBasedFibTimeToolPartialOptions;
+	FibCircles: FibCirclesToolPartialOptions;
+	FibSpiral: FibSpiralToolPartialOptions;
+	FibSpeedResistanceArcs: FibSpeedResistanceArcsToolPartialOptions;
+	FibWedge: FibWedgeToolPartialOptions;
+	Pitchfan: PitchfanToolPartialOptions;
 	ParallelChannel: ParallelChannelToolPartialOptions;
 	HorizontalLine: HorizontalLineToolPartialOptions;
 	VerticalLine: VerticalLineToolPartialOptions;

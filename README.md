@@ -2,14 +2,15 @@
 
 # ⚠️ PROJECT MOVED / DEPRECATED ⚠️
 
-### The Line Tools project has moved to a new repository supporting Lightweight Charts V5!
+## The Line Tools project has moved to a new repository supporting Lightweight Charts V5
 
 ## 👉 [CLICK HERE FOR THE NEW LIGHTWEIGHT CHARTS LINE TOOLS CORE](https://github.com/difurious/lightweight-charts-line-tools-core) 👈
 
 **Please Note:**
-*   The new project is a **Plugin for Lightweight Charts V5** (it is no longer a modified source build of v3.8).
-*   It is designed as a **drop-in replacement** for the functionality found in this repository.
-*   Please read the full `README` of the new Core project to learn how to install and use it.
+
+* The new project is a **Plugin for Lightweight Charts V5** (it is no longer a modified source build of v3.8).
+* It is designed as a **drop-in replacement** for the functionality found in this repository.
+* Please read the full `README` of the new Core project to learn how to install and use it.
 
 ---
 ---
@@ -127,7 +128,7 @@ As thanks for creating this product, we'd be grateful if you add it in a promine
 
 ## Video
 
-https://github.com/difurious/lightweight-charts-line-tools/assets/61764595/250ce779-9797-45fb-9f0b-2b9d51899376
+<https://github.com/difurious/lightweight-charts-line-tools/assets/61764595/250ce779-9797-45fb-9f0b-2b9d51899376>
 
 ---
 
@@ -146,7 +147,10 @@ https://github.com/difurious/lightweight-charts-line-tools/assets/61764595/250ce
 
 ---
 
+<!-- markdownlint-disable no-inline-html -->
+
 ## About
+
 Line Tools is build off of [lightweight-charts 3.8.0](https://github.com/tradingview/lightweight-charts/tree/v3.8.0).  It adds multiple interactive drawing tools.
 
 ---
@@ -161,47 +165,54 @@ Line Tools is build off of [lightweight-charts 3.8.0](https://github.com/trading
 ---
 
 ## Tasklist
-- [ ] Optimize the code that currently exists
-- [ ] Fix npm install so you dont need to use --force
-- [ ] When you commit, it complains about tsconfig.json, need to figure out why, "commit --no-verify" works for now
-- [ ] Update Line Tools to use lightweight-charts 4.x.x
-- [ ] Convert to plugin when that exists on lightweight-charts 4.x.x
-- [ ] Add new line tools
-- [X] Add new line tool - Circle
-- [X] Add new line tool - Callout
-- [X] Add new line tool - Price Range
-- [ ] Add line tools related functionality to aid in trading
+
+* [ ] Optimize the code that currently exists
+* [ ] Fix npm install so you dont need to use --force
+* [ ] When you commit, it complains about tsconfig.json, need to figure out why, "commit --no-verify" works for now
+* [ ] Update Line Tools to use lightweight-charts 4.x.x
+* [ ] Convert to plugin when that exists on lightweight-charts 4.x.x
+* [ ] Add new line tools
+* [X] Add new line tool - Circle
+* [X] Add new line tool - Callout
+* [X] Add new line tool - Price Range
+* [ ] Add line tools related functionality to aid in trading
 
 ---
+
 ## Known Bugs
-- If trying to use some tools in a blank area to the left of the first data point, it might not show
-- Some line tools options do nothing "angle, scale, cap, join"
-- The Circle tool, if the 2nd point is to the left of the 1st point, and you pan the screen to the right so the 1st point goes off the screen, then the circle will disappear. Just put the 2nd point to the right of the 1st point to prevent.
+
+* If trying to use some tools in a blank area to the left of the first data point, it might not show
+* Some line tools options do nothing "angle, scale, cap, join"
+* The Circle tool, if the 2nd point is to the left of the 1st point, and you pan the screen to the right so the 1st point goes off the screen, then the circle will disappear. Just put the 2nd point to the right of the 1st point to prevent.
 
 ---
 
 ## <a name="how-to-build"></a>How to Build
+
 1. Clone the project
 2. have node installed, you can google it
 3. cd into the clones project directory
 4. `npm install --force`
 5. `npm run build:prod`
 6. now you can view the debug.html in the root folder to view how the lineTools works
-7. built files are located in /dist 
+7. built files are located in /dist
 
 ---
 
 ## Main Features
+
 1. **[Crosshair Sync](#crosshair-sync)**
-2. **[createPriceLine added ability to make a horizontal ray](#create-price-line-ray)**  (draggable createPriceLine was removed from code, see [commit](https://github.com/difurious/lightweight-charts-line-tools/commit/140da15ba31057bb4bc7a6e22ccfd68320698e19) it you want to add it back)
-3. **[Line Tools](#how-to-use-line-tools)**
+2. **[createPriceLine added ability to make a horizontal ray](#createpriceline-ray)**  (draggable createPriceLine was removed from code, see [commit](https://github.com/difurious/lightweight-charts-line-tools/commit/140da15ba31057bb4bc7a6e22ccfd68320698e19) it you want to add it back)
+3. **[Line Tools](#how-to-use-linetools)**
   
-    FibRetracement, ParallelChannel, HorizontalLine, VerticalLine, Highlighter, CrossLine, TrendLine, Rectangle, Triangle, Brush,	Path, Text,	Ray, Arrow,	ExtendedLine,	HorizontalRay, Circle, Callout, PriceRange
+    FibRetracement, ParallelChannel, HorizontalLine, VerticalLine, Highlighter, CrossLine, TrendLine, Rectangle, Triangle, Brush, Path, Text, Ray, Arrow, ExtendedLine, HorizontalRay, Circle, Callout, PriceRange
 
 ---
 
 ## <a name="crosshair-sync"></a>Crosshair Sync
-params data from the subscribe will look like 
+
+params data from the subscribe will look like
+
 ```js
 {
     "time": 1686576600,
@@ -374,9 +385,11 @@ var manualLineToCreate =
 //add the line
 manualLineToCreateFinal = candleSeriesRef.current.createPriceLine(manualLineToCreate)
 ```
+
 ---
 
 ## <a name="how-to-use-line-tools"></a>How To Use LineTools
+
 1. read how to build the code [here](#how-to-build)
 2. open the file "debug.html" in the root folder with browser or edit to view code for an example of each Line Tool
 
@@ -391,17 +404,21 @@ The empty array is the point(s), points can look like this
 > `[{price: #PRICE, timestamp: #TIMESTAMP}]`
 
  and the empty object at the end uses the default options.  It will create the line tool and wait for user input for a click to place it.  See "debug.html" to see all the options that are availible for each specific tool. Line Tool Options that exist but dont do anything are
- * angle, scale, cap, join
+
+* angle, scale, cap, join
 
 ---
+
 ### Hold Shift on Some Line Tools
 
 If you hold shift when editing a line tool will create a straight horizontal line while editing.  Shift works on only these specific line tools
+
 * ParallelChannel, TrendLine, Arrow, ExtendedLine, Ray, Rectangle, FibRetracement
 
 ---
 
 ### Line Tool Functionality
+
 <br>
 exportLineTools() will export all existing line tools, it will be a JSON string
 
@@ -434,6 +451,7 @@ create a line tool object and apply it to an existing line by having the "id" ma
   }
   chart.current.applyLineToolOptions(applyLineToolOptionsOBJ)
 ```
+
 <br>
 
 Get the currently selected line tool, and return that line tools data in the format that exportLineTools() uses
@@ -447,7 +465,7 @@ Delete any line tools that match these specific ID's.  It needs to be an array o
 
 <br>
 
-Sorry, I dont know how to use this one, I have not needed to use this 
+Sorry, I dont know how to use this one, I have not needed to use this
 
 ```chart.current.setActiveLineTool("#IdontKNowWhatToPassToThis")```
 
@@ -455,7 +473,7 @@ Sorry, I dont know how to use this one, I have not needed to use this
 
 When a line tool is double clicked, params will be the specific line tool's export data.
 
-```js 
+```js
 function lineToolWasDoubleClicked(params){
     console.log(params)
 }
@@ -495,31 +513,3 @@ if(chartReady === true){
   }  
 }
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

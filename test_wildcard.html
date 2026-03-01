@@ -38,6 +38,17 @@
       <button id="TextButton">Add Text</button>
       <button id="LongShortPositionButton">Add LongShortPosition</button>
       <button id="CalloutButton">Add Callout</button>
+      <br>
+      <button id="TrendBasedFibExtensionButton">Add TrendBasedFibExtension</button>
+      <button id="FibChannelButton">Add FibChannel</button>
+      <button id="FibTimeZoneButton">Add FibTimeZone</button>
+      <button id="FibSpeedResistanceFanButton">Add FibSpeedResistanceFan</button>
+      <button id="TrendBasedFibTimeButton">Add TrendBasedFibTime</button>
+      <button id="FibCirclesButton">Add FibCircles</button>
+      <button id="FibSpiralButton">Add FibSpiral</button>
+      <button id="FibSpeedResistanceArcsButton">Add FibSpeedResistanceArcs</button>
+      <button id="FibWedgeButton">Add FibWedge</button>
+      <button id="PitchfanButton">Add Pitchfan</button>
     </div>
     <button id="getButton">Get Matching Line Tools</button>
     <button id="removeButton">Remove Matching Line Tools</button>
@@ -132,12 +143,15 @@
     const lineToolTypes = [
       'TrendLine', 'HorizontalLine', 'FibRetracement', 'Rectangle', 'VerticalLine',
       'Ray', 'Arrow', 'ExtendedLine', 'HorizontalRay', 'Circle', 'PriceRange',
-      'Triangle', 'Brush', 'Path', 'Text', 'LongShortPosition', 'Callout'
+      'Triangle', 'Brush', 'Path', 'Text', 'LongShortPosition', 'Callout',
+      'TrendBasedFibExtension', 'FibChannel', 'FibTimeZone', 'FibSpeedResistanceFan',
+      'TrendBasedFibTime', 'FibCircles', 'FibSpiral', 'FibSpeedResistanceArcs',
+      'FibWedge', 'Pitchfan'
     ];
 
     lineToolTypes.forEach(type => {
       document.getElementById(type + 'Button').addEventListener('click', () => {
-        chart.addLineTool(type, [], {});
+        chart.setActiveLineTool(type, {});
       });
     });
 
