@@ -4,7 +4,6 @@ import { ChartModel } from '../../model/chart-model';
 import { LineTool, LineToolOptionsInternal } from '../../model/line-tool';
 import { BoxHorizontalAlignment, BoxVerticalAlignment, FibRetracementLevel, LineToolType, TextAlignment } from '../../model/line-tool-options';
 import { CompositeRenderer } from '../../renderers/composite-renderer';
-import { LineStyle } from '../../renderers/draw-line';
 import { AnchorPoint } from '../../renderers/line-anchor-renderer';
 import { SegmentRenderer } from '../../renderers/segment-renderer';
 import { SpiralRenderer } from '../../renderers/spiral-renderer';
@@ -47,9 +46,9 @@ export class FibSpiralPaneView extends LineToolPaneView {
 		const p2 = this._points[1];
 
 		options.levels.forEach((level: FibRetracementLevel, i: number) => {
-            // A Fibonacci Spiral tool usually draws ONE spiral based on the Golden Ratio.
-            // However, our options allow for "levels".
-            // For now, let's draw one spiral at level.coeff scale if level.visible is true.
+			// A Fibonacci Spiral tool usually draws ONE spiral based on the Golden Ratio.
+			// However, our options allow for "levels".
+			// For now, let's draw one spiral at level.coeff scale if level.visible is true.
 			if (!level.visible) { return; }
 
 			if (!this._spiralRenderers[i]) {
@@ -57,15 +56,15 @@ export class FibSpiralPaneView extends LineToolPaneView {
 				this._labelRenderers.push(new TextRenderer());
 			}
 
-            // We need to pass scaled points to the renderer to handle "levels"
-            // But SpiralRenderer uses points[0] as center and points[1] as radius unit.
+			// We need to pass scaled points to the renderer to handle "levels"
+			// But SpiralRenderer uses points[0] as center and points[1] as radius unit.
 			const edgeX = p1.x + (p2.x - p1.x) * level.coeff;
 			const edgeY = p1.y + (p2.y - p1.y) * level.coeff;
 
 			this._spiralRenderers[i].setData({
 				color: level.color,
-				width: 1,
-				style: LineStyle.Solid,
+				width: options.line.width,
+				style: options.line.style,
 				points: [p1, new AnchorPoint(edgeX, edgeY, 0)],
 			});
 
@@ -85,7 +84,7 @@ export class FibSpiralPaneView extends LineToolPaneView {
 
 		this.addAnchors(compositeRenderer);
 
-        // Draw trend line from p1 to p2
+		// Draw trend line from p1 to p2
 		const trendLineRenderer = new SegmentRenderer();
 		trendLineRenderer.setData({
 			line: { ...options.line, color: '#787b86', style: 2, extend: { left: false, right: false } },

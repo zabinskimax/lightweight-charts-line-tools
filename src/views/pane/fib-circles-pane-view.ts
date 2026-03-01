@@ -6,7 +6,6 @@ import { LineTool, LineToolOptionsInternal } from '../../model/line-tool';
 import { BoxHorizontalAlignment, BoxVerticalAlignment, FibRetracementLevel, LineToolType, TextAlignment } from '../../model/line-tool-options';
 import { ArcRenderer } from '../../renderers/arc-renderer';
 import { CompositeRenderer } from '../../renderers/composite-renderer';
-import { LineStyle } from '../../renderers/draw-line';
 import { AnchorPoint } from '../../renderers/line-anchor-renderer';
 import { SegmentRenderer } from '../../renderers/segment-renderer';
 import { TextRenderer } from '../../renderers/text-renderer';
@@ -62,7 +61,7 @@ export class FibCirclesPaneView extends LineToolPaneView {
 				startAngle: 0,
 				endAngle: 2 * Math.PI,
 				background: { color: applyAlpha(level.color, level.opacity) },
-				border: { color: level.color, width: 1, style: LineStyle.Solid },
+				border: { color: level.color, width: options.line.width, style: options.line.style },
 				points: [center],
 			});
 
