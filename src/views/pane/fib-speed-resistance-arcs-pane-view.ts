@@ -47,11 +47,11 @@ export class FibSpeedResistanceArcsPaneView extends LineToolPaneView {
 		const p2 = this._points[1];
 		const radius0 = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
 
-		// Angles: draw a full circle or semi-circle?
-		// "Speed Resistance Arcs" are often semi-circles in the trend direction.
-		// For now, let's draw full circles like Fib Circles if not specified.
-		const startAngle = 0;
-		const endAngle = 2 * Math.PI;
+		// Angles: draw a half circle cut off horizontally.
+		// Upward if p2 is above p1, downward otherwise.
+		const isUpward = p2.y < p1.y;
+		const startAngle = isUpward ? Math.PI : 0;
+		const endAngle = isUpward ? 2 * Math.PI : Math.PI;
 
 		options.levels.forEach((level: FibRetracementLevel, i: number) => {
 			const radius = level.coeff * radius0;
@@ -78,7 +78,7 @@ export class FibSpeedResistanceArcsPaneView extends LineToolPaneView {
 					font: { color: level.color, size: 11, family: defaultFontFamily },
 					box: { alignment: { horizontal: BoxHorizontalAlignment.Center, vertical: BoxVerticalAlignment.Middle } },
 				},
-				points: [new AnchorPoint(p1.x + radius, p1.y, 0)],
+				points: [new AnchorPoint(p1.x + (isUpward ? -radius : radius), p1.y, 0)],
 			});
 
 			compositeRenderer.append(this._arcRenderers[i]);
