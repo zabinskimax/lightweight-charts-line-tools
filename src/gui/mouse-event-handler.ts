@@ -681,7 +681,7 @@ export class MouseEventHandler implements IDestroyable {
 		// it treats a touchstart and the following touchmove events as cancelable=false,
 		// so we can't prevent them (as soon we subscribe on touchmove inside touchstart's handler).
 		// And we'll get scroll of the page along with chart's one instead of only chart's scroll.
-		this._target.addEventListener('touchmove', () => { }, { passive: false });
+		this._target.addEventListener('touchmove', () => {}, { passive: false });
 	}
 
 	private _initPinch(): void {

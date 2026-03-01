@@ -21,7 +21,7 @@ export abstract class DataSource implements IDataSource {
 	public setId(id: string): void {
 		this._id = id;
 	}
-	
+
 	public zorder(): number {
 		return this._zorder;
 	}

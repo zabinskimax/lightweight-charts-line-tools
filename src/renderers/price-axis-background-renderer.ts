@@ -1,6 +1,6 @@
 import { drawScaled } from '../helpers/canvas-helpers';
 
-import { /*IPriceAxisViewRenderer, PriceAxisViewRendererCommonData,*/ PriceAxisViewRendererOptions } from './iprice-axis-view-renderer';
+import { /* IPriceAxisViewRenderer, PriceAxisViewRendererCommonData,*/ PriceAxisViewRendererOptions } from './iprice-axis-view-renderer';
 
 export interface PriceAxisBackgroundRendererData {
 	coordinate: number;
@@ -11,16 +11,16 @@ export interface PriceAxisBackgroundRendererData {
 
 export class PriceAxisBackgroundRenderer {
 	private _data: PriceAxisBackgroundRendererData | null;
-	//private _commonData: PriceAxisViewRendererCommonData | null;
+	// private _commonData: PriceAxisViewRendererCommonData | null;
 
 	public constructor() {
 		this._data = null;
-		//this._commonData = null;
+		// this._commonData = null;
 	}
 
-	public setData(data: PriceAxisBackgroundRendererData/*, commonData: PriceAxisViewRendererCommonData*/): void {
+	public setData(data: PriceAxisBackgroundRendererData/* , commonData: PriceAxisViewRendererCommonData*/): void {
 		this._data = data;
-		//this._commonData = commonData;
+		// this._commonData = commonData;
 	}
 
 	public drawBackground(ctx: CanvasRenderingContext2D, rendererOptions: PriceAxisViewRendererOptions, pixelRatio: number): void {
@@ -34,8 +34,8 @@ export class PriceAxisBackgroundRenderer {
 		drawScaled(ctx, pixelRatio, () => {
 			ctx.fillStyle = color;
 			ctx.fillRect(0, y, width, height);
-		});		
-		
+		});
+
 		// if (this._commonData === null) {
 			// return;
 		// }

@@ -428,7 +428,8 @@ export abstract class LineToolPaneView implements IUpdatablePaneView, IInputEven
 	}
 
 	private _applyFibRetracementShift(appliedPoint: Point, toolTypeStr: string): void {
-		if (toolTypeStr === 'FibRetracement' && this._points.length === 2 && this._editedPointIndex !== null && this._onMouseDownInitialPoints.length === 2) {
+		const isFibTool = ['FibRetracement', 'TrendBasedFibExtension', 'FibChannel', 'FibTimeZone', 'FibSpeedResistanceFan', 'TrendBasedFibTime', 'FibCircles', 'FibSpiral', 'FibSpeedResistanceArcs', 'FibWedge', 'Pitchfan'].includes(toolTypeStr);
+		if (isFibTool && this._editedPointIndex !== null && this._onMouseDownInitialPoints.length > 0 && this._onMouseDownInitialPoints[this._editedPointIndex]) {
 			appliedPoint.y = this._onMouseDownInitialPoints[this._editedPointIndex].y;
 		}
 	}

@@ -64,7 +64,7 @@ export class CrosshairTimeAxisView implements ITimeAxisView {
 		// Useless. Not removed just to keep constructor arguments untouched.
 		const value = this._valueProvider();
 		data.coordinate = value.coordinate;
-		/*if (!value.time) {
+		/* if (!value.time) {
 			return;
 		}*/
 

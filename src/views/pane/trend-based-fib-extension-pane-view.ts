@@ -22,7 +22,7 @@ export class TrendBasedFibExtensionPaneView extends LineToolPaneView {
 		this._renderer = null;
 	}
 
-    // eslint-disable-next-line complexity
+	// eslint-disable-next-line complexity
 	protected override _updateImpl(): void {
 		const options = this._source.options() as LineToolOptionsInternal<'TrendBasedFibExtension'>;
 
@@ -52,7 +52,7 @@ export class TrendBasedFibExtensionPaneView extends LineToolPaneView {
 			if (this._points.length < 2) { return; }
 			const compositeRenderer = new CompositeRenderer();
 
-            // Main trend line (P1 to P2)
+			// Main trend line (P1 to P2)
 			const trendLineRenderer = new SegmentRenderer();
 			trendLineRenderer.setData({
 				line: { ...options.line, color: '#787b86', style: 2, extend: { left: false, right: false } },
@@ -66,7 +66,7 @@ export class TrendBasedFibExtensionPaneView extends LineToolPaneView {
 			const diff = p2 - p1;
 
 			if (this._points.length > 2) {
-                // Retracement line (P2 to P3)
+				// Retracement line (P2 to P3)
 				const retracementLineRenderer = new SegmentRenderer();
 				retracementLineRenderer.setData({
 					line: { ...options.line, color: '#787b86', style: 2, extend: { left: false, right: false } },
@@ -85,7 +85,31 @@ export class TrendBasedFibExtensionPaneView extends LineToolPaneView {
 				return { coordinate, price: priceScale.formatPrice(price, baseValue), coeff: level.coeff, color: level.color, opacity: level.opacity };
 			});
 
+			let distanceTextToDisplay = '';
+
+			const findIndexByKeyValue = (levels: FibRetracementLevel[], keyToFind: keyof FibRetracementLevel, valueToFind: number): number => {
+				for (let k = 0; k < levels.length; k++) {
+					if (levels[k][keyToFind] === valueToFind) {
+						return k;
+					}
+				}
+				return -1;
+			};
+
 			for (let i = 0, j = -1; i < levelCoordinates.length; i++, j++) {
+				if (options.levels[i].distanceFromCoeffEnabled) {
+					const compareToIndex = findIndexByKeyValue(options.levels, 'coeff', options.levels[i].distanceFromCoeff);
+
+					if (compareToIndex >= 0) {
+						const compareToPrice = Number(levelCoordinates[compareToIndex].price);
+						const currentPrice = Number(levelCoordinates[i].price);
+						const priceDiference = Math.round(Math.abs(currentPrice - compareToPrice) * 100000) / 100000;
+
+						if (priceDiference > 0) {
+							distanceTextToDisplay = '>>>>' + priceDiference + ' from ' + options.levels[compareToIndex].coeff + ' line';
+						}
+					}
+				}
 				if (!this._lineRenderers[i]) {
 					this._lineRenderers.push(new SegmentRenderer());
 					this._labelRenderers.push(new TextRenderer());
@@ -103,12 +127,14 @@ export class TrendBasedFibExtensionPaneView extends LineToolPaneView {
 				this._labelRenderers[i].setData({
 					text: {
 						alignment: TextAlignment.Right,
-						value: `${levelCoordinates[i].coeff}(${levelCoordinates[i].price})`,
+						value: `${levelCoordinates[i].coeff}(${levelCoordinates[i].price}) ${distanceTextToDisplay}`,
 						font: { color: levelCoordinates[i].color, size: 11, family: defaultFontFamily },
 						box: { alignment: { horizontal: BoxHorizontalAlignment.Right, vertical: BoxVerticalAlignment.Middle } },
 					},
 					points: linePoints,
 				});
+
+				distanceTextToDisplay = '';
 
 				compositeRenderer.append(this._labelRenderers[i]);
 				compositeRenderer.append(this._lineRenderers[i]);

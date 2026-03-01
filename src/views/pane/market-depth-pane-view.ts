@@ -2,7 +2,7 @@ import { deepCopy } from '../../helpers/deep-copy';
 
 import { ChartModel } from '../../model/chart-model';
 import { LineTool, LineToolOptionsInternal } from '../../model/line-tool';
-import { BoxHorizontalAlignment, BoxVerticalAlignment, LineToolType, MarketDepthOptions, TextAlignment, TextOptions } from '../../model/line-tool-options';
+import { BoxHorizontalAlignment, BoxVerticalAlignment, LineToolType, TextAlignment } from '../../model/line-tool-options';
 import { CompositeRenderer } from '../../renderers/composite-renderer';
 import { MarketDepthRenderer } from '../../renderers/market-depth-renderer';
 
@@ -27,8 +27,8 @@ export class MarketDepthPaneView extends LineToolPaneView {
 		if (this._points.length < 1) { return; }
 
 		const options = this._source.options() as LineToolOptionsInternal<'MarketDepth'>;
-		const data = deepCopy(options.text) as TextOptions;
-		const marketDepthOptions = deepCopy(options.marketDepth) as MarketDepthOptions;
+		const data = deepCopy(options.text);
+		const marketDepthOptions = deepCopy(options.marketDepth);
 		// const data = options.text;
 		data.box.alignment = { vertical: BoxVerticalAlignment.Top, horizontal: BoxHorizontalAlignment.Center };
 		data.alignment = TextAlignment.Center;

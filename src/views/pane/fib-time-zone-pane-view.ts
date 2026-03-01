@@ -83,12 +83,12 @@ export class FibTimeZonePaneView extends LineToolPaneView {
 
 			this._labelRenderers[i].setData({
 				text: {
-					alignment: TextAlignment.Center,
-					value: `${level.coeff}`,
+					alignment: TextAlignment.Left,
+					value: `${i + 1}`,
 					font: { color: level.color, size: 11, family: defaultFontFamily },
-					box: { alignment: { horizontal: BoxHorizontalAlignment.Center, vertical: BoxVerticalAlignment.Top } },
+					box: { alignment: { horizontal: BoxHorizontalAlignment.Left, vertical: BoxVerticalAlignment.Top } },
 				},
-				points: [new AnchorPoint(x, 10, 0)],
+				points: [new AnchorPoint(x + 4, height - 11 - 10, 0)],
 			});
 
 			compositeRenderer.append(this._labelRenderers[i]);

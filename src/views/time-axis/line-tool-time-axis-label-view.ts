@@ -5,7 +5,6 @@ import { LineTool } from '../../model/line-tool';
 import { UTCTimestamp } from '../../model/time-data';
 import { TimeAxisViewRenderer } from '../../renderers/time-axis-view-renderer';
 
-
 import { ITimeAxisView } from './itime-axis-view';
 
 export interface TimeAxisLabelRendererData {
@@ -72,7 +71,7 @@ export class LineToolTimeAxisLabelView implements ITimeAxisView {
 		this._rendererData.visible = true;
 		this._invalidated = false;
 	}
-	
+
 	protected _getBackgroundColor(): string | null {
 		return this._source.timeAxisLabelColor();
 	}

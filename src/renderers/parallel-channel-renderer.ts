@@ -18,7 +18,7 @@ export class ParallelChannelRenderer extends ScaledRenderer {
 	protected _backHitTest: HitTestResult<void>;
 	protected _hitTest: HitTestResult<void>;
 	protected _data: ParallelChannelRendererData | null;
-	
+
 	private _cssHeight: number = 1000;
 	private _cssWidth: number = 1000;
 
@@ -68,7 +68,7 @@ export class ParallelChannelRenderer extends ScaledRenderer {
 		if (this._data.points.length === 4) {
 			const [,, end2, end3] = this._data.points;
 			this._extendAndDrawLineSegment(ctx, end2, end3);
-			this._drawBackground(ctx, this._data.points,);
+			this._drawBackground(ctx, this._data.points);
 
 			if (this._data.showMiddleLine) {
 				setLineStyle(ctx, this._data.middleLine?.style || LineStyle.Solid);

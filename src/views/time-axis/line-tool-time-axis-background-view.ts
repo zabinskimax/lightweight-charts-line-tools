@@ -1,8 +1,8 @@
 import { ChartModel } from '../../model/chart-model';
 import { LineTool, LineToolPoint } from '../../model/line-tool';
 import { UTCTimestamp } from '../../model/time-data';
-import { TimeAxisBackgroundRenderer as TimeAxisBackgroundRenderer, TimeAxisBackgroundRendererData } from '../../renderers/time-axis-background-renderer';
 import { ITimeAxisViewRenderer } from '../../renderers/itime-axis-view-renderer';
+import { TimeAxisBackgroundRenderer as TimeAxisBackgroundRenderer, TimeAxisBackgroundRendererData } from '../../renderers/time-axis-background-renderer';
 
 import { ITimeAxisView } from './itime-axis-view';
 

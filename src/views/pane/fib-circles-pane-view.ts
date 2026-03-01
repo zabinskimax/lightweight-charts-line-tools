@@ -4,7 +4,7 @@ import { defaultFontFamily } from '../../helpers/make-font';
 import { ChartModel } from '../../model/chart-model';
 import { LineTool, LineToolOptionsInternal } from '../../model/line-tool';
 import { BoxHorizontalAlignment, BoxVerticalAlignment, FibRetracementLevel, LineToolType, TextAlignment } from '../../model/line-tool-options';
-import { CircleRenderer } from '../../renderers/circle-renderer';
+import { ArcRenderer } from '../../renderers/arc-renderer';
 import { CompositeRenderer } from '../../renderers/composite-renderer';
 import { LineStyle } from '../../renderers/draw-line';
 import { AnchorPoint } from '../../renderers/line-anchor-renderer';
@@ -15,7 +15,7 @@ import { LineToolPaneView } from './line-tool-pane-view';
 
 export class FibCirclesPaneView extends LineToolPaneView {
 	protected _labelRenderers: TextRenderer[] = [];
-	protected _circleRenderers: CircleRenderer[] = [];
+	protected _arcRenderers: ArcRenderer[] = [];
 
 	public constructor(source: LineTool<LineToolType>, model: ChartModel) {
 		super(source, model);
@@ -51,15 +51,19 @@ export class FibCirclesPaneView extends LineToolPaneView {
 		options.levels.forEach((level: FibRetracementLevel, i: number) => {
 			const radius = level.coeff * radius0;
 
-			if (!this._circleRenderers[i]) {
-				this._circleRenderers.push(new CircleRenderer());
+			if (!this._arcRenderers[i]) {
+				this._arcRenderers.push(new ArcRenderer());
 				this._labelRenderers.push(new TextRenderer());
 			}
 
-			this._circleRenderers[i].setData({
+			this._arcRenderers[i].setData({
+				radius,
+				innerRadius: i > 0 ? options.levels[i - 1].coeff * radius0 : 0,
+				startAngle: 0,
+				endAngle: 2 * Math.PI,
 				background: { color: applyAlpha(level.color, level.opacity) },
 				border: { color: level.color, width: 1, style: LineStyle.Solid },
-				points: [center, new AnchorPoint(center.x + radius, center.y, 0)],
+				points: [center],
 			});
 
 			this._labelRenderers[i].setData({
@@ -72,13 +76,13 @@ export class FibCirclesPaneView extends LineToolPaneView {
 				points: [new AnchorPoint(center.x + radius, center.y, 0)],
 			});
 
-			compositeRenderer.append(this._circleRenderers[i]);
+			compositeRenderer.append(this._arcRenderers[i]);
 			compositeRenderer.append(this._labelRenderers[i]);
 		});
 
 		this.addAnchors(compositeRenderer);
 
-        // Draw trend line from center to edge
+		// Draw trend line from center to edge
 		const trendLineRenderer = new SegmentRenderer();
 		trendLineRenderer.setData({
 			line: { ...options.line, color: '#787b86', style: 2, extend: { left: false, right: false } },

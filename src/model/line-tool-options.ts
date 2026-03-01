@@ -857,6 +857,11 @@ export interface LineToolTrendBasedFibExtensionOptions {
 	 * Fib Levels.
 	 */
 	levels: FibRetracementLevel[];
+
+	/**
+	 * Fib tradeStrategy.
+	 */
+	tradeStrategy: FibRetracementTradeStrategy;
 }
 
 /**
@@ -877,6 +882,11 @@ export interface LineToolFibChannelOptions {
 	 * Fib Levels.
 	 */
 	levels: FibRetracementLevel[];
+
+	/**
+	 * Fib tradeStrategy.
+	 */
+	tradeStrategy: FibRetracementTradeStrategy;
 }
 
 /**
@@ -897,6 +907,11 @@ export interface LineToolFibTimeZoneOptions {
 	 * Fib Levels.
 	 */
 	levels: FibRetracementLevel[];
+
+	/**
+	 * Fib tradeStrategy.
+	 */
+	tradeStrategy: FibRetracementTradeStrategy;
 }
 
 /**
@@ -917,6 +932,11 @@ export interface LineToolFibSpeedResistanceFanOptions {
 	 * Fib Levels.
 	 */
 	levels: FibRetracementLevel[];
+
+	/**
+	 * Fib tradeStrategy.
+	 */
+	tradeStrategy: FibRetracementTradeStrategy;
 }
 
 /**
@@ -937,6 +957,11 @@ export interface LineToolTrendBasedFibTimeOptions {
 	 * Fib Levels.
 	 */
 	levels: FibRetracementLevel[];
+
+	/**
+	 * Fib tradeStrategy.
+	 */
+	tradeStrategy: FibRetracementTradeStrategy;
 }
 
 /**
@@ -957,6 +982,11 @@ export interface LineToolFibCirclesOptions {
 	 * Fib Levels.
 	 */
 	levels: FibRetracementLevel[];
+
+	/**
+	 * Fib tradeStrategy.
+	 */
+	tradeStrategy: FibRetracementTradeStrategy;
 }
 
 /**
@@ -977,6 +1007,11 @@ export interface LineToolFibSpiralOptions {
 	 * Fib Levels.
 	 */
 	levels: FibRetracementLevel[];
+
+	/**
+	 * Fib tradeStrategy.
+	 */
+	tradeStrategy: FibRetracementTradeStrategy;
 }
 
 /**
@@ -997,6 +1032,11 @@ export interface LineToolFibSpeedResistanceArcsOptions {
 	 * Fib Levels.
 	 */
 	levels: FibRetracementLevel[];
+
+	/**
+	 * Fib tradeStrategy.
+	 */
+	tradeStrategy: FibRetracementTradeStrategy;
 }
 
 /**
@@ -1017,6 +1057,11 @@ export interface LineToolFibWedgeOptions {
 	 * Fib Levels.
 	 */
 	levels: FibRetracementLevel[];
+
+	/**
+	 * Fib tradeStrategy.
+	 */
+	tradeStrategy: FibRetracementTradeStrategy;
 }
 
 /**
@@ -1037,6 +1082,11 @@ export interface LineToolPitchfanOptions {
 	 * Fib Levels.
 	 */
 	levels: FibRetracementLevel[];
+
+	/**
+	 * Fib tradeStrategy.
+	 */
+	tradeStrategy: FibRetracementTradeStrategy;
 }
 
 /**

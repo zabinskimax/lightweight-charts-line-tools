@@ -1,3 +1,4 @@
+import { applyAlpha } from '../../helpers/color';
 import { defaultFontFamily } from '../../helpers/make-font';
 
 import { ChartModel } from '../../model/chart-model';
@@ -6,6 +7,7 @@ import { BoxHorizontalAlignment, BoxVerticalAlignment, FibRetracementLevel, Line
 import { CompositeRenderer } from '../../renderers/composite-renderer';
 import { RectangleRenderer } from '../../renderers/fib-retracement-renderer';
 import { AnchorPoint } from '../../renderers/line-anchor-renderer';
+import { PolygonRenderer } from '../../renderers/polygon-renderer';
 import { SegmentRenderer } from '../../renderers/segment-renderer';
 import { TextRenderer } from '../../renderers/text-renderer';
 
@@ -15,6 +17,7 @@ export class FibChannelPaneView extends LineToolPaneView {
 	protected _rectangleRenderers: RectangleRenderer[] = [];
 	protected _labelRenderers: TextRenderer[] = [];
 	protected _lineRenderers: SegmentRenderer[] = [];
+	protected _polygonRenderers: PolygonRenderer[] = [];
 
 	public constructor(source: LineTool<LineToolType>, model: ChartModel) {
 		super(source, model);
@@ -106,12 +109,18 @@ export class FibChannelPaneView extends LineToolPaneView {
 				compositeRenderer.append(this._lineRenderers[i]);
 
 				if (j >= 0) {
-					if (!this._rectangleRenderers[j]) { this._rectangleRenderers.push(new RectangleRenderer()); }
-					// Note: RectangleRenderer might need adjustment for non-horizontal rectangles,
-					// but let's see if we can use it or if we need a PolygonRenderer.
-					// Existing RectangleRenderer seems to support only axis-aligned rectangles.
-					// For Fib Channel, we need a skewed rectangle (parallelogram).
-					// I'll skip the background for now or use a custom polygon if available.
+					if (!this._polygonRenderers[j]) { this._polygonRenderers.push(new PolygonRenderer()); }
+					this._polygonRenderers[j].setData({
+						line: { ...options.line, color: 'transparent' },
+						background: { color: applyAlpha(options.levels[i].color, options.levels[i].opacity) },
+						points: [
+							levels[i - 1].start,
+							levels[i - 1].end,
+							levels[i].end,
+							levels[i].start,
+						],
+					});
+					compositeRenderer.append(this._polygonRenderers[j]);
 				}
 			}
 

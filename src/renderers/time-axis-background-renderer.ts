@@ -21,7 +21,7 @@ export class TimeAxisBackgroundRenderer implements ITimeAxisViewRenderer {
 	}
 
 	public draw(ctx: CanvasRenderingContext2D, rendererOptions: TimeAxisViewRendererOptions, pixelRatio: number): void {
-	//public drawBackground(ctx: CanvasRenderingContext2D, rendererOptions: TimeAxisViewRendererOptions, pixelRatio: number): void {
+	// public drawBackground(ctx: CanvasRenderingContext2D, rendererOptions: TimeAxisViewRendererOptions, pixelRatio: number): void {
 		if (this._data === null || this._data.visible === false) {
 			return;
 		}

@@ -4,7 +4,7 @@ import { applyAlpha } from '../../helpers/color';
 import { defaultFontFamily } from '../../helpers/make-font';
 import { clone, merge } from '../../helpers/strict-type-checks';
 
-import { BoxHorizontalAlignment, BoxVerticalAlignment, BrushToolOptions, CalloutToolOptions, CircleToolOptions, CrossLineToolOptions, FibCirclesToolOptions, FibRetracementToolOptions, FibSpiralToolOptions, HighlighterToolOptions, HorizontalLineToolOptions, LineJoin, LongShortPositionToolOptions, MarketDepthToolOptions, ParallelChannelToolOptions, PathToolOptions, PriceRangeToolOptions, RectangleToolOptions, TextAlignment, TextOptions, TextToolOptions, TrendLineToolOptions, TriangleToolOptions, VerticalLineToolOptions } from '../../model/line-tool-options';
+import { BoxHorizontalAlignment, BoxVerticalAlignment, BrushToolOptions, CalloutToolOptions, CircleToolOptions, CrossLineToolOptions, FibCirclesToolOptions, FibRetracementToolOptions, FibSpiralToolOptions, HighlighterToolOptions, HorizontalLineToolOptions, LineJoin, LongShortPositionToolOptions, MarketDepthToolOptions, ParallelChannelToolOptions, PathToolOptions, PriceRangeToolOptions, RectangleToolOptions, TextAlignment, TextOptions, TextToolOptions, TrendLineToolOptions, TriangleToolOptions, VerticalLineToolOptions, TrendBasedFibExtensionToolOptions, FibChannelToolOptions, FibTimeZoneToolOptions, FibSpeedResistanceFanToolOptions, TrendBasedFibTimeToolOptions, FibWedgeToolOptions, PitchfanToolOptions, FibSpeedResistanceArcsToolOptions } from '../../model/line-tool-options';
 
 import { LineEnd, LineStyle } from '../..';
 
@@ -321,16 +321,16 @@ export const TextOptionDefaults: TextToolOptions = {
 	text: merge(clone(TextDefaults), { value: 'Text' }) as TextOptions,
 };
 
-export const TrendBasedFibExtensionOptionDefaults = merge(clone(FibRetracementOptionDefaults), { tradeStrategy: undefined });
-export const FibChannelOptionDefaults = merge(clone(FibRetracementOptionDefaults), { tradeStrategy: undefined });
-export const FibTimeZoneOptionDefaults = merge(clone(FibRetracementOptionDefaults), { tradeStrategy: undefined, extend: { left: false, right: false } });
-export const FibSpeedResistanceFanOptionDefaults = merge(clone(FibRetracementOptionDefaults), { tradeStrategy: undefined, extend: { left: false, right: false } });
-export const TrendBasedFibTimeOptionDefaults = merge(clone(FibRetracementOptionDefaults), { tradeStrategy: undefined, extend: { left: false, right: false } });
-export const FibCirclesOptionDefaults = merge(clone(FibRetracementOptionDefaults), { tradeStrategy: undefined, extend: { left: false, right: false } }) as unknown as FibCirclesToolOptions;
-export const FibSpiralOptionDefaults = merge(clone(FibRetracementOptionDefaults), { tradeStrategy: undefined, extend: { left: false, right: false } }) as unknown as FibSpiralToolOptions;
-export const FibSpeedResistanceArcsOptionDefaults = merge(clone(FibRetracementOptionDefaults), { tradeStrategy: undefined, extend: { left: false, right: false } });
-export const FibWedgeOptionDefaults = merge(clone(FibRetracementOptionDefaults), { tradeStrategy: undefined, extend: { left: false, right: false } });
-export const PitchfanOptionDefaults = merge(clone(FibRetracementOptionDefaults), { tradeStrategy: undefined, extend: { left: false, right: false } });
+export const TrendBasedFibExtensionOptionDefaults: TrendBasedFibExtensionToolOptions = clone(FibRetracementOptionDefaults);
+export const FibChannelOptionDefaults: FibChannelToolOptions = clone(FibRetracementOptionDefaults);
+export const FibTimeZoneOptionDefaults: FibTimeZoneToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as FibTimeZoneToolOptions;
+export const FibSpeedResistanceFanOptionDefaults: FibSpeedResistanceFanToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as FibSpeedResistanceFanToolOptions;
+export const TrendBasedFibTimeOptionDefaults: TrendBasedFibTimeToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as TrendBasedFibTimeToolOptions;
+export const FibCirclesOptionDefaults: FibCirclesToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as FibCirclesToolOptions;
+export const FibSpiralOptionDefaults: FibSpiralToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as FibSpiralToolOptions;
+export const FibSpeedResistanceArcsOptionDefaults: FibSpeedResistanceArcsToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as FibSpeedResistanceArcsToolOptions;
+export const FibWedgeOptionDefaults: FibWedgeToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as FibWedgeToolOptions;
+export const PitchfanOptionDefaults: PitchfanToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as PitchfanToolOptions;
 
 /** @public */
 export const LineToolsOptionDefaults = {

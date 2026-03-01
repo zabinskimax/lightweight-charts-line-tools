@@ -24,7 +24,7 @@ export class SegmentRenderer implements IPaneRenderer {
 
 	private _cssHeight: number = 1000;
 	private _cssWidth: number = 1000;
-	
+
 	public constructor() {
 		this._data = null;
 		this._hitTest = new HitTestResult(HitTestType.MovePoint);
@@ -43,7 +43,7 @@ export class SegmentRenderer implements IPaneRenderer {
 
 		this._cssWidth = ctx.canvas.width;
 		this._cssHeight = ctx.canvas.height;
-		
+
 		const lineWidth = this._data.line.width || 1;
 		const lineColor = this._data.line.color || 'white';
 		const lineStyle = this._data.line.style || LineStyle.Solid;
@@ -75,7 +75,7 @@ export class SegmentRenderer implements IPaneRenderer {
 
 		const tolerance = interactionTolerance.line;
 		const line = this._extendAndClipLineSegment(this._data.points[0], this._data.points[1]);
-		if (null !== line && distanceToSegment(line[0], line[1], new Point(x,y)).distance <= tolerance) { return this._hitTest; }
+		if (null !== line && distanceToSegment(line[0], line[1], new Point(x, y)).distance <= tolerance) { return this._hitTest; }
 		return null;
 	}
 

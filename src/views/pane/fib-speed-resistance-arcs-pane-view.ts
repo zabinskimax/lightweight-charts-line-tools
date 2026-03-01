@@ -47,9 +47,9 @@ export class FibSpeedResistanceArcsPaneView extends LineToolPaneView {
 		const p2 = this._points[1];
 		const radius0 = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
 
-        // Angles: draw a full circle or semi-circle?
-        // "Speed Resistance Arcs" are often semi-circles in the trend direction.
-        // For now, let's draw full circles like Fib Circles if not specified.
+		// Angles: draw a full circle or semi-circle?
+		// "Speed Resistance Arcs" are often semi-circles in the trend direction.
+		// For now, let's draw full circles like Fib Circles if not specified.
 		const startAngle = 0;
 		const endAngle = 2 * Math.PI;
 
@@ -63,9 +63,10 @@ export class FibSpeedResistanceArcsPaneView extends LineToolPaneView {
 
 			this._arcRenderers[i].setData({
 				background: { color: applyAlpha(level.color, level.opacity) },
-				border: { color: level.color, width: 1, style: 0 },
+				border: { color: level.color, width: options.line.width, style: options.line.style },
 				points: [p1],
 				radius: radius,
+				innerRadius: i > 0 ? options.levels[i - 1].coeff * radius0 : 0,
 				startAngle: startAngle,
 				endAngle: endAngle,
 			});
@@ -86,7 +87,7 @@ export class FibSpeedResistanceArcsPaneView extends LineToolPaneView {
 
 		this.addAnchors(compositeRenderer);
 
-        // Draw trend line from p1 to p2
+		// Draw trend line from p1 to p2
 		const trendLineRenderer = new SegmentRenderer();
 		trendLineRenderer.setData({
 			line: { ...options.line, color: '#787b86', style: 2, extend: { left: false, right: false } },

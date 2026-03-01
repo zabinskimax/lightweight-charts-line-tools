@@ -227,138 +227,125 @@ What I use in react
 
 ```jsx
 useEffect(() => {
+	if (chartReady === true) {
+		console.log('inside useEffect for crosshair SyncHandler');
 
-  if(chartReady === true){
-    console.log("inside useEffect for crosshair SyncHandler")
+		// used to store the previous xx time if the timeToCoord return null, then the crosshair would disapear
+		// so ill use this var to just display the previous candle vs it disapearring constantly
+		// TODO, this will only update when a new time interval from chart 1 is hit, so it techncicly
+		// shows the incorrect  time if time is between the 2 chart intervals
+		let crosshairPreviousXX = 0;
 
-    //used to store the previous xx time if the timeToCoord return null, then the crosshair would disapear
-    //so ill use this var to just display the previous candle vs it disapearring constantly
-    //TODO, this will only update when a new time interval from chart 1 is hit, so it techncicly
-    //shows the incorrect  time if time is between the 2 chart intervals
-    var crosshairPreviousXX = 0
+		// const crosshairSyncHandler = (param, seriesMaster, seriesSlave, fromChartNumber, chartToModify) => {
+		const crosshairSyncHandler = (param, fromChartNumber) => {
+			console.log('syncing crosshairs master is chart ' + fromChartNumber);
+			console.log(param);
 
-    //const crosshairSyncHandler = (param, seriesMaster, seriesSlave, fromChartNumber, chartToModify) => {
-    const crosshairSyncHandler = (param, fromChartNumber) => {
-      console.log("syncing crosshairs master is chart " + fromChartNumber)
-      console.log(param)
+			if (fromChartNumber === 1) {
+				var chartToModify = chart2;
+				var seriesMaster = candleSeriesRef;
+				var seriesSlave = candleSeries2Ref;
+			} else if (fromChartNumber === 2) {
+				var chartToModify = chart;
+				var seriesMaster = candleSeries2Ref;
+				var seriesSlave = candleSeriesRef;
+			}
 
-      if(fromChartNumber === 1){
-        var chartToModify = chart2
-        var seriesMaster = candleSeriesRef
-        var seriesSlave = candleSeries2Ref
-      }
+			if (param.time !== undefined) {
+				// time axis
+				const xx = chartToModify.current.timeScale().timeToCoordinate(param.time);
+				var price = seriesMaster.current.coordinateToPrice(param.point.y);
+				// price axis
+				var yy = seriesSlave.current.priceToCoordinate(price);
+				// console.log("x cord = " + xx)
+				// console.log("y cord = " + yy)
+				// everything is good, so update the crosshair
+				if (xx !== null) {
+					// console.log("both axis")
+					// console.log("x = " + xx)
+					// console.log("y = " + yy)
+					chartToModify.current.setCrossHairXY(xx, yy, true);
+					// set previous because xx is a lefit time
+					crosshairPreviousXX = xx;
+				} else {
+					// console.log("else")
+					// console.log("x = " + xx)
+					// console.log("y = " + yy)
+					// if xx is null than it did not respond with a time, so use crosshairPreviousXX so it displays something
+					chartToModify.current.setCrossHairXY(crosshairPreviousXX, yy, true);
+				}
+			}
 
-      else if(fromChartNumber === 2) {
-        
-        var chartToModify = chart
-        var seriesMaster = candleSeries2Ref
-        var seriesSlave = candleSeriesRef
-        
-      }        
+			// time is undefined
+			else {
+				// point.y exists
+				if (param.point !== undefined) {
+					// console.log("param.point.y = " + param.point.y )
+					var price = seriesMaster.current.coordinateToPrice(param.point.y);
+					// price axis
+					var yy = seriesSlave.current.priceToCoordinate(price);
+					// only show the price axis
+					// console.log("x = " + xx)
+					// console.log("y = " + yy)
+					chartToModify.current.setCrossHairXY(null, yy, true);
+				}
 
-      if(param.time !== undefined) {
+				// no axis points exist, most likely cursor is in Y price scale axis
+				// point.y does not exist
+				else {
+					// clar the slave chart crosshair
+					chartToModify.current.clearCrossHair();
+				}
+			}
+		};
 
-        //time axis
-        var xx = chartToModify.current.timeScale().timeToCoordinate(param.time);
-        var price = seriesMaster.current.coordinateToPrice(param.point.y)
-        //price axis
-        var yy = seriesSlave.current.priceToCoordinate(price);
-        //console.log("x cord = " + xx)
-        //console.log("y cord = " + yy)
-        //everything is good, so update the crosshair
-        if(xx !== null){
-          //console.log("both axis")
-          //console.log("x = " + xx)
-          //console.log("y = " + yy)
-          chartToModify.current.setCrossHairXY(xx,yy,true);
-          //set previous because xx is a lefit time
-          crosshairPreviousXX = xx
-        }
-        else{
-          //console.log("else")
-          //console.log("x = " + xx)
-          //console.log("y = " + yy)
-          //if xx is null than it did not respond with a time, so use crosshairPreviousXX so it displays something
-          chartToModify.current.setCrossHairXY(crosshairPreviousXX,yy,true);
-        }
-      }
-      
-      //time is undefined
-      else{
-        //point.y exists
-        if(param.point !== undefined){
-          //console.log("param.point.y = " + param.point.y )
-          var price = seriesMaster.current.coordinateToPrice(param.point.y)
-          //price axis
-          var yy = seriesSlave.current.priceToCoordinate(price); 
-          //only show the price axis
-          //console.log("x = " + xx)
-          //console.log("y = " + yy)
-          chartToModify.current.setCrossHairXY(null,yy,true); 
-        }
+		const chart1CrosshairSyncHandler = param => {
+			crosshairSyncHandler(param, 1);
+		};
 
-        //no axis points exist, most likely cursor is in Y price scale axis
-        //point.y does not exist
-        else{
-          //clar the slave chart crosshair
-          chartToModify.current.clearCrossHair();
-        }
-      
-      }
-    }
-    
-    
-    const chart1CrosshairSyncHandler = (param) => {
-      crosshairSyncHandler(param, 1)
-    }
-    
-    const chart2CrosshairSyncHandler = (param) => {
-      crosshairSyncHandler(param, 2)
-    }         
+		const chart2CrosshairSyncHandler = param => {
+			crosshairSyncHandler(param, 2);
+		};
 
-  
-    //chart 2 exists and sync crosshairs is enabled
-    if(chartReady === true && chart2Ready === true && syncCrosshairsDisabled === false && syncCrosshairsSelected === true){
-      console.log("inside sync crosshairs")
-  
-      //chart 1 active
-      if(pointerOverChart === 1){
-        if(chart2.current !== null && chart2ContainerRef.current !== null){
-          chart2.current.unsubscribeCrosshairMove(chart2CrosshairSyncHandler)
-        }
-        
-        chart.current.subscribeCrosshairMove(chart1CrosshairSyncHandler)
-      }
+		// chart 2 exists and sync crosshairs is enabled
+		if (chartReady === true && chart2Ready === true && syncCrosshairsDisabled === false && syncCrosshairsSelected === true) {
+			console.log('inside sync crosshairs');
 
-      //chart 2 active
-      else if(pointerOverChart === 2){
-        chart.current.unsubscribeCrosshairMove(chart1CrosshairSyncHandler)
-        if(chart2.current !== null && chart2ContainerRef.current !== null){
-          chart2.current.subscribeCrosshairMove(chart2CrosshairSyncHandler)
-        }   
-      }      
+			// chart 1 active
+			if (pointerOverChart === 1) {
+				if (chart2.current !== null && chart2ContainerRef.current !== null) {
+					chart2.current.unsubscribeCrosshairMove(chart2CrosshairSyncHandler);
+				}
 
-      return () => {
-        chart.current.unsubscribeCrosshairMove(chart1CrosshairSyncHandler)
-        if(chart2.current !== null && chart2ContainerRef.current !== null){
-          chart2.current.unsubscribeCrosshairMove(chart2CrosshairSyncHandler)
-        }
-        
-      }
-    }
+				chart.current.subscribeCrosshairMove(chart1CrosshairSyncHandler);
+			}
 
-    //crosshair sync is not active, so unsubscribe to both events
-    else{
-      chart.current.unsubscribeCrosshairMove(chart1CrosshairSyncHandler)
+			// chart 2 active
+			else if (pointerOverChart === 2) {
+				chart.current.unsubscribeCrosshairMove(chart1CrosshairSyncHandler);
+				if (chart2.current !== null && chart2ContainerRef.current !== null) {
+					chart2.current.subscribeCrosshairMove(chart2CrosshairSyncHandler);
+				}
+			}
 
-      if(chart2Ready === true && chart2.current !== null && chart2ContainerRef.current !== null){
-        chart2.current.unsubscribeCrosshairMove(chart2CrosshairSyncHandler)
-      }
-      
-    }
-  }
+			return () => {
+				chart.current.unsubscribeCrosshairMove(chart1CrosshairSyncHandler);
+				if (chart2.current !== null && chart2ContainerRef.current !== null) {
+					chart2.current.unsubscribeCrosshairMove(chart2CrosshairSyncHandler);
+				}
+			};
+		}
 
-}, [chartReady, chart2Ready, syncCrosshairsDisabled, syncCrosshairsSelected, pointerOverChart])
+		// crosshair sync is not active, so unsubscribe to both events
+		else {
+			chart.current.unsubscribeCrosshairMove(chart1CrosshairSyncHandler);
+
+			if (chart2Ready === true && chart2.current !== null && chart2ContainerRef.current !== null) {
+				chart2.current.unsubscribeCrosshairMove(chart2CrosshairSyncHandler);
+			}
+		}
+	}
+}, [chartReady, chart2Ready, syncCrosshairsDisabled, syncCrosshairsSelected, pointerOverChart]);
 ```
 
 ---

@@ -14,6 +14,7 @@ import { interactionTolerance } from './optimal-bar-width';
 export type ArcRendererData = DeepPartial<CircleOptions> & {
 	points: AnchorPoint[];
 	radius: number;
+	innerRadius?: number;
 	startAngle: number;
 	endAngle: number;
 	hitTestBackground?: boolean;
@@ -81,8 +82,14 @@ export class ArcRenderer implements IPaneRenderer {
 		if (background) {
 			ctx.fillStyle = background;
 			ctx.beginPath();
-			ctx.moveTo(center.x, center.y);
-			ctx.arc(center.x, center.y, radius, startAngle, endAngle);
+			const innerRadius = this._data.innerRadius !== undefined ? this._data.innerRadius * pixelRatio : 0;
+			if (innerRadius > 0) {
+				ctx.arc(center.x, center.y, radius, startAngle, endAngle);
+				ctx.arc(center.x, center.y, innerRadius, endAngle, startAngle, true);
+			} else {
+				ctx.moveTo(center.x, center.y);
+				ctx.arc(center.x, center.y, radius, startAngle, endAngle);
+			}
 			ctx.closePath();
 			ctx.fill();
 		}
