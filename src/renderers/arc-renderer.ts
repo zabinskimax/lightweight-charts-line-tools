@@ -14,7 +14,9 @@ import { interactionTolerance } from './optimal-bar-width';
 export type ArcRendererData = DeepPartial<CircleOptions> & {
 	points: AnchorPoint[];
 	radius: number;
+	radiusY?: number;
 	innerRadius?: number;
+	innerRadiusY?: number;
 	startAngle: number;
 	endAngle: number;
 	hitTestBackground?: boolean;
@@ -45,17 +47,25 @@ export class ArcRenderer implements IPaneRenderer {
 		const scaledPoint = new Point(x * pixelRatio, y * pixelRatio);
 		const center = new Point(this._data.points[0].x * pixelRatio, this._data.points[0].y * pixelRatio);
 
-		const distanceToCenter = Math.sqrt(Math.pow(center.x - scaledPoint.x, 2) + Math.pow(center.y - scaledPoint.y, 2));
-		const radius = this._data.radius * pixelRatio;
+		const rx = this._data.radius * pixelRatio;
+		const ry = (this._data.radiusY ?? this._data.radius) * pixelRatio;
 
-		const angle = Math.atan2(scaledPoint.y - center.y, scaledPoint.x - center.x);
+		// Ellipse hit test: (scaledX/rx)^2 + (scaledY/ry)^2 = 1
+		const dx = scaledPoint.x - center.x;
+		const dy = scaledPoint.y - center.y;
+		const normalizedDistance = Math.sqrt(Math.pow(dx / rx, 2) + Math.pow(dy / ry, 2));
+
+		const angle = Math.atan2(dy, dx);
 		const normalizedStart = this._normalizeAngle(this._data.startAngle);
 		const normalizedEnd = this._normalizeAngle(this._data.endAngle);
 		const normalizedAngle = this._normalizeAngle(angle);
 
 		const inAngleRange = this._isAngleBetween(normalizedAngle, normalizedStart, normalizedEnd);
 
-		if (inAngleRange && Math.abs(distanceToCenter - radius) <= tolerance) {
+		// We check if the point is near the boundary (normalizedDistance around 1)
+		// Since precision is tough with ellipses, we approximate:
+		const toleranceInUnit = tolerance / Math.min(rx, ry);
+		if (inAngleRange && Math.abs(normalizedDistance - 1) <= toleranceInUnit) {
 			return this._hitTest;
 		}
 
@@ -70,7 +80,8 @@ export class ArcRenderer implements IPaneRenderer {
 		ctx.save();
 
 		const center = new Point(this._data.points[0].x * pixelRatio, this._data.points[0].y * pixelRatio);
-		const radius = this._data.radius * pixelRatio;
+		const radiusX = this._data.radius * pixelRatio;
+		const radiusY = (this._data.radiusY ?? this._data.radius) * pixelRatio;
 		const startAngle = this._data.startAngle;
 		const endAngle = this._data.endAngle;
 
@@ -82,13 +93,15 @@ export class ArcRenderer implements IPaneRenderer {
 		if (background) {
 			ctx.fillStyle = background;
 			ctx.beginPath();
-			const innerRadius = this._data.innerRadius !== undefined ? this._data.innerRadius * pixelRatio : 0;
-			if (innerRadius > 0) {
-				ctx.arc(center.x, center.y, radius, startAngle, endAngle);
-				ctx.arc(center.x, center.y, innerRadius, endAngle, startAngle, true);
+			const innerRadiusX = this._data.innerRadius !== undefined ? this._data.innerRadius * pixelRatio : 0;
+			const innerRadiusY = this._data.innerRadiusY !== undefined ? this._data.innerRadiusY * pixelRatio : (this._data.innerRadius !== undefined ? this._data.innerRadius * (radiusY / radiusX) * pixelRatio : 0);
+
+			if (innerRadiusX > 0 || innerRadiusY > 0) {
+				ctx.ellipse(center.x, center.y, radiusX, radiusY, 0, startAngle, endAngle);
+				ctx.ellipse(center.x, center.y, innerRadiusX, innerRadiusY, 0, endAngle, startAngle, true);
 			} else {
 				ctx.moveTo(center.x, center.y);
-				ctx.arc(center.x, center.y, radius, startAngle, endAngle);
+				ctx.ellipse(center.x, center.y, radiusX, radiusY, 0, startAngle, endAngle);
 			}
 			ctx.closePath();
 			ctx.fill();
@@ -97,7 +110,7 @@ export class ArcRenderer implements IPaneRenderer {
 		if (borderColor && scaledBorderWidth > 0) {
 			ctx.beginPath();
 			setLineStyle(ctx, this._data.border?.style || LineStyle.Solid);
-			ctx.arc(center.x, center.y, radius, startAngle, endAngle);
+			ctx.ellipse(center.x, center.y, radiusX, radiusY, 0, startAngle, endAngle);
 			ctx.lineWidth = scaledBorderWidth;
 			ctx.strokeStyle = borderColor;
 			ctx.stroke();

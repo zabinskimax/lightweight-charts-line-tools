@@ -1,19 +1,14 @@
-import { defaultFontFamily } from '../../helpers/make-font';
-
 import { ChartModel } from '../../model/chart-model';
 import { LineTool, LineToolOptionsInternal } from '../../model/line-tool';
-import { BoxHorizontalAlignment, BoxVerticalAlignment, FibRetracementLevel, LineToolType, TextAlignment } from '../../model/line-tool-options';
+import { LineToolType } from '../../model/line-tool-options';
 import { CompositeRenderer } from '../../renderers/composite-renderer';
-import { AnchorPoint } from '../../renderers/line-anchor-renderer';
 import { SegmentRenderer } from '../../renderers/segment-renderer';
 import { SpiralRenderer } from '../../renderers/spiral-renderer';
-import { TextRenderer } from '../../renderers/text-renderer';
 
 import { LineToolPaneView } from './line-tool-pane-view';
 
 export class FibSpiralPaneView extends LineToolPaneView {
-	protected _labelRenderers: TextRenderer[] = [];
-	protected _spiralRenderers: SpiralRenderer[] = [];
+	protected _spiralRenderer: SpiralRenderer = new SpiralRenderer();
 
 	public constructor(source: LineTool<LineToolType>, model: ChartModel) {
 		super(source, model);
@@ -45,42 +40,18 @@ export class FibSpiralPaneView extends LineToolPaneView {
 		const p1 = this._points[0];
 		const p2 = this._points[1];
 
-		options.levels.forEach((level: FibRetracementLevel, i: number) => {
-			// A Fibonacci Spiral tool usually draws ONE spiral based on the Golden Ratio.
-			// However, our options allow for "levels".
-			// For now, let's draw one spiral at level.coeff scale if level.visible is true.
-			if (!level.visible) { return; }
+		// Draw single spiral using the first visible level's color, or fallback to line color
+		const visibleLevel = options.levels.find((l) => l.visible);
+		const spiralColor = visibleLevel ? visibleLevel.color : '#2962ff';
 
-			if (!this._spiralRenderers[i]) {
-				this._spiralRenderers.push(new SpiralRenderer());
-				this._labelRenderers.push(new TextRenderer());
-			}
-
-			// We need to pass scaled points to the renderer to handle "levels"
-			// But SpiralRenderer uses points[0] as center and points[1] as radius unit.
-			const edgeX = p1.x + (p2.x - p1.x) * level.coeff;
-			const edgeY = p1.y + (p2.y - p1.y) * level.coeff;
-
-			this._spiralRenderers[i].setData({
-				color: level.color,
-				width: options.line.width,
-				style: options.line.style,
-				points: [p1, new AnchorPoint(edgeX, edgeY, 0)],
-			});
-
-			this._labelRenderers[i].setData({
-				text: {
-					alignment: TextAlignment.Center,
-					value: `${level.coeff}`,
-					font: { color: level.color, size: 11, family: defaultFontFamily },
-					box: { alignment: { horizontal: BoxHorizontalAlignment.Center, vertical: BoxVerticalAlignment.Middle } },
-				},
-				points: [new AnchorPoint(edgeX, edgeY, 0)],
-			});
-
-			compositeRenderer.append(this._spiralRenderers[i]);
-			compositeRenderer.append(this._labelRenderers[i]);
+		this._spiralRenderer.setData({
+			color: spiralColor,
+			width: options.line.width,
+			style: options.line.style,
+			points: [p1, p2],
 		});
+
+		compositeRenderer.append(this._spiralRenderer);
 
 		this.addAnchors(compositeRenderer);
 

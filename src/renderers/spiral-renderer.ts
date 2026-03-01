@@ -36,8 +36,8 @@ export class SpiralRenderer implements IPaneRenderer {
 			return null;
 		}
 
-        // Hit test is complex for spiral, but we can approximate it or hit test the start/end points.
-        // For simplicity, let's hit test a few points along the spiral.
+		// Hit test is complex for spiral, but we can approximate it or hit test the start/end points.
+		// For simplicity, let's hit test a few points along the spiral.
 		const pixelRatio = ctx.canvas.ownerDocument && ctx.canvas.ownerDocument.defaultView && ctx.canvas.ownerDocument.defaultView.devicePixelRatio || 1;
 		const tolerance = interactionTolerance.line + 2;
 		const scaledPoint = new Point(x * pixelRatio, y * pixelRatio);
@@ -100,13 +100,16 @@ export class SpiralRenderer implements IPaneRenderer {
 		const goldenRatio = (1 + Math.sqrt(5)) / 2;
 		const b = Math.log(goldenRatio) / (Math.PI / 2); // growth factor for 90 degree turns
 
-        // Approximate the logarithmic spiral
-		for (let theta = 0; theta < 10 * Math.PI; theta += 0.1) {
+		// Approximate the logarithmic spiral
+		// We start from a negative theta so it winds out from the center (p1)
+		// At theta = 0, r = startRadius (the distance to p2)
+		for (let theta = -20 * Math.PI; theta < 20 * Math.PI; theta += 0.1) {
 			const r = startRadius * Math.exp(b * theta);
 			const x = centerX + r * Math.cos(startAngle + theta);
 			const y = centerY + r * Math.sin(startAngle + theta);
 
-            // Stop if off screen? For now just limit theta.
+			// Limit points near center for performance and limit outward growth
+			if (theta < 0 && r < 0.5) { continue; }
 			points.push(new Point(x, y));
 			if (r > 3000 * pixelRatio) { break; } // limit size
 		}

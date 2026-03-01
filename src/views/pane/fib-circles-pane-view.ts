@@ -45,10 +45,12 @@ export class FibCirclesPaneView extends LineToolPaneView {
 
 		const center = this._points[0];
 		const edge = this._points[1];
-		const radius0 = Math.sqrt(Math.pow(edge.x - center.x, 2) + Math.pow(edge.y - center.y, 2));
+		const radiusX0 = Math.abs(edge.x - center.x);
+		const radiusY0 = Math.abs(edge.y - center.y);
 
 		options.levels.forEach((level: FibRetracementLevel, i: number) => {
-			const radius = level.coeff * radius0;
+			const rx = level.coeff * radiusX0;
+			const ry = level.coeff * radiusY0;
 
 			if (!this._arcRenderers[i]) {
 				this._arcRenderers.push(new ArcRenderer());
@@ -56,8 +58,10 @@ export class FibCirclesPaneView extends LineToolPaneView {
 			}
 
 			this._arcRenderers[i].setData({
-				radius,
-				innerRadius: i > 0 ? options.levels[i - 1].coeff * radius0 : 0,
+				radius: rx,
+				radiusY: ry,
+				innerRadius: i > 0 ? options.levels[i - 1].coeff * radiusX0 : 0,
+				innerRadiusY: i > 0 ? options.levels[i - 1].coeff * radiusY0 : 0,
 				startAngle: 0,
 				endAngle: 2 * Math.PI,
 				background: { color: applyAlpha(level.color, level.opacity) },
@@ -72,7 +76,7 @@ export class FibCirclesPaneView extends LineToolPaneView {
 					font: { color: level.color, size: 11, family: defaultFontFamily },
 					box: { alignment: { horizontal: BoxHorizontalAlignment.Center, vertical: BoxVerticalAlignment.Middle } },
 				},
-				points: [new AnchorPoint(center.x + radius, center.y, 0)],
+				points: [new AnchorPoint(center.x + rx, center.y, 0)],
 			});
 
 			compositeRenderer.append(this._arcRenderers[i]);
