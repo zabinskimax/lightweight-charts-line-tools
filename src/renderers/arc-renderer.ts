@@ -50,6 +50,10 @@ export class ArcRenderer implements IPaneRenderer {
 		const rx = this._data.radius * pixelRatio;
 		const ry = (this._data.radiusY ?? this._data.radius) * pixelRatio;
 
+		if (rx < 0.5 || ry < 0.5) {
+			return null;
+		}
+
 		// Ellipse hit test: (scaledX/rx)^2 + (scaledY/ry)^2 = 1
 		const dx = scaledPoint.x - center.x;
 		const dy = scaledPoint.y - center.y;
@@ -61,12 +65,36 @@ export class ArcRenderer implements IPaneRenderer {
 		const normalizedAngle = this._normalizeAngle(angle);
 
 		const inAngleRange = this._isAngleBetween(normalizedAngle, normalizedStart, normalizedEnd);
+		if (!inAngleRange) {
+			return null;
+		}
 
-		// We check if the point is near the boundary (normalizedDistance around 1)
-		// Since precision is tough with ellipses, we approximate:
 		const toleranceInUnit = tolerance / Math.min(rx, ry);
-		if (inAngleRange && Math.abs(normalizedDistance - 1) <= toleranceInUnit) {
+
+		// 1. Check outer boundary
+		if (Math.abs(normalizedDistance - 1) <= toleranceInUnit) {
 			return this._hitTest;
+		}
+
+		// 2. Check inner boundary
+		if (this._data.innerRadius !== undefined) {
+			const irx = this._data.innerRadius * pixelRatio;
+			const iry = (this._data.innerRadiusY ?? (this._data.innerRadius * (ry / rx))) * pixelRatio;
+			if (irx > 0.5 && iry > 0.5) {
+				const innerNormalizedDistance = Math.sqrt(Math.pow(dx / irx, 2) + Math.pow(dy / iry, 2));
+				const innerToleranceInUnit = tolerance / Math.min(irx, iry);
+				if (Math.abs(innerNormalizedDistance - 1) <= innerToleranceInUnit) {
+					return this._hitTest;
+				}
+
+				// 3. Check background (area between inner and outer)
+				if (this._data.hitTestBackground && normalizedDistance < 1 && innerNormalizedDistance > 1) {
+					return this._backHitTest;
+				}
+			}
+		} else if (this._data.hitTestBackground && normalizedDistance < 1) {
+			// 3b. Check background (full wedge/circle)
+			return this._backHitTest;
 		}
 
 		return null;
