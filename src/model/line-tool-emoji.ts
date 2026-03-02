@@ -21,7 +21,7 @@ export class LineToolEmoji extends LineTool<'Emoji'> {
 	public override addPoint(point: LineToolPoint): void {
 		if (this._points.length === 0) {
 			super.addPoint(point);
-            // Auto-spawn second point with default size (50px square)
+			// Auto-spawn second point with default size (50px square)
 			const p1Screen = this.pointToScreenPoint(point);
 			if (p1Screen) {
 				const p2Screen = new Point(p1Screen.x + 50, p1Screen.y + 50);
@@ -82,20 +82,24 @@ export class LineToolEmoji extends LineTool<'Emoji'> {
 		const size = Math.max(width, height);
 		const halfSize = size / 2;
 
+		const angle = this.options().emoji.angle;
+		const center = new Point(centerX, centerY);
+
 		const points = [
-			this.screenPointToPoint(new Point(centerX - halfSize, centerY - halfSize)), // 0: TL
-			this.screenPointToPoint(new Point(centerX + halfSize, centerY + halfSize)), // 1: BR
-			this.screenPointToPoint(new Point(centerX - halfSize, centerY + halfSize)), // 2: BL
-			this.screenPointToPoint(new Point(centerX + halfSize, centerY - halfSize)), // 3: TR
+			this._rotatePoint(new Point(centerX - halfSize, centerY - halfSize), center, angle), // 0: TL
+			this._rotatePoint(new Point(centerX + halfSize, centerY + halfSize), center, angle), // 1: BR
+			this._rotatePoint(new Point(centerX - halfSize, centerY + halfSize), center, angle), // 2: BL
+			this._rotatePoint(new Point(centerX + halfSize, centerY - halfSize), center, angle), // 3: TR
 		];
 
 		if (index < 4) {
-			const p = points[index];
+			const p = this.screenPointToPoint(points[index]);
 			return p || start;
 		}
 
 		if (index === 8) {
-			const rot = new Point(centerX, centerY - halfSize - size * 0.2);
+			const rotRelative = new Point(centerX, centerY - halfSize - size * 0.2);
+			const rot = this._rotatePoint(rotRelative, center, angle);
 			const p = this.screenPointToPoint(rot);
 			return p || start;
 		}
@@ -121,62 +125,78 @@ export class LineToolEmoji extends LineTool<'Emoji'> {
 	}
 
 	private _resizeEmoji(index: number, point: LineToolPoint): void {
-		const refIndex = this._getRefIndex(index);
-		const pRefPt = this.getPoint(refIndex);
-		if (!pRefPt) { return; }
-
-		const pRefScreen = this.pointToScreenPoint(pRefPt);
+		const p1s = this.pointToScreenPoint(this._points[0]);
+		const p2s = this.pointToScreenPoint(this._points[1]);
 		const pMoveScreen = this.pointToScreenPoint(point);
+		if (!p1s || !p2s || !pMoveScreen) { return; }
 
-		if (pRefScreen && pMoveScreen) {
-			const dx = pMoveScreen.x - pRefScreen.x;
-			const dy = pMoveScreen.y - pRefScreen.y;
-			const size = Math.max(Math.abs(dx), Math.abs(dy));
+		const centerX = (p1s.x + p2s.x) / 2;
+		const centerY = (p1s.y + p2s.y) / 2;
+		const center = new Point(centerX, centerY);
+		const angle = this.options().emoji.angle;
 
-			const pNewScreen = new Point(
-                pRefScreen.x + Math.sign(dx) * size,
-                pRefScreen.y + Math.sign(dy) * size
-            );
+		// Rotate mouse coordinate into "unrotated space" relative to center
+		const pMoveLocal = this._rotatePoint(pMoveScreen, center, -angle);
 
-			const coord = this.screenPointToPoint(pNewScreen);
-			if (coord) {
-				this._updatePointsFromCoord(index, coord);
-				this.model().updateSource(this);
-			}
+		// Reference point (opposite corner) in unrotated space is static relative to old bounds
+		// Since we always enforce Square, we can derive it from the unrotated P1/P2
+		const width = Math.abs(p2s.x - p1s.x);
+		const height = Math.abs(p2s.y - p1s.y);
+		const halfSize = Math.max(width, height) / 2;
+
+		const refUnrotated = this._getRefUnrotated(index, centerX, centerY, halfSize);
+		const dx = pMoveLocal.x - refUnrotated.x;
+		const dy = pMoveLocal.y - refUnrotated.y;
+		const newSize = Math.max(Math.abs(dx), Math.abs(dy));
+
+		// New axis-aligned corners in unrotated space
+		const newHalfSize = newSize / 2;
+		const newCenterLocal = new Point(
+			refUnrotated.x + (Math.sign(dx) || 1) * newHalfSize,
+			refUnrotated.y + (Math.sign(dy) || 1) * newHalfSize
+		);
+
+		// Transform back to screen space and finally to coordinates
+		// To keep P1/P2 simple, we treat them as the TL/BR corners of the unrotated box
+		const p1NewLocal = new Point(newCenterLocal.x - newHalfSize, newCenterLocal.y - newHalfSize);
+		const p2NewLocal = new Point(newCenterLocal.x + newHalfSize, newCenterLocal.y + newHalfSize);
+
+		// Important: LineTool P1/P2 are axis-aligned logically.
+		// We update them so the unrotated box is consistent with the new size/center.
+		// These points need to be rotated by 'angle' back to world space? No,
+		// the renderer handles rotation. We just update the unit metrics.
+		const coord1 = this.screenPointToPoint(p1NewLocal);
+		const coord2 = this.screenPointToPoint(p2NewLocal);
+
+		if (coord1 && coord2) {
+			this._points[0].timestamp = coord1.timestamp;
+			this._points[0].price = coord1.price;
+			this._points[1].timestamp = coord2.timestamp;
+			this._points[1].price = coord2.price;
+			this.model().updateSource(this);
 		}
 	}
 
-	private _getRefIndex(index: number): number {
+	private _getRefUnrotated(index: number, cx: number, cy: number, hs: number): Point {
 		switch (index) {
-			case 0: return 1; // TL -> BR
-			case 1: return 0; // BR -> TL
-			case 2: return 3; // BL -> TR
-			case 3: return 2; // TR -> BL
-			default: return 1;
+			case 0: return new Point(cx + hs, cy + hs); // TL -> BR
+			case 1: return new Point(cx - hs, cy - hs); // BR -> TL
+			case 2: return new Point(cx + hs, cy - hs); // BL -> TR
+			case 3: return new Point(cx - hs, cy + hs); // TR -> BL
+			default: return new Point(cx + hs, cy + hs);
 		}
 	}
 
-	private _updatePointsFromCoord(index: number, coord: LineToolPoint): void {
-		const p1 = this._points[0];
-		const p2 = this._points[1];
+	private _rotatePoint(p: Point, center: Point, angle: number): Point {
+		const s = Math.sin(angle);
+		const c = Math.cos(angle);
 
-		const leftIdx = p1.timestamp <= p2.timestamp ? 0 : 1;
-		const rightIdx = 1 - leftIdx;
-		const topIdx = p1.price >= p2.price ? 0 : 1;
-		const bottomIdx = 1 - topIdx;
+		const px = p.x - center.x;
+		const py = p.y - center.y;
 
-		if (index === 0) { // TL
-			this._points[leftIdx].timestamp = coord.timestamp;
-			this._points[topIdx].price = coord.price;
-		} else if (index === 1) { // BR
-			this._points[rightIdx].timestamp = coord.timestamp;
-			this._points[bottomIdx].price = coord.price;
-		} else if (index === 2) { // BL
-			this._points[leftIdx].timestamp = coord.timestamp;
-			this._points[bottomIdx].price = coord.price;
-		} else if (index === 3) { // TR
-			this._points[rightIdx].timestamp = coord.timestamp;
-			this._points[topIdx].price = coord.price;
-		}
+		const nx = px * c - py * s;
+		const ny = px * s + py * c;
+
+		return new Point(nx + center.x, ny + center.y);
 	}
 }
