@@ -342,6 +342,8 @@ export const EmojiOptionDefaults: EmojiToolOptions = {
 	emoji: {
 		value: '😀',
 		angle: 0,
+		flipH: false,
+		flipV: false,
 	},
 };
 

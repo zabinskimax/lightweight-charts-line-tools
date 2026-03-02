@@ -20,7 +20,7 @@ export class EmojiRenderer implements IPaneRenderer {
 		this._data = data;
 	}
 
-	public hitTest(x: Coordinate, y: Coordinate, ctx: CanvasRenderingContext2D): HitTestResult<void> | null {
+	public hitTest(x: Coordinate, y: Coordinate, _ctx: CanvasRenderingContext2D): HitTestResult<void> | null {
 		if (!this._data || !this._data.p1 || !this._data.p2) {
 			return null;
 		}
@@ -62,6 +62,12 @@ export class EmojiRenderer implements IPaneRenderer {
 		ctx.save();
 		ctx.translate(centerX * pixelRatio, centerY * pixelRatio);
 		ctx.rotate(emoji.angle);
+		// Apply inversion flip — scale(-1,1) mirrors horizontally, (1,-1) mirrors vertically.
+		const sx = emoji.flipH ? -1 : 1;
+		const sy = emoji.flipV ? -1 : 1;
+		if (sx !== 1 || sy !== 1) {
+			ctx.scale(sx, sy);
+		}
 
 		// Draw border/box and connector only if selected
 		if (this._data.selected) {
@@ -69,11 +75,15 @@ export class EmojiRenderer implements IPaneRenderer {
 			ctx.lineWidth = Math.max(1, Math.floor(pixelRatio));
 			ctx.strokeRect(-size / 2 * pixelRatio, -size / 2 * pixelRatio, size * pixelRatio, size * pixelRatio);
 
-			// Draw connector line to rotation handle
+			// Draw connector line to rotation handle (always drawn in the un-flipped
+			// direction so the rotation handle stays above the box visually).
+			ctx.save();
+			if (sx !== 1 || sy !== 1) { ctx.scale(sx, sy); } // undo flip for the connector
 			ctx.beginPath();
 			ctx.moveTo(0, -size / 2 * pixelRatio);
-			ctx.lineTo(0, (-size / 2 - size * 0.2) * pixelRatio); // 20% of size offset
+			ctx.lineTo(0, (-size / 2 - size * 0.2) * pixelRatio);
 			ctx.stroke();
+			ctx.restore();
 		}
 
 		const fontSize = size * pixelRatio;

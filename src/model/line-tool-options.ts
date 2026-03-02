@@ -152,6 +152,16 @@ export interface EmojiOptions {
 	 * Emoji angle.
 	 */
 	angle: number;
+
+	/**
+	 * Flip emoji horizontally (mirror on vertical axis).
+	 */
+	flipH: boolean;
+
+	/**
+	 * Flip emoji vertically (mirror on horizontal axis).
+	 */
+	flipV: boolean;
 }
 
 export interface TextFontOptions {

@@ -124,7 +124,7 @@ export class LineToolEmoji extends LineTool<'Emoji'> {
 		}
 	}
 
-	private _resizeEmoji(index: number, point: LineToolPoint): void {
+	private _resizeEmoji(_index: number, point: LineToolPoint): void {
 		const p1s = this.pointToScreenPoint(this._points[0]);
 		const p2s = this.pointToScreenPoint(this._points[1]);
 		const pDrag = this.pointToScreenPoint(point);
@@ -134,36 +134,19 @@ export class LineToolEmoji extends LineTool<'Emoji'> {
 		const centerX = (p1s.x + p2s.x) / 2;
 		const centerY = (p1s.y + p2s.y) / 2;
 		const center = new Point(centerX, centerY);
-		const size = Math.max(Math.abs(p2s.x - p1s.x), Math.abs(p2s.y - p1s.y));
-		const hs = size / 2;
 
-		// 1. Identify the fixed reference corner in screen space
-		const refIndex = this._getRefIndex(index);
-		const refLocal = this._getLocalCorner(refIndex, hs);
-		const pRefRotated = this._rotatePoint(new Point(centerX + refLocal.x, centerY + refLocal.y), center, angle);
-
-		// 2. Transformed drag point relative to fixed reference point
-		const dragVector = new Point(pDrag.x - pRefRotated.x, pDrag.y - pRefRotated.y);
+		// 1. Vector from FIXED center to mouse drag point
+		const dragVector = new Point(pDrag.x - center.x, pDrag.y - center.y);
+		// 2. Transformed drag vector into emoji's local (unrotated) space
 		const dragLocal = this._rotateVector(dragVector, -angle);
 
-		// 3. Calculate new size based on mouse displacement
-		const newSize = Math.max(Math.abs(dragLocal.x), Math.abs(dragLocal.y));
-		const newHS = newSize / 2;
+		// 3. Symmetric resizing: center is fixed, we just update the halfSize (hs)
+		// and rebuild P1/P2 around the SAME center.
+		const newHS = Math.max(Math.abs(dragLocal.x), Math.abs(dragLocal.y));
 
-		// 4. Calculate new local center relative to anchor
-		// The box expands in the direction of the mouse relative to the anchor
-		const signX = Math.sign(dragLocal.x) || 1;
-		const signY = Math.sign(dragLocal.y) || 1;
-		const localCenterRelativeToAnchor = new Point(signX * newHS, signY * newHS);
-
-		// Map back to screen space to find the world center
-		const rotatedCenterOffset = this._rotateVector(localCenterRelativeToAnchor, angle);
-		const ncx = pRefRotated.x + rotatedCenterOffset.x;
-		const ncy = pRefRotated.y + rotatedCenterOffset.y;
-
-		// 5. Update axis-aligned model points (P1/P2)
-		const coord1 = this.screenPointToPoint(new Point(ncx - newHS, ncy - newHS));
-		const coord2 = this.screenPointToPoint(new Point(ncx + newHS, ncy + newHS));
+		// 4. Update axis-aligned model points (P1/P2) centered on the fixed coordinate
+		const coord1 = this.screenPointToPoint(new Point(centerX - newHS, centerY - newHS));
+		const coord2 = this.screenPointToPoint(new Point(centerX + newHS, centerY + newHS));
 
 		if (coord1 && coord2) {
 			this._points[0].timestamp = coord1.timestamp;
@@ -171,26 +154,6 @@ export class LineToolEmoji extends LineTool<'Emoji'> {
 			this._points[1].timestamp = coord2.timestamp;
 			this._points[1].price = coord2.price;
 			this.model().updateSource(this);
-		}
-	}
-
-	private _getRefIndex(index: number): number {
-		switch (index) {
-			case 0: return 1; // TL -> BR
-			case 1: return 0; // BR -> TL
-			case 2: return 3; // BL -> TR
-			case 3: return 2; // TR -> BL
-			default: return 1;
-		}
-	}
-
-	private _getLocalCorner(index: number, hs: number): Point {
-		switch (index) {
-			case 0: return new Point(-hs, -hs); // TL
-			case 1: return new Point(hs, hs);   // BR
-			case 2: return new Point(-hs, hs);  // BL
-			case 3: return new Point(hs, -hs);  // TR
-			default: return new Point(hs, hs);
 		}
 	}
 
