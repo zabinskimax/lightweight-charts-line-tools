@@ -9,6 +9,7 @@ export interface EmojiRendererData {
 	emoji: EmojiOptions;
 	p1: Point | null;
 	p2: Point | null;
+	selected: boolean;
 }
 
 export class EmojiRenderer implements IPaneRenderer {
@@ -31,7 +32,7 @@ export class EmojiRenderer implements IPaneRenderer {
 		const height = Math.abs(p2.y - p1.y);
 		const size = Math.max(width, height);
 
-        // Transform hit test point to local space
+		// Transform hit test point to local space
 		const dx = x - centerX;
 		const dy = y - centerY;
 		const cos = Math.cos(-emoji.angle);
@@ -62,24 +63,26 @@ export class EmojiRenderer implements IPaneRenderer {
 		ctx.translate(centerX * pixelRatio, centerY * pixelRatio);
 		ctx.rotate(emoji.angle);
 
-        // Draw border/box (Always a square on the canvas)
-		ctx.strokeStyle = '#2196F3'; // TradingView blue
-		ctx.lineWidth = Math.max(1, Math.floor(pixelRatio));
-		ctx.strokeRect(-size / 2 * pixelRatio, -size / 2 * pixelRatio, size * pixelRatio, size * pixelRatio);
+		// Draw border/box and connector only if selected
+		if (this._data.selected) {
+			ctx.strokeStyle = '#2196F3'; // TradingView blue
+			ctx.lineWidth = Math.max(1, Math.floor(pixelRatio));
+			ctx.strokeRect(-size / 2 * pixelRatio, -size / 2 * pixelRatio, size * pixelRatio, size * pixelRatio);
 
-        // Draw connector line to rotation handle
-		ctx.beginPath();
-		ctx.moveTo(0, -size / 2 * pixelRatio);
-		ctx.lineTo(0, (-size / 2 - size * 0.2) * pixelRatio); // 20% of size offset
-		ctx.stroke();
+			// Draw connector line to rotation handle
+			ctx.beginPath();
+			ctx.moveTo(0, -size / 2 * pixelRatio);
+			ctx.lineTo(0, (-size / 2 - size * 0.2) * pixelRatio); // 20% of size offset
+			ctx.stroke();
+		}
 
 		const fontSize = size * pixelRatio;
 		ctx.font = `${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"`;
 		ctx.textAlign = 'center';
 		ctx.textBaseline = 'middle';
 
-        // Add a small vertical offset to account for common emoji baseline shifts
-        // (usually they are shifted slightly up in most fonts)
+		// Add a small vertical offset to account for common emoji baseline shifts
+		// (usually they are shifted slightly up in most fonts)
 		const verticalOffset = fontSize * 0.08;
 		ctx.fillText(emoji.value, 0, verticalOffset);
 

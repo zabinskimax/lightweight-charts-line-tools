@@ -41,12 +41,13 @@ export class EmojiPaneView extends LineToolPaneView {
 			emoji: options.emoji,
 			p1: p1,
 			p2: p2,
+			selected: this._source.selected(),
 		});
 
 		const compositeRenderer = new CompositeRenderer();
 		compositeRenderer.append(this._emojiRenderer);
 
-        // Add rotated anchors
+		// Add rotated anchors
 		this._addRotatedAnchors(p1, p2, options.emoji.angle, compositeRenderer);
 
 		this._renderer = compositeRenderer;
@@ -65,20 +66,20 @@ export class EmojiPaneView extends LineToolPaneView {
 			const cos = Math.cos(angle);
 			const sin = Math.sin(angle);
 			return new Point(
-                (centerX + dx * cos - dy * sin) as Coordinate,
-                (centerY + dx * sin + dy * cos) as Coordinate
-            );
+				(centerX + dx * cos - dy * sin) as Coordinate,
+				(centerY + dx * sin + dy * cos) as Coordinate
+			);
 		};
 
 		const halfSize = size / 2;
 
-        // Corners (Strictly Square relative to center)
+		// Corners (Strictly Square relative to center)
 		const tl = rotate(centerX - halfSize, centerY - halfSize);
 		const br = rotate(centerX + halfSize, centerY + halfSize);
 		const bl = rotate(centerX - halfSize, centerY + halfSize);
 		const tr = rotate(centerX + halfSize, centerY - halfSize);
 
-        // Rotation handle (Top Center + Offset relative to size)
+		// Rotation handle (Top Center + Offset relative to size)
 		const rot = rotate(centerX, centerY - halfSize - size * 0.2);
 
 		const anchorPoints = [
