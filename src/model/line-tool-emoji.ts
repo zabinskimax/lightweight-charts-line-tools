@@ -108,14 +108,14 @@ export class LineToolEmoji extends LineTool<'Emoji'> {
 	}
 
 	private _rotateEmoji(point: LineToolPoint): void {
-		const p1 = this.pointToScreenPoint(this._points[0]);
-		const p2 = this.pointToScreenPoint(this._points[1]);
+		const p1s = this.pointToScreenPoint(this._points[0]);
+		const p2s = this.pointToScreenPoint(this._points[1]);
 		const pTarget = this.pointToScreenPoint(point);
 
-		if (p1 && p2 && pTarget) {
+		if (p1s && p2s && pTarget) {
 			const center = {
-				x: (p1.x + p2.x) / 2,
-				y: (p1.y + p2.y) / 2,
+				x: (p1s.x + p2s.x) / 2,
+				y: (p1s.y + p2s.y) / 2,
 			};
 			const angle = Math.atan2(pTarget.y - center.y, pTarget.x - center.x) + Math.PI / 2;
 			this.applyOptions({
@@ -127,46 +127,49 @@ export class LineToolEmoji extends LineTool<'Emoji'> {
 	private _resizeEmoji(index: number, point: LineToolPoint): void {
 		const p1s = this.pointToScreenPoint(this._points[0]);
 		const p2s = this.pointToScreenPoint(this._points[1]);
-		const pMoveScreen = this.pointToScreenPoint(point);
-		if (!p1s || !p2s || !pMoveScreen) { return; }
+		const pDrag = this.pointToScreenPoint(point);
+		if (!p1s || !p2s || !pDrag) { return; }
 
+		const angle = this.options().emoji.angle;
+		const width = Math.abs(p2s.x - p1s.x);
+		const height = Math.abs(p2s.y - p1s.y);
+		const size = Math.max(width, height);
+		const halfSize = size / 2;
 		const centerX = (p1s.x + p2s.x) / 2;
 		const centerY = (p1s.y + p2s.y) / 2;
 		const center = new Point(centerX, centerY);
-		const angle = this.options().emoji.angle;
 
-		// Rotate mouse coordinate into "unrotated space" relative to center
-		const pMoveLocal = this._rotatePoint(pMoveScreen, center, -angle);
+		// 1. Find the reference point (opposite corner) in screen space
+		const refIndex = this._getRefIndex(index);
+		const refLocal = this._getLocalCorner(refIndex, halfSize);
+		const pRefRotated = this._rotatePoint(new Point(centerX + refLocal.x, centerY + refLocal.y), center, angle);
 
-		// Reference point (opposite corner) in unrotated space is static relative to old bounds
-		// Since we always enforce Square, we can derive it from the unrotated P1/P2
-		const width = Math.abs(p2s.x - p1s.x);
-		const height = Math.abs(p2s.y - p1s.y);
-		const halfSize = Math.max(width, height) / 2;
+		// 2. Transformed drag point relative to fixed reference point
+		const dragVector = new Point(pDrag.x - pRefRotated.x, pDrag.y - pRefRotated.y);
+		// Rotate this vector back by -angle to get axis-aligned dimensions
+		const dragLocal = this._rotateVector(dragVector, -angle);
 
-		const refUnrotated = this._getRefUnrotated(index, centerX, centerY, halfSize);
-		const dx = pMoveLocal.x - refUnrotated.x;
-		const dy = pMoveLocal.y - refUnrotated.y;
-		const newSize = Math.max(Math.abs(dx), Math.abs(dy));
-
-		// New axis-aligned corners in unrotated space
+		// 3. Calculate new size and local center in unrotated space
+		const newSize = Math.max(Math.abs(dragLocal.x), Math.abs(dragLocal.y));
 		const newHalfSize = newSize / 2;
-		const newCenterLocal = new Point(
-			refUnrotated.x + (Math.sign(dx) || 1) * newHalfSize,
-			refUnrotated.y + (Math.sign(dy) || 1) * newHalfSize
+
+		// The new center in unrotated space is relative to pRefRotated
+		const centerOffsetLocal = new Point(
+			(Math.sign(dragLocal.x) || 1) * newHalfSize,
+			(Math.sign(dragLocal.y) || 1) * newHalfSize
 		);
+		// Transform center offset back to world screen space
+		const centerOffsetRotated = this._rotateVector(centerOffsetLocal, angle);
+		const newCenterScreen = new Point(pRefRotated.x + centerOffsetRotated.x, pRefRotated.y + centerOffsetRotated.y);
 
-		// Transform back to screen space and finally to coordinates
-		// To keep P1/P2 simple, we treat them as the TL/BR corners of the unrotated box
-		const p1NewLocal = new Point(newCenterLocal.x - newHalfSize, newCenterLocal.y - newHalfSize);
-		const p2NewLocal = new Point(newCenterLocal.x + newHalfSize, newCenterLocal.y + newHalfSize);
+		// 4. Update axis-aligned model points (P1/P2)
+		// We define P1/P2 as the AABB that produces this visual square when NOT rotated.
+		// Their center must be newCenterScreen, and size must be newSize.
+		const p1NewAxis = new Point(newCenterScreen.x - newHalfSize, newCenterScreen.y - newHalfSize);
+		const p2NewAxis = new Point(newCenterScreen.x + newHalfSize, newCenterScreen.y + newHalfSize);
 
-		// Important: LineTool P1/P2 are axis-aligned logically.
-		// We update them so the unrotated box is consistent with the new size/center.
-		// These points need to be rotated by 'angle' back to world space? No,
-		// the renderer handles rotation. We just update the unit metrics.
-		const coord1 = this.screenPointToPoint(p1NewLocal);
-		const coord2 = this.screenPointToPoint(p2NewLocal);
+		const coord1 = this.screenPointToPoint(p1NewAxis);
+		const coord2 = this.screenPointToPoint(p2NewAxis);
 
 		if (coord1 && coord2) {
 			this._points[0].timestamp = coord1.timestamp;
@@ -177,13 +180,23 @@ export class LineToolEmoji extends LineTool<'Emoji'> {
 		}
 	}
 
-	private _getRefUnrotated(index: number, cx: number, cy: number, hs: number): Point {
+	private _getRefIndex(index: number): number {
 		switch (index) {
-			case 0: return new Point(cx + hs, cy + hs); // TL -> BR
-			case 1: return new Point(cx - hs, cy - hs); // BR -> TL
-			case 2: return new Point(cx + hs, cy - hs); // BL -> TR
-			case 3: return new Point(cx - hs, cy + hs); // TR -> BL
-			default: return new Point(cx + hs, cy + hs);
+			case 0: return 1; // TL -> BR
+			case 1: return 0; // BR -> TL
+			case 2: return 3; // BL -> TR
+			case 3: return 2; // TR -> BL
+			default: return 1;
+		}
+	}
+
+	private _getLocalCorner(index: number, hs: number): Point {
+		switch (index) {
+			case 0: return new Point(-hs, -hs); // TL
+			case 1: return new Point(hs, hs);   // BR
+			case 2: return new Point(-hs, hs);  // BL
+			case 3: return new Point(hs, -hs);  // TR
+			default: return new Point(hs, hs);
 		}
 	}
 
@@ -198,5 +211,11 @@ export class LineToolEmoji extends LineTool<'Emoji'> {
 		const ny = px * s + py * c;
 
 		return new Point(nx + center.x, ny + center.y);
+	}
+
+	private _rotateVector(v: Point, angle: number): Point {
+		const s = Math.sin(angle);
+		const c = Math.cos(angle);
+		return new Point(v.x * c - v.y * s, v.x * s + v.y * c);
 	}
 }
