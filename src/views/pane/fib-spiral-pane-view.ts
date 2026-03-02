@@ -1,6 +1,6 @@
 import { ChartModel } from '../../model/chart-model';
 import { LineTool, LineToolOptionsInternal } from '../../model/line-tool';
-import { LineToolType } from '../../model/line-tool-options';
+import { FibRetracementLevel, LineToolType } from '../../model/line-tool-options';
 import { CompositeRenderer } from '../../renderers/composite-renderer';
 import { SegmentRenderer } from '../../renderers/segment-renderer';
 import { SpiralRenderer } from '../../renderers/spiral-renderer';
@@ -41,7 +41,7 @@ export class FibSpiralPaneView extends LineToolPaneView {
 		const p2 = this._points[1];
 
 		// Draw single spiral using the first visible level's color, or fallback to line color
-		const visibleLevel = options.levels.find((l) => l.visible);
+		const visibleLevel = options.levels.find((l: FibRetracementLevel) => l.visible);
 		const spiralColor = visibleLevel ? visibleLevel.color : '#2962ff';
 
 		this._spiralRenderer.setData({

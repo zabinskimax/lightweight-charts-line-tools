@@ -142,6 +142,18 @@ export interface TextBoxOptions {
 	background?: BackroundOptions;
 }
 
+export interface EmojiOptions {
+	/**
+	 * Emoji value.
+	 */
+	value: string;
+
+	/**
+	 * Emoji angle.
+	 */
+	angle: number;
+}
+
 export interface TextFontOptions {
 	/**
 	 * Font color.
@@ -805,6 +817,16 @@ export interface LineToolHighlighterOptions {
 }
 
 /**
+ * Represents style options for an emoji.
+ */
+export interface LineToolEmojiOptions {
+	/**
+	 * Emoji config.
+	 */
+	emoji: EmojiOptions;
+}
+
+/**
  * Represents style options for a path.
  */
 export interface LineToolPathOptions {
@@ -1112,6 +1134,9 @@ export type HighlighterToolPartialOptions = LineToolPartialOptions<LineToolHighl
 export type TextToolOptions = LineToolOptions<LineToolTextOptions>;
 export type TextToolPartialOptions = LineToolPartialOptions<LineToolTextOptions>;
 
+export type EmojiToolOptions = LineToolOptions<LineToolEmojiOptions>;
+export type EmojiToolPartialOptions = LineToolPartialOptions<LineToolEmojiOptions>;
+
 export type TrendLineToolOptions = LineToolOptions<LineToolTrendLineOptions>;
 export type TrendLineToolPartialOptions = LineToolPartialOptions<LineToolTrendLineOptions>;
 
@@ -1211,6 +1236,7 @@ export interface LineToolOptionsMap {
 	Brush: BrushToolOptions;
 	Path: PathToolOptions;
 	Text: TextToolOptions;
+	Emoji: EmojiToolOptions;
 
 	Ray: TrendLineToolOptions;
 	Arrow: TrendLineToolOptions;
@@ -1250,6 +1276,7 @@ export interface LineToolPartialOptionsMap {
 	Brush: BrushToolPartialOptions;
 	Path: PathToolPartialOptions;
 	Text: TextToolPartialOptions;
+	Emoji: EmojiToolPartialOptions;
 
 	Ray: TrendLineToolPartialOptions;
 	Arrow: TrendLineToolPartialOptions;

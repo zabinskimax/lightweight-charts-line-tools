@@ -4,7 +4,7 @@ import { applyAlpha } from '../../helpers/color';
 import { defaultFontFamily } from '../../helpers/make-font';
 import { clone, merge } from '../../helpers/strict-type-checks';
 
-import { BoxHorizontalAlignment, BoxVerticalAlignment, BrushToolOptions, CalloutToolOptions, CircleToolOptions, CrossLineToolOptions, FibCirclesToolOptions, FibRetracementToolOptions, FibSpiralToolOptions, HighlighterToolOptions, HorizontalLineToolOptions, LineJoin, LongShortPositionToolOptions, MarketDepthToolOptions, ParallelChannelToolOptions, PathToolOptions, PriceRangeToolOptions, RectangleToolOptions, TextAlignment, TextOptions, TextToolOptions, TrendLineToolOptions, TriangleToolOptions, VerticalLineToolOptions, TrendBasedFibExtensionToolOptions, FibChannelToolOptions, FibTimeZoneToolOptions, FibSpeedResistanceFanToolOptions, TrendBasedFibTimeToolOptions, FibWedgeToolOptions, PitchfanToolOptions, FibSpeedResistanceArcsToolOptions } from '../../model/line-tool-options';
+import { BoxHorizontalAlignment, BoxVerticalAlignment, BrushToolOptions, CalloutToolOptions, CircleToolOptions, CrossLineToolOptions, FibCirclesToolOptions, FibRetracementToolOptions, FibSpiralToolOptions, HighlighterToolOptions, HorizontalLineToolOptions, LineJoin, LongShortPositionToolOptions, MarketDepthToolOptions, ParallelChannelToolOptions, PathToolOptions, PriceRangeToolOptions, RectangleToolOptions, TextAlignment, TextOptions, TextToolOptions, TrendLineToolOptions, TriangleToolOptions, VerticalLineToolOptions, TrendBasedFibExtensionToolOptions, FibChannelToolOptions, FibTimeZoneToolOptions, FibSpeedResistanceFanToolOptions, TrendBasedFibTimeToolOptions, FibWedgeToolOptions, PitchfanToolOptions, FibSpeedResistanceArcsToolOptions, EmojiToolOptions } from '../../model/line-tool-options';
 
 import { LineEnd, LineStyle } from '../..';
 
@@ -321,6 +321,16 @@ export const TextOptionDefaults: TextToolOptions = {
 	text: merge(clone(TextDefaults), { value: 'Text' }) as TextOptions,
 };
 
+export const EmojiOptionDefaults: EmojiToolOptions = {
+	visible: true,
+	editable: true,
+	locked: false,
+	emoji: {
+		value: '😀',
+		angle: 0,
+	},
+};
+
 export const TrendBasedFibExtensionOptionDefaults: TrendBasedFibExtensionToolOptions = clone(FibRetracementOptionDefaults);
 export const FibChannelOptionDefaults: FibChannelToolOptions = clone(FibRetracementOptionDefaults);
 export const FibTimeZoneOptionDefaults: FibTimeZoneToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as FibTimeZoneToolOptions;
@@ -365,5 +375,6 @@ export const LineToolsOptionDefaults = {
 	Brush: BrushOptionDefaults,
 	Path: PathOptionDefaults,
 	Text: TextOptionDefaults,
+	Emoji: EmojiOptionDefaults,
 	MarketDepth: MarketDepthOptionDefaults,
 };

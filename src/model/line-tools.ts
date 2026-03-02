@@ -5,6 +5,7 @@ import { LineToolBrush } from './line-tool-brush';
 import { LineToolCallout } from './line-tool-callout';
 import { LineToolCircle } from './line-tool-circle';
 import { LineToolCrossLine } from './line-tool-cross-line';
+import { LineToolEmoji } from './line-tool-emoji';
 import { LineToolExtendedLine } from './line-tool-extended-line';
 import { LineToolFibChannel } from './line-tool-fib-channel';
 import { LineToolFibCircles } from './line-tool-fib-circles';
@@ -61,6 +62,7 @@ export const LineTools: Record<LineToolType, new (...args: any) => LineTool<Line
 	Brush: LineToolBrush,
 	Path: LineToolPath,
 	Text: LineToolText,
+	Emoji: LineToolEmoji,
 
 	Ray: LineToolRay,
 	Arrow: LineToolArrow,

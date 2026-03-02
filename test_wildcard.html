@@ -39,6 +39,73 @@
       <button id="LongShortPositionButton">Add LongShortPosition</button>
       <button id="CalloutButton">Add Callout</button>
       <br>
+      <select id="EmojiPicker"></select>
+      <button id="EmojiButton">Add Emoji</button>
+      <br>
+      <script>
+        (function populateEmojis() {
+          const picker = document.getElementById('EmojiPicker');
+          const categories = [
+            { name: 'Smileys & Emotion', ranges: [[0x1F600, 0x1F64F]] },
+            { name: 'People & Body', ranges: [[0x1F300, 0x1F30F], [0x1F460, 0x1F48F], [0x1F9D0, 0x1F9FF]] },
+            { name: 'Animals & Nature', ranges: [[0x1F400, 0x1F45F], [0x1F330, 0x1F35F]] },
+            { name: 'Food & Drink', ranges: [[0x1F360, 0x1F37F], [0x1F950, 0x1F96F]] },
+            { name: 'Activities', ranges: [[0x1F3A0, 0x1F3CF], [0x1F940, 0x1F94F]] },
+            { name: 'Travel & Places', ranges: [[0x1F680, 0x1F6FF], [0x1F3E0, 0x1F3EF]] },
+            { name: 'Objects', ranges: [[0x1F490, 0x1F4AF], [0x1F500, 0x1F53F], [0x1F9E0, 0x1F9FF]] },
+            { name: 'Symbols', ranges: [[0x1F300, 0x1F32F], [0x2600, 0x26FF], [0x2700, 0x27BF]] },
+          ];
+
+          let categoryIndex = 0;
+          let rangeIndex = 0;
+          let currentCode = 0;
+          let currentGroup = null;
+
+          function loadBatch() {
+            const batchSize = 50;
+            let count = 0;
+
+            while (categoryIndex < categories.length && count < batchSize) {
+              const category = categories[categoryIndex];
+              if (!currentGroup) {
+                currentGroup = document.createElement('optgroup');
+                currentGroup.label = category.name;
+                picker.appendChild(currentGroup);
+              }
+
+              const range = category.ranges[rangeIndex];
+              if (currentCode === 0) currentCode = range[0];
+
+              while (currentCode <= range[1] && count < batchSize) {
+                const emoji = String.fromCodePoint(currentCode);
+                const option = document.createElement('option');
+                option.value = emoji;
+                option.textContent = emoji + ' ' + category.name + ' ' + currentCode; // Tooltip-like text
+                option.textContent = emoji;
+                currentGroup.appendChild(option);
+                currentCode++;
+                count++;
+              }
+
+              if (currentCode > range[1]) {
+                rangeIndex++;
+                currentCode = 0;
+                if (rangeIndex >= category.ranges.length) {
+                  categoryIndex++;
+                  rangeIndex = 0;
+                  currentGroup = null;
+                }
+              }
+            }
+
+            if (categoryIndex < categories.length) {
+              requestAnimationFrame(loadBatch);
+            }
+          }
+
+          requestAnimationFrame(loadBatch);
+        })();
+      </script>
       <button id="TrendBasedFibExtensionButton">Add TrendBasedFibExtension</button>
       <button id="FibChannelButton">Add FibChannel</button>
       <button id="FibTimeZoneButton">Add FibTimeZone</button>
@@ -152,6 +219,16 @@
     lineToolTypes.forEach(type => {
       document.getElementById(type + 'Button').addEventListener('click', () => {
         chart.setActiveLineTool(type, {});
+      });
+    });
+
+    document.getElementById('EmojiButton').addEventListener('click', () => {
+      const emoji = document.getElementById('EmojiPicker').value;
+      chart.setActiveLineTool('Emoji', {
+        emoji: {
+          value: emoji,
+          size: 32
+        }
       });
     });
 
