@@ -3,7 +3,7 @@ import { drawScaled } from '../helpers/canvas-helpers';
 import { Delegate } from '../helpers/delegate';
 import { IDestroyable } from '../helpers/idestroyable';
 import { ISubscription } from '../helpers/isubscription';
-import { DeepPartial } from '../helpers/strict-type-checks';
+import { clone, DeepPartial } from '../helpers/strict-type-checks';
 
 import { BarPrice, BarPrices } from '../model/bar';
 import { ChartModel, ChartOptionsInternal } from '../model/chart-model';
@@ -14,8 +14,9 @@ import {
 	TimeScaleInvalidation,
 	TimeScaleInvalidationType,
 } from '../model/invalidate-mask';
-import { LineToolExport } from '../model/line-tool';
+import { LineTool, LineToolExport, LineToolPoint } from '../model/line-tool';
 import { LineToolType } from '../model/line-tool-options';
+import { LineTools } from '../model/line-tools';
 import { Point } from '../model/point';
 import { PriceAxisPosition } from '../model/price-scale';
 import { Series } from '../model/series';
@@ -50,6 +51,8 @@ export type LineToolsDoubleClickEventParamsImplSupplier = () => LineToolsDoubleC
 export type LineToolsAfterEditEventParamsImplSupplier = () => LineToolsAfterEditEventParamsImpl;
 
 export class ChartWidget implements IDestroyable {
+	private static _clipboard: LineToolExport<LineToolType>[] = [];
+
 	private readonly _options: ChartOptionsInternal;
 	private _paneWidgets: PaneWidget[] = [];
 	// private _paneSeparators: PaneSeparator[] = [];
@@ -69,6 +72,7 @@ export class ChartWidget implements IDestroyable {
 	private _lineToolsDoubleClick: Delegate<LineToolsDoubleClickEventParamsImplSupplier> = new Delegate();
 	private _lineToolsAfterEdit: Delegate<LineToolsAfterEditEventParamsImplSupplier> = new Delegate();
 	private _onWheelBound: (event: WheelEvent) => void;
+	private _onKeyDownBound: (event: KeyboardEvent) => void;
 
 	public constructor(container: HTMLElement, options: ChartOptionsInternal) {
 		this._options = options;
@@ -86,6 +90,11 @@ export class ChartWidget implements IDestroyable {
 
 		this._onWheelBound = this._onMousewheel.bind(this);
 		this._element.addEventListener('wheel', this._onWheelBound, { passive: false });
+
+		this._element.tabIndex = 0;
+		this._element.style.outline = 'none';
+		this._onKeyDownBound = this._onKeyDown.bind(this);
+		this._element.addEventListener('keydown', this._onKeyDownBound);
 
 		this._model = new ChartModel(
 			this._invalidateHandler.bind(this),
@@ -148,6 +157,7 @@ export class ChartWidget implements IDestroyable {
 
 	public destroy(): void {
 		this._element.removeEventListener('wheel', this._onWheelBound);
+		this._element.removeEventListener('keydown', this._onKeyDownBound);
 		if (this._drawRafId !== 0) {
 			window.cancelAnimationFrame(this._drawRafId);
 		}
@@ -687,6 +697,7 @@ export class ChartWidget implements IDestroyable {
 	}
 
 	private _onPaneWidgetClicked(time: TimePointIndex | null, point: Point): void {
+		this._element.focus();
 		this._clicked.fire(() => this._getMouseEventParamsImpl(time, point));
 	}
 
@@ -713,6 +724,76 @@ export class ChartWidget implements IDestroyable {
 
 	private _isRightAxisVisible(): boolean {
 		return this._paneWidgets[0].state().rightPriceScale().options().visible;
+	}
+
+	private _onKeyDown(event: KeyboardEvent): void {
+		const isControlAction = event.ctrlKey || event.metaKey;
+		if (!isControlAction) {
+			return;
+		}
+
+		if (event.code === 'KeyC') {
+			this._copyToClipboard();
+			event.preventDefault();
+		} else if (event.code === 'KeyV') {
+			this._pasteFromClipboard();
+			event.preventDefault();
+		}
+	}
+
+	private _copyToClipboard(): void {
+		const pane = this._model.panes()[0];
+		if (!pane) {
+			return;
+		}
+
+		const selectedLineTools = pane.getSelectedLineTools();
+		if (selectedLineTools.length === 0) {
+			return;
+		}
+
+		ChartWidget._clipboard = selectedLineTools.map((l: LineTool<LineToolType>) => l.exportLineToolToLineToolExport());
+	}
+
+	private _pasteFromClipboard(): void {
+		if (ChartWidget._clipboard.length === 0) {
+			return;
+		}
+
+		const pane = this._model.panes()[0];
+		if (!pane) {
+			return;
+		}
+
+		const priceScaleId = pane.defaultVisiblePriceScale()?.id() || this._model.defaultVisiblePriceScaleId();
+
+		// Deselect current tools
+		pane.getAllLineTools().forEach((l: LineTool<LineToolType>) => l.setSelected(false));
+
+		ChartWidget._clipboard.forEach((exportedTool: LineToolExport<LineToolType>) => {
+			const toolType = exportedTool.toolType;
+			// Clone options to avoid shared references
+			const options = clone(exportedTool.options);
+
+			// Create a temporary tool instance to use its conversion methods
+			const tempTool = new LineTools[toolType](this._model, options, []);
+
+			const offsetPoints = exportedTool.points.map((p: LineToolPoint) => {
+				const screenPoint = tempTool.pointToScreenPoint(p);
+				if (screenPoint === null) {
+					return p;
+				}
+				const offsetScreenPoint = new Point(screenPoint.x + 10 as Coordinate, screenPoint.y + 10 as Coordinate);
+				const offsetPoint = tempTool.screenPointToPoint(offsetScreenPoint);
+				return offsetPoint || p;
+			});
+
+			const newTool = new LineTools[toolType](this._model, options, offsetPoints);
+			newTool.setSelected(true);
+			pane.addDataSource(newTool, priceScaleId);
+		});
+
+		this._model.lightUpdate();
 	}
 }
 
