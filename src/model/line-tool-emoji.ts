@@ -131,45 +131,42 @@ export class LineToolEmoji extends LineTool<'Emoji'> {
 		if (!p1s || !p2s || !pDrag) { return; }
 
 		const angle = this.options().emoji.angle;
-		const width = Math.abs(p2s.x - p1s.x);
-		const height = Math.abs(p2s.y - p1s.y);
-		const size = Math.max(width, height);
-		const halfSize = size / 2;
 		const centerX = (p1s.x + p2s.x) / 2;
 		const centerY = (p1s.y + p2s.y) / 2;
 		const center = new Point(centerX, centerY);
+		const size = Math.max(Math.abs(p2s.x - p1s.x), Math.abs(p2s.y - p1s.y));
+		const hs = size / 2;
 
-		// 1. Find the reference point (opposite corner) in screen space
+		// 1. Identify the fixed reference corner in screen space
 		const refIndex = this._getRefIndex(index);
-		const refLocal = this._getLocalCorner(refIndex, halfSize);
+		const refLocal = this._getLocalCorner(refIndex, hs);
 		const pRefRotated = this._rotatePoint(new Point(centerX + refLocal.x, centerY + refLocal.y), center, angle);
 
 		// 2. Transformed drag point relative to fixed reference point
 		const dragVector = new Point(pDrag.x - pRefRotated.x, pDrag.y - pRefRotated.y);
-		// Rotate this vector back by -angle to get axis-aligned dimensions
 		const dragLocal = this._rotateVector(dragVector, -angle);
 
-		// 3. Calculate new size and local center in unrotated space
+		// 3. To maintain a square, we use the max displacement
+		// "Inverting" means we allow the square to grow in whatever direction dragLocal indicates
 		const newSize = Math.max(Math.abs(dragLocal.x), Math.abs(dragLocal.y));
-		const newHalfSize = newSize / 2;
+		const newHS = newSize / 2;
 
-		// The new center in unrotated space is relative to pRefRotated
-		const centerOffsetLocal = new Point(
-			(Math.sign(dragLocal.x) || 1) * newHalfSize,
-			(Math.sign(dragLocal.y) || 1) * newHalfSize
+		// 4. Calculate new center.
+		// Since we want the opposite corner to stay at pRefRotated:
+		// pRefRotated = newCenter + rotate(newRefLocal, angle)
+		// newRefLocal has the same axis-signs as the original refLocal but with newHS magnitude
+		const newRefLocal = new Point(
+			(Math.sign(refLocal.x) || 1) * newHS,
+			(Math.sign(refLocal.y) || 1) * newHS
 		);
-		// Transform center offset back to world screen space
-		const centerOffsetRotated = this._rotateVector(centerOffsetLocal, angle);
-		const newCenterScreen = new Point(pRefRotated.x + centerOffsetRotated.x, pRefRotated.y + centerOffsetRotated.y);
 
-		// 4. Update axis-aligned model points (P1/P2)
-		// We define P1/P2 as the AABB that produces this visual square when NOT rotated.
-		// Their center must be newCenterScreen, and size must be newSize.
-		const p1NewAxis = new Point(newCenterScreen.x - newHalfSize, newCenterScreen.y - newHalfSize);
-		const p2NewAxis = new Point(newCenterScreen.x + newHalfSize, newCenterScreen.y + newHalfSize);
+		const rotatedOffset = this._rotateVector(newRefLocal, angle);
+		const ncx = pRefRotated.x - rotatedOffset.x;
+		const ncy = pRefRotated.y - rotatedOffset.y;
 
-		const coord1 = this.screenPointToPoint(p1NewAxis);
-		const coord2 = this.screenPointToPoint(p2NewAxis);
+		// 5. Update axis-aligned model points (P1/P2)
+		const coord1 = this.screenPointToPoint(new Point(ncx - newHS, ncy - newHS));
+		const coord2 = this.screenPointToPoint(new Point(ncx + newHS, ncy + newHS));
 
 		if (coord1 && coord2) {
 			this._points[0].timestamp = coord1.timestamp;
