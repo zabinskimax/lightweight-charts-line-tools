@@ -146,23 +146,20 @@ export class LineToolEmoji extends LineTool<'Emoji'> {
 		const dragVector = new Point(pDrag.x - pRefRotated.x, pDrag.y - pRefRotated.y);
 		const dragLocal = this._rotateVector(dragVector, -angle);
 
-		// 3. To maintain a square, we use the max displacement
-		// "Inverting" means we allow the square to grow in whatever direction dragLocal indicates
+		// 3. Calculate new size based on mouse displacement
 		const newSize = Math.max(Math.abs(dragLocal.x), Math.abs(dragLocal.y));
 		const newHS = newSize / 2;
 
-		// 4. Calculate new center.
-		// Since we want the opposite corner to stay at pRefRotated:
-		// pRefRotated = newCenter + rotate(newRefLocal, angle)
-		// newRefLocal has the same axis-signs as the original refLocal but with newHS magnitude
-		const newRefLocal = new Point(
-			(Math.sign(refLocal.x) || 1) * newHS,
-			(Math.sign(refLocal.y) || 1) * newHS
-		);
+		// 4. Calculate new local center relative to anchor
+		// The box expands in the direction of the mouse relative to the anchor
+		const signX = Math.sign(dragLocal.x) || 1;
+		const signY = Math.sign(dragLocal.y) || 1;
+		const localCenterRelativeToAnchor = new Point(signX * newHS, signY * newHS);
 
-		const rotatedOffset = this._rotateVector(newRefLocal, angle);
-		const ncx = pRefRotated.x - rotatedOffset.x;
-		const ncy = pRefRotated.y - rotatedOffset.y;
+		// Map back to screen space to find the world center
+		const rotatedCenterOffset = this._rotateVector(localCenterRelativeToAnchor, angle);
+		const ncx = pRefRotated.x + rotatedCenterOffset.x;
+		const ncy = pRefRotated.y + rotatedCenterOffset.y;
 
 		// 5. Update axis-aligned model points (P1/P2)
 		const coord1 = this.screenPointToPoint(new Point(ncx - newHS, ncy - newHS));
