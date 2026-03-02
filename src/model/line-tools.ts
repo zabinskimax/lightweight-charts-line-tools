@@ -19,6 +19,7 @@ import { LineToolHighlighter } from './line-tool-highlighter';
 import { LineToolHorizontalLine } from './line-tool-horizontal-line';
 import { LineToolHorizontalRay } from './line-tool-horizontal-ray';
 import { LineToolLongShortPosition } from './line-tool-long-short-position';
+import { LineToolFixedRangeVolumeProfile } from './line-tool-fixed-range-volume-profile';
 import { LineToolMarketDepth } from './line-tool-market-depth';
 import { LineToolType } from './line-tool-options';
 import { LineToolParallelChannel } from './line-tool-parallel-channel';
@@ -69,4 +70,5 @@ export const LineTools: Record<LineToolType, new (...args: any) => LineTool<Line
 	ExtendedLine: LineToolExtendedLine,
 	HorizontalRay: LineToolHorizontalRay,
 	MarketDepth: LineToolMarketDepth,
+	FixedRangeVolumeProfile: LineToolFixedRangeVolumeProfile,
 };

@@ -116,6 +116,7 @@
       <button id="FibSpeedResistanceArcsButton">Add FibSpeedResistanceArcs</button>
       <button id="FibWedgeButton">Add FibWedge</button>
       <button id="PitchfanButton">Add Pitchfan</button>
+      <button id="FixedRangeVolumeProfileButton">Add FixedRangeVolumeProfile</button>
     </div>
     <button id="getButton">Get Matching Line Tools</button>
     <button id="removeButton">Remove Matching Line Tools</button>
@@ -229,6 +230,29 @@
           value: emoji,
           size: 32
         }
+      });
+    });
+
+    document.getElementById('FixedRangeVolumeProfileButton').addEventListener('click', () => {
+      // Sample volume profile bars spanning ~105–165 price range.
+      // In real usage these would be computed from OHLCV data in the selected range.
+      const sampleBars = [
+        { price: 165, volume:  800 },
+        { price: 160, volume: 1200 },
+        { price: 155, volume: 1800 },
+        { price: 150, volume: 2600 },
+        { price: 145, volume: 3800 },
+        { price: 140, volume: 5200 },
+        { price: 135, volume: 6100 }, // POC
+        { price: 130, volume: 5000 },
+        { price: 125, volume: 3500 },
+        { price: 120, volume: 2200 },
+        { price: 115, volume: 1400 },
+        { price: 110, volume:  900 },
+        { price: 105, volume:  500 },
+      ];
+      chart.setActiveLineTool('FixedRangeVolumeProfile', {
+        volumeProfile: { bars: sampleBars }
       });
     });
 

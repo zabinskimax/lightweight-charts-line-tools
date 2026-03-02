@@ -382,6 +382,80 @@ export interface PriceRangeOptions {
 	centerHorizontalLineStyle: LineStyle;
 }
 
+export interface VolumeProfileBar {
+	/**
+	 * Center price of this bin.
+	 */
+	price: number;
+
+	/**
+	 * Total volume in this bin.
+	 */
+	volume: number;
+}
+
+export interface FixedRangeVolumeProfileOptions {
+	/**
+	 * Pre-aggregated volume profile bars.
+	 */
+	bars: VolumeProfileBar[];
+
+	/**
+	 * Bar color.
+	 * @defaultValue `'rgba(33,150,243,0.5)'`
+	 */
+	barColor: string;
+
+	/**
+	 * Bar color inside the value area.
+	 * @defaultValue `'rgba(33,150,243,0.85)'`
+	 */
+	valueAreaColor: string;
+
+	/**
+	 * Color of the Point of Control line.
+	 * @defaultValue `'rgba(255,82,82,1)'`
+	 */
+	pocColor: string;
+
+	/**
+	 * Fraction of total volume that defines the value area (0–1).
+	 * @defaultValue `0.7`
+	 */
+	valueAreaVolume: number;
+
+	/**
+	 * Whether to draw the Point of Control line.
+	 * @defaultValue `true`
+	 */
+	showPOC: boolean;
+
+	/**
+	 * Whether to highlight the value area.
+	 * @defaultValue `true`
+	 */
+	showValueArea: boolean;
+
+	/**
+	 * Border color of the profile rectangle.
+	 * @defaultValue `'rgba(150,150,150,0.8)'`
+	 */
+	borderColor: string;
+
+	/**
+	 * Border width in pixels.
+	 * @defaultValue `1`
+	 */
+	borderWidth: number;
+}
+
+export interface LineToolFixedRangeVolumeProfileOptions {
+	/**
+	 * Volume profile config.
+	 */
+	volumeProfile: FixedRangeVolumeProfileOptions;
+}
+
 export interface MarketDepthSingleAggregatesData {
 	EarliestTime: string;
 	LatestTime: string;
@@ -1216,6 +1290,9 @@ export type FibWedgeToolPartialOptions = LineToolPartialOptions<LineToolFibWedge
 export type PitchfanToolOptions = LineToolOptions<LineToolPitchfanOptions>;
 export type PitchfanToolPartialOptions = LineToolPartialOptions<LineToolPitchfanOptions>;
 
+export type FixedRangeVolumeProfileToolOptions = LineToolOptions<LineToolFixedRangeVolumeProfileOptions>;
+export type FixedRangeVolumeProfileToolPartialOptions = LineToolPartialOptions<LineToolFixedRangeVolumeProfileOptions>;
+
 /**
  * Represents the type of options for each line tool type.
  */
@@ -1254,6 +1331,7 @@ export interface LineToolOptionsMap {
 	HorizontalRay: HorizontalLineToolOptions;
 
 	MarketDepth: MarketDepthToolOptions;
+	FixedRangeVolumeProfile: FixedRangeVolumeProfileToolOptions;
 }
 
 /**
@@ -1294,6 +1372,7 @@ export interface LineToolPartialOptionsMap {
 	HorizontalRay: HorizontalLineToolPartialOptions;
 
 	MarketDepth: MarketDepthToolPartialOptions;
+	FixedRangeVolumeProfile: FixedRangeVolumeProfileToolPartialOptions;
 }
 
 /**

@@ -4,7 +4,7 @@ import { applyAlpha } from '../../helpers/color';
 import { defaultFontFamily } from '../../helpers/make-font';
 import { clone, merge } from '../../helpers/strict-type-checks';
 
-import { BoxHorizontalAlignment, BoxVerticalAlignment, BrushToolOptions, CalloutToolOptions, CircleToolOptions, CrossLineToolOptions, FibCirclesToolOptions, FibRetracementLevel, FibRetracementToolOptions, FibSpiralToolOptions, HighlighterToolOptions, HorizontalLineToolOptions, LineJoin, LongShortPositionToolOptions, MarketDepthToolOptions, ParallelChannelToolOptions, PathToolOptions, PriceRangeToolOptions, RectangleToolOptions, TextAlignment, TextOptions, TextToolOptions, TrendLineToolOptions, TriangleToolOptions, VerticalLineToolOptions, TrendBasedFibExtensionToolOptions, FibChannelToolOptions, FibTimeZoneToolOptions, FibSpeedResistanceFanToolOptions, TrendBasedFibTimeToolOptions, FibWedgeToolOptions, PitchfanToolOptions, FibSpeedResistanceArcsToolOptions, EmojiToolOptions } from '../../model/line-tool-options';
+import { BoxHorizontalAlignment, BoxVerticalAlignment, BrushToolOptions, CalloutToolOptions, CircleToolOptions, CrossLineToolOptions, FibCirclesToolOptions, FibRetracementLevel, FibRetracementToolOptions, FibSpiralToolOptions, FixedRangeVolumeProfileToolOptions, HighlighterToolOptions, HorizontalLineToolOptions, LineJoin, LongShortPositionToolOptions, MarketDepthToolOptions, ParallelChannelToolOptions, PathToolOptions, PriceRangeToolOptions, RectangleToolOptions, TextAlignment, TextOptions, TextToolOptions, TrendLineToolOptions, TriangleToolOptions, VerticalLineToolOptions, TrendBasedFibExtensionToolOptions, FibChannelToolOptions, FibTimeZoneToolOptions, FibSpeedResistanceFanToolOptions, TrendBasedFibTimeToolOptions, FibWedgeToolOptions, PitchfanToolOptions, FibSpeedResistanceArcsToolOptions, EmojiToolOptions } from '../../model/line-tool-options';
 
 import { LineEnd, LineStyle } from '../..';
 
@@ -358,6 +358,23 @@ export const FibSpeedResistanceArcsOptionDefaults: FibSpeedResistanceArcsToolOpt
 export const FibWedgeOptionDefaults: FibWedgeToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as FibWedgeToolOptions;
 export const PitchfanOptionDefaults: PitchfanToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as PitchfanToolOptions;
 
+export const FixedRangeVolumeProfileOptionDefaults: FixedRangeVolumeProfileToolOptions = {
+	visible: true,
+	editable: true,
+	locked: false,
+	volumeProfile: {
+		bars: [],
+		barColor: applyAlpha('#2196F3', 0.5),
+		valueAreaColor: applyAlpha('#2196F3', 0.85),
+		pocColor: applyAlpha('#FF5252', 1),
+		valueAreaVolume: 0.7,
+		showPOC: true,
+		showValueArea: true,
+		borderColor: applyAlpha('#969696', 0.8),
+		borderWidth: 1,
+	},
+};
+
 /** @public */
 export const LineToolsOptionDefaults = {
 	Ray: merge(clone(TrendLineOptionDefaults), { line: { extend: { right: true } } }),
@@ -393,4 +410,5 @@ export const LineToolsOptionDefaults = {
 	Text: TextOptionDefaults,
 	Emoji: EmojiOptionDefaults,
 	MarketDepth: MarketDepthOptionDefaults,
+	FixedRangeVolumeProfile: FixedRangeVolumeProfileOptionDefaults,
 };
