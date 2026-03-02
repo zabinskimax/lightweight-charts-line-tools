@@ -4,7 +4,7 @@ import { applyAlpha } from '../../helpers/color';
 import { defaultFontFamily } from '../../helpers/make-font';
 import { clone, merge } from '../../helpers/strict-type-checks';
 
-import { BoxHorizontalAlignment, BoxVerticalAlignment, BrushToolOptions, CalloutToolOptions, CircleToolOptions, CrossLineToolOptions, FibCirclesToolOptions, FibRetracementToolOptions, FibSpiralToolOptions, HighlighterToolOptions, HorizontalLineToolOptions, LineJoin, LongShortPositionToolOptions, MarketDepthToolOptions, ParallelChannelToolOptions, PathToolOptions, PriceRangeToolOptions, RectangleToolOptions, TextAlignment, TextOptions, TextToolOptions, TrendLineToolOptions, TriangleToolOptions, VerticalLineToolOptions, TrendBasedFibExtensionToolOptions, FibChannelToolOptions, FibTimeZoneToolOptions, FibSpeedResistanceFanToolOptions, TrendBasedFibTimeToolOptions, FibWedgeToolOptions, PitchfanToolOptions, FibSpeedResistanceArcsToolOptions, EmojiToolOptions } from '../../model/line-tool-options';
+import { BoxHorizontalAlignment, BoxVerticalAlignment, BrushToolOptions, CalloutToolOptions, CircleToolOptions, CrossLineToolOptions, FibCirclesToolOptions, FibRetracementLevel, FibRetracementToolOptions, FibSpiralToolOptions, HighlighterToolOptions, HorizontalLineToolOptions, LineJoin, LongShortPositionToolOptions, MarketDepthToolOptions, ParallelChannelToolOptions, PathToolOptions, PriceRangeToolOptions, RectangleToolOptions, TextAlignment, TextOptions, TextToolOptions, TrendLineToolOptions, TriangleToolOptions, VerticalLineToolOptions, TrendBasedFibExtensionToolOptions, FibChannelToolOptions, FibTimeZoneToolOptions, FibSpeedResistanceFanToolOptions, TrendBasedFibTimeToolOptions, FibWedgeToolOptions, PitchfanToolOptions, FibSpeedResistanceArcsToolOptions, EmojiToolOptions } from '../../model/line-tool-options';
 
 import { LineEnd, LineStyle } from '../..';
 
@@ -124,6 +124,20 @@ export const ParallelChannelOptionDefaults: ParallelChannelToolOptions = {
 	middleLine: { width: 1, color: '#2962ff', style: LineStyle.Dashed },
 	channelLine: { width: 1, color: '#2962ff', style: LineStyle.Solid },
 };
+
+const FibTimeZoneLevels: FibRetracementLevel[] = [
+	{ color: '#787b86', coeff: 0, opacity: 0.2, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+	{ color: '#f23645', coeff: 1, opacity: 0.2, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+	{ color: '#81c784', coeff: 2, opacity: 0.2, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+	{ color: '#4caf50', coeff: 3, opacity: 0.2, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+	{ color: '#089981', coeff: 5, opacity: 0.2, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+	{ color: '#64b5f6', coeff: 8, opacity: 0.2, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+	{ color: '#787b86', coeff: 13, opacity: 0.2, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+	{ color: '#2962ff', coeff: 21, opacity: 0.2, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+	{ color: '#f23645', coeff: 34, opacity: 0.2, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+	{ color: '#9c27b0', coeff: 55, opacity: 0.2, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+	{ color: '#e91e63', coeff: 89, opacity: 0.2, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+];
 
 export const FibRetracementOptionDefaults: FibRetracementToolOptions = {
 	visible: true,
@@ -333,9 +347,9 @@ export const EmojiOptionDefaults: EmojiToolOptions = {
 
 export const TrendBasedFibExtensionOptionDefaults: TrendBasedFibExtensionToolOptions = clone(FibRetracementOptionDefaults);
 export const FibChannelOptionDefaults: FibChannelToolOptions = clone(FibRetracementOptionDefaults);
-export const FibTimeZoneOptionDefaults: FibTimeZoneToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as FibTimeZoneToolOptions;
+export const FibTimeZoneOptionDefaults: FibTimeZoneToolOptions = merge(clone(FibRetracementOptionDefaults), { levels: FibTimeZoneLevels, extend: { left: false, right: false } }) as unknown as FibTimeZoneToolOptions;
 export const FibSpeedResistanceFanOptionDefaults: FibSpeedResistanceFanToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as FibSpeedResistanceFanToolOptions;
-export const TrendBasedFibTimeOptionDefaults: TrendBasedFibTimeToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as TrendBasedFibTimeToolOptions;
+export const TrendBasedFibTimeOptionDefaults: TrendBasedFibTimeToolOptions = merge(clone(FibRetracementOptionDefaults), { levels: FibTimeZoneLevels, extend: { left: false, right: false } }) as unknown as TrendBasedFibTimeToolOptions;
 export const FibCirclesOptionDefaults: FibCirclesToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as FibCirclesToolOptions;
 export const FibSpiralOptionDefaults: FibSpiralToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as FibSpiralToolOptions;
 export const FibSpeedResistanceArcsOptionDefaults: FibSpeedResistanceArcsToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as FibSpeedResistanceArcsToolOptions;

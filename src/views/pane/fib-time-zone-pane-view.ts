@@ -54,11 +54,15 @@ export class FibTimeZonePaneView extends LineToolPaneView {
 		const pane = this._model.paneForSource(this._source);
 		const height = pane ? pane.height() : 0;
 
-		// Draw trend line between P1 and P2
+		// Draw trend line between Level 1 and Level 2
+		const tLevel2 = Number(t1) + options.levels[1].coeff * dt;
+		const xLevel2 = timeScale.timeToCoordinate({ timestamp: tLevel2 as UTCTimestamp });
+		if (xLevel2 === null) { return; }
+
 		const trendLineRenderer = new SegmentRenderer();
 		trendLineRenderer.setData({
 			line: { ...options.line, color: '#787b86', style: 2, extend: { left: false, right: false } },
-			points: [this._points[0], this._points[1]],
+			points: [this._points[0], new AnchorPoint(xLevel2, this._points[0].y, 0)],
 		});
 		compositeRenderer.append(trendLineRenderer);
 

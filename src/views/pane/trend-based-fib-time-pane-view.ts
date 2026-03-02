@@ -54,15 +54,25 @@ export class TrendBasedFibTimePaneView extends LineToolPaneView {
 		const pane = this._model.paneForSource(this._source);
 		const height = pane ? pane.height() : 0;
 
-		// Draw the trend line between P1 and P2
-		const trendLineRenderer = new SegmentRenderer();
-		trendLineRenderer.setData({
-			line: { ...options.line, color: '#787b86', style: 2, extend: { left: false, right: false } },
-			points: [this._points[0], this._points[1]],
-		});
-		compositeRenderer.append(trendLineRenderer);
-
 		const t3 = points.length > 2 ? points[2].timestamp : points[1].timestamp;
+
+		// Draw trend line between Level 1 and Level 2 (relative to T3)
+		const tLevel1 = Number(t3) + options.levels[0].coeff * dt;
+		const tLevel2 = Number(t3) + options.levels[1].coeff * dt;
+		const xLevel1 = timeScale.timeToCoordinate({ timestamp: tLevel1 as UTCTimestamp });
+		const xLevel2 = timeScale.timeToCoordinate({ timestamp: tLevel2 as UTCTimestamp });
+
+		if (xLevel1 !== null && xLevel2 !== null) {
+			const trendLineRenderer = new SegmentRenderer();
+			trendLineRenderer.setData({
+				line: { ...options.line, color: '#787b86', style: 2, extend: { left: false, right: false } },
+				points: [
+					new AnchorPoint(xLevel1, this._points[0].y, 0),
+					new AnchorPoint(xLevel2, this._points[0].y, 0),
+				],
+			});
+			compositeRenderer.append(trendLineRenderer);
+		}
 
 		options.levels.forEach((level: FibRetracementLevel, i: number) => {
 			const timestamp = Number(t3) + level.coeff * dt;
