@@ -124,7 +124,7 @@ export class LineToolEmoji extends LineTool<'Emoji'> {
 		}
 	}
 
-	private _resizeEmoji(_index: number, point: LineToolPoint): void {
+	private _resizeEmoji(index: number, point: LineToolPoint): void {
 		const p1s = this.pointToScreenPoint(this._points[0]);
 		const p2s = this.pointToScreenPoint(this._points[1]);
 		const pDrag = this.pointToScreenPoint(point);
@@ -141,10 +141,21 @@ export class LineToolEmoji extends LineTool<'Emoji'> {
 		const dragLocal = this._rotateVector(dragVector, -angle);
 
 		// 3. Symmetric resizing: center is fixed, we just update the halfSize (hs)
-		// and rebuild P1/P2 around the SAME center.
 		const newHS = Math.max(Math.abs(dragLocal.x), Math.abs(dragLocal.y));
+		if (newHS < 1) { return; }
 
-		// 4. Update axis-aligned model points (P1/P2) centered on the fixed coordinate
+		// 4. Determine flipping based on mouse quadrant relative to the starting handle
+		// TL(0): x<0, y<0 | BR(1): x>0, y>0 | BL(2): x<0, y>0 | TR(3): x>0, y<0
+		const expectedSignX = (index === 0 || index === 2) ? -1 : 1;
+		const expectedSignY = (index === 0 || index === 3) ? -1 : 1;
+
+		const currentSignX = Math.sign(dragLocal.x) || expectedSignX;
+		const currentSignY = Math.sign(dragLocal.y) || expectedSignY;
+
+		const flipH = currentSignX !== expectedSignX;
+		const flipV = currentSignY !== expectedSignY;
+
+		// 5. Update axis-aligned model points (P1/P2) centered on the fixed coordinate
 		const coord1 = this.screenPointToPoint(new Point(centerX - newHS, centerY - newHS));
 		const coord2 = this.screenPointToPoint(new Point(centerX + newHS, centerY + newHS));
 
@@ -153,6 +164,9 @@ export class LineToolEmoji extends LineTool<'Emoji'> {
 			this._points[0].price = coord1.price;
 			this._points[1].timestamp = coord2.timestamp;
 			this._points[1].price = coord2.price;
+			this.applyOptions({
+				emoji: { flipH, flipV },
+			});
 			this.model().updateSource(this);
 		}
 	}
