@@ -351,7 +351,10 @@ export const TrendBasedFibExtensionOptionDefaults: TrendBasedFibExtensionToolOpt
 export const FibChannelOptionDefaults: FibChannelToolOptions = clone(FibRetracementOptionDefaults);
 export const FibTimeZoneOptionDefaults: FibTimeZoneToolOptions = merge(clone(FibRetracementOptionDefaults), { levels: FibTimeZoneLevels, extend: { left: false, right: false } }) as unknown as FibTimeZoneToolOptions;
 export const FibSpeedResistanceFanOptionDefaults: FibSpeedResistanceFanToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as FibSpeedResistanceFanToolOptions;
-export const TrendBasedFibTimeOptionDefaults: TrendBasedFibTimeToolOptions = merge(clone(FibRetracementOptionDefaults), { levels: FibTimeZoneLevels, extend: { left: false, right: false } }) as unknown as TrendBasedFibTimeToolOptions;
+export const TrendBasedFibTimeOptionDefaults: TrendBasedFibTimeToolOptions = merge(clone(FibRetracementOptionDefaults), {
+	levels: FibRetracementOptionDefaults.levels.map((l: FibRetracementLevel) => merge(clone(l), { opacity: 0.2 })),
+	extend: { left: false, right: false },
+}) as unknown as TrendBasedFibTimeToolOptions;
 export const FibCirclesOptionDefaults: FibCirclesToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as FibCirclesToolOptions;
 export const FibSpiralOptionDefaults: FibSpiralToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as FibSpiralToolOptions;
 export const FibSpeedResistanceArcsOptionDefaults: FibSpeedResistanceArcsToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as FibSpeedResistanceArcsToolOptions;

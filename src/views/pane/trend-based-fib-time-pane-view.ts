@@ -44,7 +44,7 @@ export class TrendBasedFibTimePaneView extends LineToolPaneView {
 
 		const t1 = points[0].timestamp;
 		const t2 = points[1].timestamp;
-		const dt = Number(t2) - Number(t1);
+		let dt = Number(t2) - Number(t1);
 
 		super._updateImpl();
 
@@ -56,25 +56,28 @@ export class TrendBasedFibTimePaneView extends LineToolPaneView {
 
 		const t3 = points.length > 2 ? points[2].timestamp : points[1].timestamp;
 
+		if (dt === 0) {
+			dt = 1;
+		}
+
 		// Draw trend line between Level 1 and Level 2 (relative to T3)
 		const tLevel1 = Number(t3) + options.levels[0].coeff * dt;
 		const tLevel2 = Number(t3) + options.levels[1].coeff * dt;
 		const xLevel1 = timeScale.timeToCoordinate({ timestamp: tLevel1 as UTCTimestamp });
 		const xLevel2 = timeScale.timeToCoordinate({ timestamp: tLevel2 as UTCTimestamp });
 
-		if (xLevel1 !== null && xLevel2 !== null) {
-			const trendLineRenderer = new SegmentRenderer();
-			trendLineRenderer.setData({
-				line: { ...options.line, color: '#787b86', style: 2, extend: { left: false, right: false } },
-				points: [
-					new AnchorPoint(xLevel1, this._points[0].y, 0),
-					new AnchorPoint(xLevel2, this._points[0].y, 0),
-				],
-			});
-			compositeRenderer.append(trendLineRenderer);
-		}
+		const trendLineRenderer = new SegmentRenderer();
+		trendLineRenderer.setData({
+			line: { ...options.line, color: '#787b86', style: 2, extend: { left: false, right: false } },
+			points: [
+				new AnchorPoint(xLevel1, this._points[0].y, 0),
+				new AnchorPoint(xLevel2, this._points[0].y, 0),
+			],
+		});
+		compositeRenderer.append(trendLineRenderer);
 
 		options.levels.forEach((level: FibRetracementLevel, i: number) => {
+			if (!level.visible) { return; }
 			const timestamp = Number(t3) + level.coeff * dt;
 			const x = timeScale.timeToCoordinate({ timestamp: timestamp as UTCTimestamp });
 
@@ -96,7 +99,7 @@ export class TrendBasedFibTimePaneView extends LineToolPaneView {
 			this._labelRenderers[i].setData({
 				text: {
 					alignment: TextAlignment.Left,
-					value: `${i + 1}`,
+					value: `${level.coeff}`,
 					font: { color: level.color, size: 11, family: defaultFontFamily },
 					box: { alignment: { horizontal: BoxHorizontalAlignment.Left, vertical: BoxVerticalAlignment.Top } },
 				},
@@ -107,7 +110,10 @@ export class TrendBasedFibTimePaneView extends LineToolPaneView {
 			compositeRenderer.append(this._lineRenderers[i]);
 
 			if (i > 0) {
-				const prevX = timeScale.timeToCoordinate({ timestamp: (Number(t3) + options.levels[i - 1].coeff * dt) as UTCTimestamp });
+				const prevLevel = options.levels[i - 1];
+				if (!prevLevel.visible) { return; }
+
+				const prevX = timeScale.timeToCoordinate({ timestamp: (Number(t3) + prevLevel.coeff * dt) as UTCTimestamp });
 				if (!this._rectangleRenderers[i - 1]) { this._rectangleRenderers.push(new RectangleRenderer()); }
 				this._rectangleRenderers[i - 1].setData({
 					...options.line,
