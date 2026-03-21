@@ -162,6 +162,7 @@ export class FixedRangeVolumeProfilePaneView extends LineToolPaneView {
 					showValueArea: vp.showValueArea,
 					borderColor: vp.borderColor,
 					borderWidth: vp.borderWidth,
+					backgroundColor: vp.backgroundColor,
 				});
 
 				compositeRenderer.append(this._profileRenderer);
