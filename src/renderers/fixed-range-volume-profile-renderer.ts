@@ -27,16 +27,18 @@ export interface FixedRangeVolumeProfileRendererData {
 	showValueArea: boolean;
 	borderColor: string;
 	borderWidth: number;
+	backgroundColor?: string;
 }
 
 export class FixedRangeVolumeProfileRenderer implements IPaneRenderer {
 	private _data: FixedRangeVolumeProfileRendererData | null = null;
-	private _hitTest: HitTestResult<void> = new HitTestResult(HitTestType.MovePoint);
-	private _backHitTest: HitTestResult<void> = new HitTestResult(HitTestType.MovePointBackground);
 
 	public setData(data: FixedRangeVolumeProfileRendererData): void {
 		this._data = data;
 	}
+
+	private _hitTestResult: HitTestResult<void> = new HitTestResult(HitTestType.Regular);
+	private _backHitTestResult: HitTestResult<void> = new HitTestResult(HitTestType.Regular);
 
 	public hitTest(x: Coordinate, y: Coordinate, ctx: CanvasRenderingContext2D): HitTestResult<void> | null {
 		if (!this._data || this._data.points.length < 2) { return null; }
@@ -53,12 +55,12 @@ export class FixedRangeVolumeProfileRenderer implements IPaneRenderer {
 		) {
 			if (scaledPt.x >= p0.x - tolerance && scaledPt.x <= p1.x + tolerance &&
 				scaledPt.y >= p0.y - tolerance && scaledPt.y <= p1.y + tolerance) {
-				return this._hitTest;
+				return this._hitTestResult;
 			}
 		}
 
 		if (pointInBox(scaledPt, new Box(p0, p1))) {
-			return this._backHitTest;
+			return this._backHitTestResult;
 		}
 
 		return null;
@@ -67,7 +69,7 @@ export class FixedRangeVolumeProfileRenderer implements IPaneRenderer {
 	public draw(ctx: CanvasRenderingContext2D, pixelRatio: number): void {
 		if (!this._data || this._data.points.length < 2) { return; }
 
-		const { bars, barColor, valueAreaColor, pocColor, showPOC, showValueArea, borderColor, borderWidth } = this._data;
+		const { bars, barColor, valueAreaColor, pocColor, showPOC, showValueArea } = this._data;
 		const [p0, p1] = this._getBoundsPhysical(pixelRatio);
 		const x0 = p0.x;
 		const y0 = p0.y;
@@ -79,6 +81,11 @@ export class FixedRangeVolumeProfileRenderer implements IPaneRenderer {
 		if (totalWidth <= 0 || totalHeight <= 0) { return; }
 
 		ctx.save();
+
+		if (this._data.backgroundColor) {
+			ctx.fillStyle = this._data.backgroundColor;
+			ctx.fillRect(x0, y0, totalWidth, totalHeight);
+		}
 
 		for (const bar of bars) {
 			const barY = Math.round(bar.y * pixelRatio);
@@ -104,11 +111,7 @@ export class FixedRangeVolumeProfileRenderer implements IPaneRenderer {
 			}
 		}
 
-		if (borderWidth > 0) {
-			ctx.strokeStyle = borderColor;
-			ctx.lineWidth = Math.max(1, Math.round(borderWidth * pixelRatio));
-			ctx.strokeRect(x0, y0, totalWidth, totalHeight);
-		}
+		// Background border outline not drawn for fixed height profile
 
 		ctx.restore();
 	}

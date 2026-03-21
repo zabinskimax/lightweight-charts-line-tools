@@ -365,8 +365,10 @@ export const FixedRangeVolumeProfileOptionDefaults: FixedRangeVolumeProfileToolO
 	visible: true,
 	editable: true,
 	locked: false,
+	line: { width: 2, color: '#2962ff', style: LineStyle.Solid },
 	volumeProfile: {
 		bars: [],
+		bins: 24,
 		barColor: applyAlpha('#2196F3', 0.5),
 		valueAreaColor: applyAlpha('#2196F3', 0.85),
 		pocColor: applyAlpha('#FF5252', 1),
@@ -374,7 +376,8 @@ export const FixedRangeVolumeProfileOptionDefaults: FixedRangeVolumeProfileToolO
 		showPOC: true,
 		showValueArea: true,
 		borderColor: applyAlpha('#969696', 0.8),
-		borderWidth: 1,
+		backgroundColor: applyAlpha('#2196F3', 0.1),
+		borderWidth: 0,
 	},
 };
 

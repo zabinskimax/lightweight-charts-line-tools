@@ -117,6 +117,13 @@
       <button id="FibWedgeButton">Add FibWedge</button>
       <button id="PitchfanButton">Add Pitchfan</button>
       <button id="FixedRangeVolumeProfileButton">Add FixedRangeVolumeProfile</button>
+      <div id="frvp-controls" style="margin-top:6px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <label>Bar: <input type="color" id="frvp-barColor" value="#2196F3"></label>
+        <label>Value Area: <input type="color" id="frvp-valueAreaColor" value="#2196F3"></label>
+        <label>POC: <input type="color" id="frvp-pocColor" value="#FF5252"></label>
+        <label>Border: <input type="color" id="frvp-borderColor" value="#969696"></label>
+        <button id="frvp-applyColors">Apply Colors to Selected</button>
+      </div>
     </div>
     <button id="getButton">Get Matching Line Tools</button>
     <button id="removeButton">Remove Matching Line Tools</button>
@@ -233,6 +240,15 @@
       });
     });
 
+    function getFrvpColors() {
+      return {
+        barColor: document.getElementById('frvp-barColor').value,
+        valueAreaColor: document.getElementById('frvp-valueAreaColor').value,
+        pocColor: document.getElementById('frvp-pocColor').value,
+        borderColor: document.getElementById('frvp-borderColor').value,
+      };
+    }
+
     document.getElementById('FixedRangeVolumeProfileButton').addEventListener('click', () => {
       // Sample volume profile bars spanning ~105–165 price range.
       // In real usage these would be computed from OHLCV data in the selected range.
@@ -252,8 +268,17 @@
         { price: 105, volume:  500 },
       ];
       chart.setActiveLineTool('FixedRangeVolumeProfile', {
-        volumeProfile: { bars: sampleBars }
+        volumeProfile: { bars: sampleBars, ...getFrvpColors() }
       });
+    });
+
+    document.getElementById('frvp-applyColors').addEventListener('click', () => {
+      const selected = chart.getSelectedLineTool && chart.getSelectedLineTool();
+      if (!selected) {
+        alert('Select a FixedRangeVolumeProfile tool first (click on it).');
+        return;
+      }
+      selected.applyOptions({ volumeProfile: getFrvpColors() });
     });
 
     // Get Button Click Handler

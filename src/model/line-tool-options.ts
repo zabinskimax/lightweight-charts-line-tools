@@ -401,6 +401,12 @@ export interface FixedRangeVolumeProfileOptions {
 	bars: VolumeProfileBar[];
 
 	/**
+	 * Number of bins (rows) for the volume profile.
+	 * @defaultValue `24`
+	 */
+	bins: number;
+
+	/**
 	 * Bar color.
 	 * @defaultValue `'rgba(33,150,243,0.5)'`
 	 */
@@ -443,6 +449,12 @@ export interface FixedRangeVolumeProfileOptions {
 	borderColor: string;
 
 	/**
+	 * Background color of the profile rectangle.
+	 * @defaultValue `'rgba(33, 150, 243, 0.1)'`
+	 */
+	backgroundColor: string;
+
+	/**
 	 * Border width in pixels.
 	 * @defaultValue `1`
 	 */
@@ -454,6 +466,11 @@ export interface LineToolFixedRangeVolumeProfileOptions {
 	 * Volume profile config.
 	 */
 	volumeProfile: FixedRangeVolumeProfileOptions;
+
+	/**
+	 * Line config.
+	 */
+	line: Omit<LineOptions, 'cap' | 'extend' | 'join' | 'end'>;
 }
 
 export interface MarketDepthSingleAggregatesData {
