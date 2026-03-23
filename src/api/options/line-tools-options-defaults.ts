@@ -378,6 +378,8 @@ export const FixedRangeVolumeProfileOptionDefaults: FixedRangeVolumeProfileToolO
 		borderColor: applyAlpha('#969696', 0.8),
 		backgroundColor: applyAlpha('#2196F3', 0.1),
 		borderWidth: 0,
+		pocExpansion: 'right',
+		barWidthRatio: 0.3,
 	},
 };
 

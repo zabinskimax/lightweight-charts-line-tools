@@ -459,6 +459,20 @@ export interface FixedRangeVolumeProfileOptions {
 	 * @defaultValue `1`
 	 */
 	borderWidth: number;
+
+	/**
+	 * Direction(s) to extend the POC line beyond the profile rectangle.
+	 * `'none'` — no extension; `'right'` — extend to right edge; `'left'` — extend to left edge; `'both'` — extend in both directions.
+	 * @defaultValue `'right'`
+	 */
+	pocExpansion: 'none' | 'left' | 'right' | 'both';
+
+	/**
+	 * Maximum bar width as a fraction of the profile box width (0–1).
+	 * The highest-volume bar fills this fraction; all others scale proportionally.
+	 * @defaultValue `0.3`
+	 */
+	barWidthRatio: number;
 }
 
 export interface LineToolFixedRangeVolumeProfileOptions {

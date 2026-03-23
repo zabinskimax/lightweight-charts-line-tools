@@ -28,6 +28,8 @@ export interface FixedRangeVolumeProfileRendererData {
 	borderColor: string;
 	borderWidth: number;
 	backgroundColor?: string;
+	pocExpansion: 'none' | 'left' | 'right' | 'both';
+	barWidthRatio: number;
 }
 
 export class FixedRangeVolumeProfileRenderer implements IPaneRenderer {
@@ -90,7 +92,7 @@ export class FixedRangeVolumeProfileRenderer implements IPaneRenderer {
 		for (const bar of bars) {
 			const barY = Math.round(bar.y * pixelRatio);
 			const barH = Math.max(1, Math.round(bar.h * pixelRatio));
-			const barW = Math.round(bar.widthRatio * totalWidth);
+			const barW = Math.round(bar.widthRatio * totalWidth * this._data.barWidthRatio);
 
 			if (barW > 0) {
 				ctx.fillStyle = (showValueArea && bar.isInValueArea) ? valueAreaColor : barColor;
@@ -102,11 +104,15 @@ export class FixedRangeVolumeProfileRenderer implements IPaneRenderer {
 			const poc = bars.find(b => b.isPOC);
 			if (poc) {
 				const pocCenterY = Math.round((poc.y + poc.h / 2) * pixelRatio);
+				const canvasWidth = ctx.canvas.width;
+				const pocExpansion = this._data.pocExpansion;
+				const lineX0 = (pocExpansion === 'left' || pocExpansion === 'both') ? 0 : x0;
+				const lineX1 = (pocExpansion === 'right' || pocExpansion === 'both') ? canvasWidth : x1;
 				ctx.strokeStyle = pocColor;
 				ctx.lineWidth = Math.max(1, Math.round(pixelRatio));
 				ctx.beginPath();
-				ctx.moveTo(x0, pocCenterY);
-				ctx.lineTo(x1, pocCenterY);
+				ctx.moveTo(lineX0, pocCenterY);
+				ctx.lineTo(lineX1, pocCenterY);
 				ctx.stroke();
 			}
 		}
