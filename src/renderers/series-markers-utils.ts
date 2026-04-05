@@ -22,6 +22,7 @@ export function shapeSize(shape: SeriesMarkerShape, originalSize: number): numbe
 		case 'circle':
 			return size(originalSize, 0.8);
 		case 'square':
+		case 'cross':
 			return size(originalSize, 0.7);
 	}
 }

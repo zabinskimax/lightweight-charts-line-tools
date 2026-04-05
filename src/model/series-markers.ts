@@ -6,7 +6,7 @@ export type SeriesMarkerPosition = 'aboveBar' | 'belowBar' | 'inBar' | 'price';
 /**
  * Represents the shape of a series marker.
  */
-export type SeriesMarkerShape = 'circle' | 'square' | 'arrowUp' | 'arrowDown' | 'triangle';
+export type SeriesMarkerShape = 'circle' | 'square' | 'arrowUp' | 'arrowDown' | 'triangle' | 'cross';
 
 /**
  * Represents the anchor of a series marker.

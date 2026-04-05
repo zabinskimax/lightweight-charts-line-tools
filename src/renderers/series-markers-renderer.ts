@@ -10,6 +10,7 @@ import { SeriesItemsIndexesRange, TimedValue } from '../model/time-data';
 import { ScaledRenderer } from './scaled-renderer';
 import { drawArrow } from './series-markers-arrow';
 import { drawCircle } from './series-markers-circle';
+import { drawCross } from './series-markers-cross';
 import { drawSquare } from './series-markers-square';
 import { drawText } from './series-markers-text';
 import { drawTriangle } from './series-markers-triangle';
@@ -140,6 +141,9 @@ function drawShape(item: SeriesMarkerRendererDataItem, ctx: CanvasRenderingConte
 			return;
 		case 'square':
 			drawSquare(ctx, item.x, item.y, item.size);
+			return;
+		case 'cross':
+			drawCross(ctx, item.x, item.y, item.size);
 			return;
 	}
 
