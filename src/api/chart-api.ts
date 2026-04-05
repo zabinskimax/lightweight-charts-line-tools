@@ -12,6 +12,7 @@ import { ColorType } from '../model/layout-options';
 import { LineTool, LineToolExport, LineToolPoint } from '../model/line-tool';
 import { LineToolOptionsMap, LineToolPartialOptionsMap, LineToolType } from '../model/line-tool-options';
 import { Pane } from '../model/pane';
+import { PolygonFillDataSource } from '../model/polygon-fill-data-source';
 import { Series } from '../model/series';
 import {
 	AreaSeriesOptions,
@@ -37,10 +38,12 @@ import { CandlestickSeriesApi } from './candlestick-series-api';
 import { DataUpdatesConsumer, SeriesDataItemTypeMap } from './data-consumer';
 import { DataLayer, DataUpdateResponse, SeriesChanges } from './data-layer';
 import { IChartApi, LineToolsAfterEditEventHandler, LineToolsAfterEditEventParams, LineToolsDoubleClickEventHandler, LineToolsDoubleClickEventParams, MouseEventHandler, MouseEventParams } from './ichart-api';
+import { IPolygonFillApi } from './ipolygon-fill-api';
 import { IPriceScaleApi } from './iprice-scale-api';
 import { ISeriesApi } from './iseries-api';
 import { ITimeScaleApi } from './itime-scale-api';
 import { LineToolApi } from './line-tool-api';
+import { PolygonFillApi } from './polygon-fill-api';
 import { chartOptionsDefaults } from './options/chart-options-defaults';
 import { LineToolsOptionDefaults } from './options/line-tools-options-defaults';
 import {
@@ -162,6 +165,8 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 	private _dataLayer: DataLayer = new DataLayer();
 	private readonly _seriesMap: Map<SeriesApi<SeriesType>, Series> = new Map();
 	private readonly _seriesMapReversed: Map<Series, SeriesApi<SeriesType>> = new Map();
+
+	private readonly _polygonFillMap: Map<PolygonFillApi, PolygonFillDataSource> = new Map();
 
 	private readonly _clickedDelegate: Delegate<MouseEventParams> = new Delegate();
 	private readonly _crosshairMovedDelegate: Delegate<MouseEventParams> = new Delegate();
@@ -344,6 +349,35 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 
 		this._seriesMap.delete(seriesApi);
 		this._seriesMapReversed.delete(series);
+	}
+
+	public addPolygonFill(series1Api: SeriesApi<'Line'>, series2Api: SeriesApi<'Line'>, fillColor: string): IPolygonFillApi {
+		const s1 = ensureDefined(this._seriesMap.get(series1Api)) as Series<'Line'>;
+		const s2 = ensureDefined(this._seriesMap.get(series2Api)) as Series<'Line'>;
+		const model = this._chartWidget.model();
+		const source = new PolygonFillDataSource(model, s1, s2, { fillColor });
+		const pane = this._getPane();
+		if (pane !== null) {
+			pane.addDataSource(source, model.defaultVisiblePriceScaleId(), -1);
+		}
+		const api = new PolygonFillApi(source);
+		this._polygonFillMap.set(api, source);
+		model.lightUpdate();
+		return api;
+	}
+
+	public removePolygonFill(polygonFillApi: IPolygonFillApi): void {
+		const api = polygonFillApi as PolygonFillApi;
+		const source = this._polygonFillMap.get(api);
+		if (source === undefined) {
+			return;
+		}
+		const pane = this._getPane();
+		if (pane !== null) {
+			pane.removeDataSource(source);
+		}
+		this._polygonFillMap.delete(api);
+		this._chartWidget.model().lightUpdate();
 	}
 
 	public addLineTool<T extends LineToolType>(name: T, points: LineToolPoint[], options?: LineToolPartialOptionsMap[T]): LineToolApi<T> {

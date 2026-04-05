@@ -19,6 +19,7 @@ import { BusinessDay, UTCTimestamp } from '../model/time-data';
 
 import { Time } from './data-consumer';
 import { ILineToolApi } from './iline-tool-api';
+import { IPolygonFillApi } from './ipolygon-fill-api';
 import { IPriceScaleApi } from './iprice-scale-api';
 import { ISeriesApi } from './iseries-api';
 import { ITimeScaleApi } from './itime-scale-api';
@@ -379,6 +380,23 @@ export interface IChartApi {
 	 * @returns Full set of currently applied options, including defaults
 	 */
 	options(): Readonly<ChartOptions>;
+
+	/**
+	 * Creates a polygon fill between two line series.
+	 *
+	 * @param series1 - The first (top) line series.
+	 * @param series2 - The second (bottom) line series.
+	 * @param fillColor - The fill color (supports rgba for transparency).
+	 * @returns An interface to control the polygon fill.
+	 */
+	addPolygonFill(series1: ISeriesApi<'Line'>, series2: ISeriesApi<'Line'>, fillColor: string): IPolygonFillApi;
+
+	/**
+	 * Removes a polygon fill that was created with {@link addPolygonFill}.
+	 *
+	 * @param polygonFill - The polygon fill to remove.
+	 */
+	removePolygonFill(polygonFill: IPolygonFillApi): void;
 
 	/**
 	 * Make a screenshot of the chart with all the elements excluding crosshair.
