@@ -286,13 +286,19 @@ export class TimeScale {
 	}
 
 	public floatIndexToTime(index: TimePointIndex): TimePoint | null {
+		if (this._points.length < 2) {
+			return this._points.length === 1
+				? { timestamp: this._points[0].time.timestamp }
+				: null;
+		}
+
 		const index1 = Math.floor(index);
 		const index2 = Math.ceil(index);
 
 		const time1 = this._points[index1]?.time.timestamp as number;
 		const time2 = this._points[index2]?.time.timestamp as number;
-		const firstTime = this._points[0]?.time.timestamp as number;
-		const lastTime = this._points[this._points.length - 1]?.time.timestamp as number;
+		const firstTime = this._points[0].time.timestamp as number;
+		const lastTime = this._points[this._points.length - 1].time.timestamp as number;
 		const interval = this._points[1].time.timestamp - this._points[0].time.timestamp;
 
 		if (index >= this._points.length - 1) {
