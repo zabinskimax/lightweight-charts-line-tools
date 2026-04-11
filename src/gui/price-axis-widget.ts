@@ -218,6 +218,11 @@ export class PriceAxisWidget implements IDestroyable {
 			rendererOptions.paddingOuter +
 			resultTickMarksMaxWidth
 		);
+		// apply user-configured minimum width
+		const minimumWidth = this._priceScale.options().minimumWidth;
+		if (minimumWidth > 0 && res < minimumWidth) {
+			res = minimumWidth;
+		}
 		// make it even
 		res += res % 2;
 		return res;

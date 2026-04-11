@@ -180,6 +180,15 @@ export interface PriceScaleOptions {
 	 * @defaultValue `true`
 	 */
 	drawTicks: boolean;
+
+	/**
+	 * Minimum width of the price scale in pixels. The scale will never be
+	 * narrower than this value, even if labels are short. Useful for syncing
+	 * the right-side width across multiple charts.
+	 *
+	 * @defaultValue `0` (no minimum)
+	 */
+	minimumWidth: number;
 }
 
 interface RangeCache {
