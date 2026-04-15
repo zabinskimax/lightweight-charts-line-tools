@@ -21,6 +21,14 @@ export { createChart } from './api/create-chart';
 export { IPolygonFillApi } from './api/ipolygon-fill-api';
 export { IBackgroundBandApi, BackgroundBandOptions } from './api/ibackground-band-api';
 export { ITextLabelApi, TextLabelOptions, TextLabelPartialOptions } from './api/itext-label-api';
+export {
+	IBarColorOverlayApi,
+	BarColorOverlayOptions,
+	BarColorOverlayPair,
+	BarColorOverlayPartialOptions,
+} from './api/ibar-color-overlay-api';
+export { IOverlayLineApi, OverlayLineOptions, OverlayLinePartialOptions } from './api/ioverlay-line-api';
+export { IOverlayBoxApi, OverlayBoxOptions, OverlayBoxPartialOptions } from './api/ioverlay-box-api';
 
 /**
  * Returns the current version as a string. For example `'3.3.0'`.

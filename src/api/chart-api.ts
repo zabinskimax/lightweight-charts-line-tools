@@ -8,14 +8,18 @@ import { clone, DeepPartial, isBoolean, merge } from '../helpers/strict-type-che
 
 import { BarPrice, BarPrices } from '../model/bar';
 import { BackgroundBandDataSource } from '../model/background-band-data-source';
+import { BarColorOverlayDataSource } from '../model/bar-color-overlay-data-source';
 import { ChartOptions, ChartOptionsInternal } from '../model/chart-model';
 import { ColorType } from '../model/layout-options';
 import { LineTool, LineToolExport, LineToolPoint } from '../model/line-tool';
 import { LineToolOptionsMap, LineToolPartialOptionsMap, LineToolType } from '../model/line-tool-options';
+import { OverlayBoxDataSource } from '../model/overlay-box-data-source';
+import { OverlayLineDataSource } from '../model/overlay-line-data-source';
 import { Pane } from '../model/pane';
 import { PolygonFillDataSource } from '../model/polygon-fill-data-source';
 import { Series } from '../model/series';
 import { TextLabelDataSource } from '../model/text-label-data-source';
+import { LineStyle, LineWidth } from '../renderers/draw-line';
 import {
 	AreaSeriesOptions,
 	AreaSeriesPartialOptions,
@@ -37,17 +41,23 @@ import {
 } from '../model/series-options';
 
 import { BackgroundBandApi } from './background-band-api';
+import { BarColorOverlayApi } from './bar-color-overlay-api';
 import { CandlestickSeriesApi } from './candlestick-series-api';
 import { DataUpdatesConsumer, SeriesDataItemTypeMap, Time } from './data-consumer';
 import { DataLayer, DataUpdateResponse, SeriesChanges } from './data-layer';
 import { IBackgroundBandApi } from './ibackground-band-api';
+import { IBarColorOverlayApi, BarColorOverlayPair, BarColorOverlayPartialOptions } from './ibar-color-overlay-api';
 import { IChartApi, LineToolsAfterEditEventHandler, LineToolsAfterEditEventParams, LineToolsDoubleClickEventHandler, LineToolsDoubleClickEventParams, MouseEventHandler, MouseEventParams } from './ichart-api';
+import { IOverlayBoxApi, OverlayBoxPartialOptions } from './ioverlay-box-api';
+import { IOverlayLineApi, OverlayLinePartialOptions } from './ioverlay-line-api';
 import { IPolygonFillApi } from './ipolygon-fill-api';
 import { IPriceScaleApi } from './iprice-scale-api';
 import { ISeriesApi } from './iseries-api';
 import { ITextLabelApi, TextLabelPartialOptions } from './itext-label-api';
 import { ITimeScaleApi } from './itime-scale-api';
 import { LineToolApi } from './line-tool-api';
+import { OverlayBoxApi } from './overlay-box-api';
+import { OverlayLineApi } from './overlay-line-api';
 import { PolygonFillApi } from './polygon-fill-api';
 import { TextLabelApi } from './text-label-api';
 import { chartOptionsDefaults } from './options/chart-options-defaults';
@@ -175,6 +185,9 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 	private readonly _polygonFillMap: Map<PolygonFillApi, PolygonFillDataSource> = new Map();
 	private readonly _backgroundBandMap: Map<BackgroundBandApi, BackgroundBandDataSource> = new Map();
 	private readonly _textLabelMap: Map<TextLabelApi, TextLabelDataSource> = new Map();
+	private readonly _barColorOverlayMap: Map<BarColorOverlayApi, BarColorOverlayDataSource> = new Map();
+	private readonly _overlayLineMap: Map<OverlayLineApi, OverlayLineDataSource> = new Map();
+	private readonly _overlayBoxMap: Map<OverlayBoxApi, OverlayBoxDataSource> = new Map();
 
 	private readonly _clickedDelegate: Delegate<MouseEventParams> = new Delegate();
 	private readonly _crosshairMovedDelegate: Delegate<MouseEventParams> = new Delegate();
@@ -433,6 +446,126 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 			pane.removeDataSource(source);
 		}
 		this._textLabelMap.delete(api);
+		this._chartWidget.model().lightUpdate();
+	}
+
+	public addBarColorOverlay(pairs: BarColorOverlayPair[], options: BarColorOverlayPartialOptions = {}): IBarColorOverlayApi {
+		const model = this._chartWidget.model();
+		const internalOptions = {
+			pairs,
+			widthRatio: options.widthRatio ?? 0.9,
+		};
+		const source = new BarColorOverlayDataSource(model, internalOptions);
+		const pane = this._getPane();
+		if (pane !== null) {
+			pane.addDataSource(source, model.defaultVisiblePriceScaleId(), 500);
+		}
+		const api = new BarColorOverlayApi(source, internalOptions);
+		this._barColorOverlayMap.set(api, source);
+		model.lightUpdate();
+		return api;
+	}
+
+	public removeBarColorOverlay(overlayApi: IBarColorOverlayApi): void {
+		const api = overlayApi as BarColorOverlayApi;
+		const source = this._barColorOverlayMap.get(api);
+		if (source === undefined) {
+			return;
+		}
+		const pane = this._getPane();
+		if (pane !== null) {
+			pane.removeDataSource(source);
+		}
+		this._barColorOverlayMap.delete(api);
+		this._chartWidget.model().lightUpdate();
+	}
+
+	public addOverlayLine(
+		seriesApi: SeriesApi<'Line' | 'Area' | 'Baseline' | 'Bar' | 'Candlestick' | 'Histogram'>,
+		time1: Time,
+		price1: number,
+		time2: Time,
+		price2: number,
+		options: OverlayLinePartialOptions = {}
+	): IOverlayLineApi {
+		const series = ensureDefined(this._seriesMap.get(seriesApi));
+		const model = this._chartWidget.model();
+		const internalOptions = {
+			time1,
+			price1,
+			time2,
+			price2,
+			color: options.color ?? '#2962ff',
+			lineWidth: (options.lineWidth ?? 1) as LineWidth,
+			lineStyle: options.lineStyle ?? LineStyle.Solid,
+		};
+		const source = new OverlayLineDataSource(model, series, internalOptions);
+		const pane = this._getPane();
+		if (pane !== null) {
+			pane.addDataSource(source, model.defaultVisiblePriceScaleId(), 600);
+		}
+		const api = new OverlayLineApi(source, internalOptions);
+		this._overlayLineMap.set(api, source);
+		model.lightUpdate();
+		return api;
+	}
+
+	public removeOverlayLine(lineApi: IOverlayLineApi): void {
+		const api = lineApi as OverlayLineApi;
+		const source = this._overlayLineMap.get(api);
+		if (source === undefined) {
+			return;
+		}
+		const pane = this._getPane();
+		if (pane !== null) {
+			pane.removeDataSource(source);
+		}
+		this._overlayLineMap.delete(api);
+		this._chartWidget.model().lightUpdate();
+	}
+
+	public addOverlayBox(
+		seriesApi: SeriesApi<'Line' | 'Area' | 'Baseline' | 'Bar' | 'Candlestick' | 'Histogram'>,
+		time1: Time,
+		price1: number,
+		time2: Time,
+		price2: number,
+		options: OverlayBoxPartialOptions = {}
+	): IOverlayBoxApi {
+		const series = ensureDefined(this._seriesMap.get(seriesApi));
+		const model = this._chartWidget.model();
+		const internalOptions = {
+			time1,
+			price1,
+			time2,
+			price2,
+			fillColor: options.fillColor,
+			borderColor: options.borderColor,
+			borderWidth: (options.borderWidth ?? 1) as LineWidth,
+			borderStyle: options.borderStyle ?? LineStyle.Solid,
+		};
+		const source = new OverlayBoxDataSource(model, series, internalOptions);
+		const pane = this._getPane();
+		if (pane !== null) {
+			pane.addDataSource(source, model.defaultVisiblePriceScaleId(), 550);
+		}
+		const api = new OverlayBoxApi(source, internalOptions);
+		this._overlayBoxMap.set(api, source);
+		model.lightUpdate();
+		return api;
+	}
+
+	public removeOverlayBox(boxApi: IOverlayBoxApi): void {
+		const api = boxApi as OverlayBoxApi;
+		const source = this._overlayBoxMap.get(api);
+		if (source === undefined) {
+			return;
+		}
+		const pane = this._getPane();
+		if (pane !== null) {
+			pane.removeDataSource(source);
+		}
+		this._overlayBoxMap.delete(api);
 		this._chartWidget.model().lightUpdate();
 	}
 

@@ -19,7 +19,10 @@ import { BusinessDay, UTCTimestamp } from '../model/time-data';
 
 import { Time } from './data-consumer';
 import { IBackgroundBandApi } from './ibackground-band-api';
+import { IBarColorOverlayApi, BarColorOverlayPair, BarColorOverlayPartialOptions } from './ibar-color-overlay-api';
 import { ILineToolApi } from './iline-tool-api';
+import { IOverlayBoxApi, OverlayBoxPartialOptions } from './ioverlay-box-api';
+import { IOverlayLineApi, OverlayLinePartialOptions } from './ioverlay-line-api';
 import { IPolygonFillApi } from './ipolygon-fill-api';
 import { IPriceScaleApi } from './iprice-scale-api';
 import { ISeriesApi } from './iseries-api';
@@ -418,6 +421,55 @@ export interface IChartApi {
 	 * Removes a text label.
 	 */
 	removeTextLabel(label: ITextLabelApi): void;
+
+	/**
+	 * Paints per-bar color tints over the main candles at specified times.
+	 * Use low-alpha colors so the underlying candles remain visible.
+	 */
+	addBarColorOverlay(pairs: BarColorOverlayPair[], options?: BarColorOverlayPartialOptions): IBarColorOverlayApi;
+
+	/**
+	 * Removes a bar color overlay.
+	 */
+	removeBarColorOverlay(overlay: IBarColorOverlayApi): void;
+
+	/**
+	 * Creates a passive (non-interactive) line between two (time, price) points.
+	 * Unlike addLineTool, the line does not appear in the drawings panel and
+	 * cannot be selected or edited.
+	 */
+	addOverlayLine(
+		series: ISeriesApi<'Line' | 'Area' | 'Baseline' | 'Bar' | 'Candlestick' | 'Histogram'>,
+		time1: Time,
+		price1: number,
+		time2: Time,
+		price2: number,
+		options?: OverlayLinePartialOptions
+	): IOverlayLineApi;
+
+	/**
+	 * Removes an overlay line.
+	 */
+	removeOverlayLine(line: IOverlayLineApi): void;
+
+	/**
+	 * Creates a passive (non-interactive) rectangle defined by two
+	 * (time, price) corners. Unlike addLineTool, the box does not appear in
+	 * the drawings panel and cannot be selected or edited.
+	 */
+	addOverlayBox(
+		series: ISeriesApi<'Line' | 'Area' | 'Baseline' | 'Bar' | 'Candlestick' | 'Histogram'>,
+		time1: Time,
+		price1: number,
+		time2: Time,
+		price2: number,
+		options?: OverlayBoxPartialOptions
+	): IOverlayBoxApi;
+
+	/**
+	 * Removes an overlay box.
+	 */
+	removeOverlayBox(box: IOverlayBoxApi): void;
 
 	/**
 	 * Creates a polygon fill between two line series.
