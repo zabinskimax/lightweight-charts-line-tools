@@ -18,10 +18,12 @@ import {
 import { BusinessDay, UTCTimestamp } from '../model/time-data';
 
 import { Time } from './data-consumer';
+import { IBackgroundBandApi } from './ibackground-band-api';
 import { ILineToolApi } from './iline-tool-api';
 import { IPolygonFillApi } from './ipolygon-fill-api';
 import { IPriceScaleApi } from './iprice-scale-api';
 import { ISeriesApi } from './iseries-api';
+import { ITextLabelApi, TextLabelPartialOptions } from './itext-label-api';
 import { ITimeScaleApi } from './itime-scale-api';
 
 /**
@@ -380,6 +382,42 @@ export interface IChartApi {
 	 * @returns Full set of currently applied options, including defaults
 	 */
 	options(): Readonly<ChartOptions>;
+
+	/**
+	 * Creates a full-height background band spanning a time range.
+	 *
+	 * @param fromTime - Left edge of the band.
+	 * @param toTime - Right edge of the band.
+	 * @param color - Fill color (supports rgba).
+	 */
+	addBackgroundBand(fromTime: Time, toTime: Time, color: string): IBackgroundBandApi;
+
+	/**
+	 * Removes a background band.
+	 */
+	removeBackgroundBand(band: IBackgroundBandApi): void;
+
+	/**
+	 * Creates a free-floating text label at a (time, price) point.
+	 *
+	 * @param series - Series whose price scale is used to resolve the price.
+	 * @param time - Time anchor for the label.
+	 * @param price - Price anchor for the label.
+	 * @param text - Text content.
+	 * @param options - Styling overrides (color, font, alignment, etc.).
+	 */
+	addTextLabel(
+		series: ISeriesApi<'Line' | 'Area' | 'Baseline' | 'Bar' | 'Candlestick' | 'Histogram'>,
+		time: Time,
+		price: number,
+		text: string,
+		options?: TextLabelPartialOptions
+	): ITextLabelApi;
+
+	/**
+	 * Removes a text label.
+	 */
+	removeTextLabel(label: ITextLabelApi): void;
 
 	/**
 	 * Creates a polygon fill between two line series.

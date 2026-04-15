@@ -7,6 +7,7 @@ import { warn } from '../helpers/logger';
 import { clone, DeepPartial, isBoolean, merge } from '../helpers/strict-type-checks';
 
 import { BarPrice, BarPrices } from '../model/bar';
+import { BackgroundBandDataSource } from '../model/background-band-data-source';
 import { ChartOptions, ChartOptionsInternal } from '../model/chart-model';
 import { ColorType } from '../model/layout-options';
 import { LineTool, LineToolExport, LineToolPoint } from '../model/line-tool';
@@ -14,6 +15,7 @@ import { LineToolOptionsMap, LineToolPartialOptionsMap, LineToolType } from '../
 import { Pane } from '../model/pane';
 import { PolygonFillDataSource } from '../model/polygon-fill-data-source';
 import { Series } from '../model/series';
+import { TextLabelDataSource } from '../model/text-label-data-source';
 import {
 	AreaSeriesOptions,
 	AreaSeriesPartialOptions,
@@ -34,16 +36,20 @@ import {
 	SeriesType,
 } from '../model/series-options';
 
+import { BackgroundBandApi } from './background-band-api';
 import { CandlestickSeriesApi } from './candlestick-series-api';
-import { DataUpdatesConsumer, SeriesDataItemTypeMap } from './data-consumer';
+import { DataUpdatesConsumer, SeriesDataItemTypeMap, Time } from './data-consumer';
 import { DataLayer, DataUpdateResponse, SeriesChanges } from './data-layer';
+import { IBackgroundBandApi } from './ibackground-band-api';
 import { IChartApi, LineToolsAfterEditEventHandler, LineToolsAfterEditEventParams, LineToolsDoubleClickEventHandler, LineToolsDoubleClickEventParams, MouseEventHandler, MouseEventParams } from './ichart-api';
 import { IPolygonFillApi } from './ipolygon-fill-api';
 import { IPriceScaleApi } from './iprice-scale-api';
 import { ISeriesApi } from './iseries-api';
+import { ITextLabelApi, TextLabelPartialOptions } from './itext-label-api';
 import { ITimeScaleApi } from './itime-scale-api';
 import { LineToolApi } from './line-tool-api';
 import { PolygonFillApi } from './polygon-fill-api';
+import { TextLabelApi } from './text-label-api';
 import { chartOptionsDefaults } from './options/chart-options-defaults';
 import { LineToolsOptionDefaults } from './options/line-tools-options-defaults';
 import {
@@ -167,6 +173,8 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 	private readonly _seriesMapReversed: Map<Series, SeriesApi<SeriesType>> = new Map();
 
 	private readonly _polygonFillMap: Map<PolygonFillApi, PolygonFillDataSource> = new Map();
+	private readonly _backgroundBandMap: Map<BackgroundBandApi, BackgroundBandDataSource> = new Map();
+	private readonly _textLabelMap: Map<TextLabelApi, TextLabelDataSource> = new Map();
 
 	private readonly _clickedDelegate: Delegate<MouseEventParams> = new Delegate();
 	private readonly _crosshairMovedDelegate: Delegate<MouseEventParams> = new Delegate();
@@ -349,6 +357,83 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 
 		this._seriesMap.delete(seriesApi);
 		this._seriesMapReversed.delete(series);
+	}
+
+	public addBackgroundBand(fromTime: Time, toTime: Time, color: string): IBackgroundBandApi {
+		const model = this._chartWidget.model();
+		const options = { fromTime, toTime, color };
+		const source = new BackgroundBandDataSource(model, options);
+		const pane = this._getPane();
+		if (pane !== null) {
+			pane.addDataSource(source, model.defaultVisiblePriceScaleId(), -100);
+		}
+		const api = new BackgroundBandApi(source, options);
+		this._backgroundBandMap.set(api, source);
+		model.lightUpdate();
+		return api;
+	}
+
+	public removeBackgroundBand(bandApi: IBackgroundBandApi): void {
+		const api = bandApi as BackgroundBandApi;
+		const source = this._backgroundBandMap.get(api);
+		if (source === undefined) {
+			return;
+		}
+		const pane = this._getPane();
+		if (pane !== null) {
+			pane.removeDataSource(source);
+		}
+		this._backgroundBandMap.delete(api);
+		this._chartWidget.model().lightUpdate();
+	}
+
+	public addTextLabel(
+		seriesApi: SeriesApi<'Line' | 'Area' | 'Baseline' | 'Bar' | 'Candlestick' | 'Histogram'>,
+		time: Time,
+		price: number,
+		text: string,
+		options: TextLabelPartialOptions = {}
+	): ITextLabelApi {
+		const series = ensureDefined(this._seriesMap.get(seriesApi));
+		const model = this._chartWidget.model();
+		const fullOptions = {
+			time,
+			price,
+			text,
+			color: options.color ?? '#131722',
+			fontSize: options.fontSize ?? 12,
+			fontFamily: options.fontFamily ?? "'Trebuchet MS', Roboto, Ubuntu, sans-serif",
+			bold: options.bold ?? false,
+			italic: options.italic ?? false,
+			horzAlign: options.horzAlign ?? 'center',
+			vertAlign: options.vertAlign ?? 'middle',
+			backgroundColor: options.backgroundColor,
+			paddingX: options.paddingX ?? 4,
+			paddingY: options.paddingY ?? 2,
+		};
+		const source = new TextLabelDataSource(model, series, fullOptions);
+		const pane = this._getPane();
+		if (pane !== null) {
+			pane.addDataSource(source, model.defaultVisiblePriceScaleId(), 1000);
+		}
+		const api = new TextLabelApi(source, fullOptions);
+		this._textLabelMap.set(api, source);
+		model.lightUpdate();
+		return api;
+	}
+
+	public removeTextLabel(labelApi: ITextLabelApi): void {
+		const api = labelApi as TextLabelApi;
+		const source = this._textLabelMap.get(api);
+		if (source === undefined) {
+			return;
+		}
+		const pane = this._getPane();
+		if (pane !== null) {
+			pane.removeDataSource(source);
+		}
+		this._textLabelMap.delete(api);
+		this._chartWidget.model().lightUpdate();
 	}
 
 	public addPolygonFill(series1Api: SeriesApi<'Line'>, series2Api: SeriesApi<'Line'>, fillColor: string): IPolygonFillApi {

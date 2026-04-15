@@ -19,6 +19,8 @@ export {
 
 export { createChart } from './api/create-chart';
 export { IPolygonFillApi } from './api/ipolygon-fill-api';
+export { IBackgroundBandApi, BackgroundBandOptions } from './api/ibackground-band-api';
+export { ITextLabelApi, TextLabelOptions, TextLabelPartialOptions } from './api/itext-label-api';
 
 /**
  * Returns the current version as a string. For example `'3.3.0'`.
