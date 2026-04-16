@@ -22,6 +22,7 @@ export const candlestickStyleDefaults: CandlestickStyleOptions = {
 	wickColor: '#737375',
 	wickUpColor: '#26a69a',
 	wickDownColor: '#ef5350',
+	wickLineStyle: LineStyle.Solid,
 };
 
 export const barStyleDefaults: BarStyleOptions = {

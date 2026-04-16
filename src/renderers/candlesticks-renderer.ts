@@ -3,6 +3,7 @@ import { fillRectInnerBorder } from '../helpers/canvas-helpers';
 import { SeriesItemsIndexesRange } from '../model/time-data';
 
 import { BarCandlestickItemBase } from './bars-renderer';
+import { LineStyle, setLineStyle } from './draw-line';
 import { IPaneRenderer } from './ipane-renderer';
 import { optimalCandlestickWidth } from './optimal-bar-width';
 
@@ -19,6 +20,7 @@ export interface PaneRendererCandlesticksData {
 
 	wickVisible: boolean;
 	borderVisible: boolean;
+	wickLineStyle: LineStyle;
 
 	visibleRange: SeriesItemsIndexesRange | null;
 }
@@ -76,18 +78,31 @@ export class PaneRendererCandlesticks implements IPaneRenderer {
 		if (this._data === null) {
 			return;
 		}
-		let prevWickColor = '';
+
+		const wickLineStyle = this._data.wickLineStyle;
+		const isSolid = wickLineStyle === LineStyle.Solid;
 
 		let wickWidth = Math.min(Math.floor(pixelRatio), Math.floor(this._data.barSpacing * pixelRatio));
 		wickWidth = Math.max(Math.floor(pixelRatio), Math.min(wickWidth, this._barWidth));
 		const wickOffset = Math.floor(wickWidth * 0.5);
 
+		if (!isSolid) {
+			ctx.lineWidth = wickWidth;
+			ctx.lineCap = 'butt';
+			setLineStyle(ctx, wickLineStyle);
+		}
+
+		let prevWickColor = '';
 		let prevEdge: number | null = null;
 
 		for (let i = visibleRange.from; i < visibleRange.to; i++) {
 			const bar = bars[i];
 			if (bar.wickColor !== prevWickColor) {
-				ctx.fillStyle = bar.wickColor;
+				if (isSolid) {
+					ctx.fillStyle = bar.wickColor;
+				} else {
+					ctx.strokeStyle = bar.wickColor;
+				}
 				prevWickColor = bar.wickColor;
 			}
 
@@ -99,18 +114,31 @@ export class PaneRendererCandlesticks implements IPaneRenderer {
 
 			const scaledX = Math.round(pixelRatio * bar.x);
 
-			let left = scaledX - wickOffset;
-			const right = left + wickWidth - 1;
-			if (prevEdge !== null) {
-				left = Math.max(prevEdge + 1, left);
-				left = Math.min(left, right);
+			if (isSolid) {
+				let left = scaledX - wickOffset;
+				const right = left + wickWidth - 1;
+				if (prevEdge !== null) {
+					left = Math.max(prevEdge + 1, left);
+					left = Math.min(left, right);
+				}
+				const width = right - left + 1;
+
+				ctx.fillRect(left, high, width, top - high);
+				ctx.fillRect(left, bottom + 1, width, low - bottom);
+
+				prevEdge = right;
+			} else {
+				const centerX = scaledX + 0.5;
+				ctx.beginPath();
+				ctx.moveTo(centerX, high);
+				ctx.lineTo(centerX, top);
+				ctx.stroke();
+
+				ctx.beginPath();
+				ctx.moveTo(centerX, bottom + 1);
+				ctx.lineTo(centerX, low);
+				ctx.stroke();
 			}
-			const width = right - left + 1;
-
-			ctx.fillRect(left, high, width, top - high);
-			ctx.fillRect(left, bottom + 1, width, low - bottom);
-
-			prevEdge = right;
 		}
 	}
 

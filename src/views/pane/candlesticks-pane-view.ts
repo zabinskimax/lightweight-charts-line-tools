@@ -26,6 +26,7 @@ export class SeriesCandlesticksPaneView extends BarsPaneViewBase<'Candlestick', 
 			barSpacing: this._model.timeScale().barSpacing(),
 			wickVisible: candlestickStyleProps.wickVisible,
 			borderVisible: candlestickStyleProps.borderVisible,
+			wickLineStyle: candlestickStyleProps.wickLineStyle,
 			visibleRange: this._itemsVisibleRange,
 		};
 

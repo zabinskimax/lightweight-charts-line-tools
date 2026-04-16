@@ -79,6 +79,13 @@ export interface CandlestickStyleOptions {
 	 * @defaultValue `'#ef5350'`
 	 */
 	wickDownColor: string;
+
+	/**
+	 * Line style for candle wicks (solid, dashed, dotted, etc.).
+	 *
+	 * @defaultValue {@link LineStyle.Solid}
+	 */
+	wickLineStyle: LineStyle;
 }
 
 export function fillUpDownCandlesticksColors(options: Partial<CandlestickStyleOptions>): void {
