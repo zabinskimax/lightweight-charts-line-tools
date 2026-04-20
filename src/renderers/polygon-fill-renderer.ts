@@ -27,7 +27,9 @@ export class PolygonFillRenderer extends ScaledRenderer {
 			data.topItems.length === 0 ||
 			data.bottomItems.length === 0 ||
 			data.topVisibleRange === null ||
-			data.bottomVisibleRange === null
+			data.bottomVisibleRange === null ||
+			data.topVisibleRange.from >= data.topVisibleRange.to ||
+			data.bottomVisibleRange.from >= data.bottomVisibleRange.to
 		) {
 			return;
 		}
