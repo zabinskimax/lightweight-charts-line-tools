@@ -29,6 +29,12 @@ export {
 } from './api/ibar-color-overlay-api';
 export { IOverlayLineApi, OverlayLineOptions, OverlayLinePartialOptions } from './api/ioverlay-line-api';
 export { IOverlayBoxApi, OverlayBoxOptions, OverlayBoxPartialOptions } from './api/ioverlay-box-api';
+export {
+	IPriceLevelMarkerApi,
+	PriceLevelMarkerOptions,
+	PriceLevelMarkerPartialOptions,
+} from './api/iprice-level-marker-api';
+export { PriceLevelMarkerShape } from './renderers/price-level-marker-renderer';
 
 /**
  * Returns the current version as a string. For example `'3.3.0'`.

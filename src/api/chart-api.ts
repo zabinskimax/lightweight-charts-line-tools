@@ -17,6 +17,7 @@ import { OverlayBoxDataSource } from '../model/overlay-box-data-source';
 import { OverlayLineDataSource } from '../model/overlay-line-data-source';
 import { Pane } from '../model/pane';
 import { PolygonFillDataSource } from '../model/polygon-fill-data-source';
+import { PriceLevelMarkerDataSource } from '../model/price-level-marker-data-source';
 import { Series } from '../model/series';
 import { TextLabelDataSource } from '../model/text-label-data-source';
 import { LineStyle, LineWidth } from '../renderers/draw-line';
@@ -56,9 +57,11 @@ import { ISeriesApi } from './iseries-api';
 import { ITextLabelApi, TextLabelPartialOptions } from './itext-label-api';
 import { ITimeScaleApi } from './itime-scale-api';
 import { LineToolApi } from './line-tool-api';
+import { IPriceLevelMarkerApi, PriceLevelMarkerPartialOptions } from './iprice-level-marker-api';
 import { OverlayBoxApi } from './overlay-box-api';
 import { OverlayLineApi } from './overlay-line-api';
 import { PolygonFillApi } from './polygon-fill-api';
+import { PriceLevelMarkerApi } from './price-level-marker-api';
 import { TextLabelApi } from './text-label-api';
 import { chartOptionsDefaults } from './options/chart-options-defaults';
 import { LineToolsOptionDefaults } from './options/line-tools-options-defaults';
@@ -188,6 +191,7 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 	private readonly _barColorOverlayMap: Map<BarColorOverlayApi, BarColorOverlayDataSource> = new Map();
 	private readonly _overlayLineMap: Map<OverlayLineApi, OverlayLineDataSource> = new Map();
 	private readonly _overlayBoxMap: Map<OverlayBoxApi, OverlayBoxDataSource> = new Map();
+	private readonly _priceLevelMarkerMap: Map<PriceLevelMarkerApi, PriceLevelMarkerDataSource> = new Map();
 
 	private readonly _clickedDelegate: Delegate<MouseEventParams> = new Delegate();
 	private readonly _crosshairMovedDelegate: Delegate<MouseEventParams> = new Delegate();
@@ -566,6 +570,58 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 			pane.removeDataSource(source);
 		}
 		this._overlayBoxMap.delete(api);
+		this._chartWidget.model().lightUpdate();
+	}
+
+	public addPriceLevelMarker(
+		seriesApi: SeriesApi<'Line' | 'Area' | 'Baseline' | 'Bar' | 'Candlestick' | 'Histogram'>,
+		time: Time,
+		price: number,
+		options: PriceLevelMarkerPartialOptions = {}
+	): IPriceLevelMarkerApi {
+		const series = ensureDefined(this._seriesMap.get(seriesApi));
+		const model = this._chartWidget.model();
+		const internalOptions = {
+			time,
+			price,
+			text: options.text,
+			color: options.color ?? '#f39c12',
+			textColor: options.textColor ?? '#ffffff',
+			shape: options.shape ?? 'diamond' as const,
+			markerSize: options.markerSize ?? 14,
+			showLine: options.showLine ?? true,
+			showLabel: options.showLabel ?? true,
+			lineStyle: options.lineStyle ?? LineStyle.Solid,
+			lineWidth: (options.lineWidth ?? 2) as LineWidth,
+			fontSize: options.fontSize ?? 12,
+			fontFamily: options.fontFamily ?? "'Trebuchet MS', Roboto, Ubuntu, sans-serif",
+			bold: options.bold ?? true,
+			labelPaddingX: options.labelPaddingX ?? 8,
+			labelPaddingY: options.labelPaddingY ?? 5,
+			labelTailSize: options.labelTailSize ?? 8,
+		};
+		const source = new PriceLevelMarkerDataSource(model, series, internalOptions);
+		const pane = this._getPane();
+		if (pane !== null) {
+			pane.addDataSource(source, model.defaultVisiblePriceScaleId(), 900);
+		}
+		const api = new PriceLevelMarkerApi(source, internalOptions);
+		this._priceLevelMarkerMap.set(api, source);
+		model.lightUpdate();
+		return api;
+	}
+
+	public removePriceLevelMarker(markerApi: IPriceLevelMarkerApi): void {
+		const api = markerApi as PriceLevelMarkerApi;
+		const source = this._priceLevelMarkerMap.get(api);
+		if (source === undefined) {
+			return;
+		}
+		const pane = this._getPane();
+		if (pane !== null) {
+			pane.removeDataSource(source);
+		}
+		this._priceLevelMarkerMap.delete(api);
 		this._chartWidget.model().lightUpdate();
 	}
 

@@ -24,6 +24,7 @@ import { ILineToolApi } from './iline-tool-api';
 import { IOverlayBoxApi, OverlayBoxPartialOptions } from './ioverlay-box-api';
 import { IOverlayLineApi, OverlayLinePartialOptions } from './ioverlay-line-api';
 import { IPolygonFillApi } from './ipolygon-fill-api';
+import { IPriceLevelMarkerApi, PriceLevelMarkerPartialOptions } from './iprice-level-marker-api';
 import { IPriceScaleApi } from './iprice-scale-api';
 import { ISeriesApi } from './iseries-api';
 import { ITextLabelApi, TextLabelPartialOptions } from './itext-label-api';
@@ -470,6 +471,23 @@ export interface IChartApi {
 	 * Removes an overlay box.
 	 */
 	removeOverlayBox(box: IOverlayBoxApi): void;
+
+	/**
+	 * Creates a price-level marker: a shape anchored at (time, price) with a
+	 * horizontal connector line extending to the right edge of the pane and
+	 * a labeled pill showing the price.
+	 */
+	addPriceLevelMarker(
+		series: ISeriesApi<'Line' | 'Area' | 'Baseline' | 'Bar' | 'Candlestick' | 'Histogram'>,
+		time: Time,
+		price: number,
+		options?: PriceLevelMarkerPartialOptions
+	): IPriceLevelMarkerApi;
+
+	/**
+	 * Removes a price-level marker.
+	 */
+	removePriceLevelMarker(marker: IPriceLevelMarkerApi): void;
 
 	/**
 	 * Creates a polygon fill between two line series.
