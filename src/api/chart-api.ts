@@ -19,7 +19,7 @@ import { Pane } from '../model/pane';
 import { PolygonFillDataSource } from '../model/polygon-fill-data-source';
 import { Series } from '../model/series';
 import { TextLabelDataSource } from '../model/text-label-data-source';
-import { LineStyle, LineWidth } from '../renderers/draw-line';
+import { LineStyle } from '../renderers/draw-line';
 import {
 	AreaSeriesOptions,
 	AreaSeriesPartialOptions,
@@ -50,7 +50,7 @@ import { IBarColorOverlayApi, BarColorOverlayPair, BarColorOverlayPartialOptions
 import { IChartApi, LineToolsAfterEditEventHandler, LineToolsAfterEditEventParams, LineToolsDoubleClickEventHandler, LineToolsDoubleClickEventParams, MouseEventHandler, MouseEventParams } from './ichart-api';
 import { IOverlayBoxApi, OverlayBoxPartialOptions } from './ioverlay-box-api';
 import { IOverlayLineApi, OverlayLinePartialOptions } from './ioverlay-line-api';
-import { IPolygonFillApi } from './ipolygon-fill-api';
+import { IPolygonFillApi, PolygonFillOptions } from './ipolygon-fill-api';
 import { IPriceScaleApi } from './iprice-scale-api';
 import { ISeriesApi } from './iseries-api';
 import { ITextLabelApi, TextLabelPartialOptions } from './itext-label-api';
@@ -496,7 +496,7 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 			time2,
 			price2,
 			color: options.color ?? '#2962ff',
-			lineWidth: (options.lineWidth ?? 1) as LineWidth,
+			lineWidth: options.lineWidth ?? 1,
 			lineStyle: options.lineStyle ?? LineStyle.Solid,
 		};
 		const source = new OverlayLineDataSource(model, series, internalOptions);
@@ -541,7 +541,7 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 			price2,
 			fillColor: options.fillColor,
 			borderColor: options.borderColor,
-			borderWidth: (options.borderWidth ?? 1) as LineWidth,
+			borderWidth: options.borderWidth ?? 1,
 			borderStyle: options.borderStyle ?? LineStyle.Solid,
 		};
 		const source = new OverlayBoxDataSource(model, series, internalOptions);
@@ -569,16 +569,17 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 		this._chartWidget.model().lightUpdate();
 	}
 
-	public addPolygonFill(series1Api: SeriesApi<'Line'>, series2Api: SeriesApi<'Line'>, fillColor: string): IPolygonFillApi {
+	public addPolygonFill(series1Api: SeriesApi<'Line'>, series2Api: SeriesApi<'Line'>, options: PolygonFillOptions): IPolygonFillApi {
 		const s1 = ensureDefined(this._seriesMap.get(series1Api)) as Series<'Line'>;
 		const s2 = ensureDefined(this._seriesMap.get(series2Api)) as Series<'Line'>;
 		const model = this._chartWidget.model();
-		const source = new PolygonFillDataSource(model, s1, s2, { fillColor });
+		const internalOptions: PolygonFillOptions = { ...options };
+		const source = new PolygonFillDataSource(model, s1, s2, internalOptions);
 		const pane = this._getPane();
 		if (pane !== null) {
 			pane.addDataSource(source, model.defaultVisiblePriceScaleId(), -1);
 		}
-		const api = new PolygonFillApi(source);
+		const api = new PolygonFillApi(source, internalOptions);
 		this._polygonFillMap.set(api, source);
 		model.lightUpdate();
 		return api;

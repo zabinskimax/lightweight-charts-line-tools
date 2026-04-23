@@ -11,7 +11,7 @@ import { SeriesItemsIndexesRange, TimedValue, TimePointIndex, visibleTimedValues
 import { TimeScale } from '../../model/time-scale';
 import { LineType } from '../../renderers/draw-line';
 import { IPaneRenderer } from '../../renderers/ipane-renderer';
-import { PolygonFillRenderer, PolygonFillRendererData } from '../../renderers/polygon-fill-renderer';
+import { PolygonFillColorRun, PolygonFillRenderer, PolygonFillRendererData } from '../../renderers/polygon-fill-renderer';
 
 import { IUpdatablePaneView, UpdateType } from './iupdatable-pane-view';
 
@@ -20,6 +20,45 @@ type FillItem = PricedValue & TimedValue;
 export interface PolygonFillOptions {
 	fillColor: string;
 	lineType?: LineType;
+	colors?: readonly (string | null | undefined)[];
+}
+
+export interface PolygonFillBuildRunsResult {
+	runs: PolygonFillColorRun[];
+	truncated: boolean;
+}
+
+export function buildPolygonFillRuns(
+	colors: readonly (string | null | undefined)[] | undefined,
+	fallbackColor: string,
+	items1Length: number,
+	items2Length: number
+): PolygonFillBuildRunsResult {
+	if (colors === undefined || colors.length === 0) {
+		return { runs: [], truncated: false };
+	}
+
+	const itemsLen = Math.min(items1Length, items2Length);
+	const maxLen = Math.min(itemsLen, colors.length);
+	const truncated = colors.length > itemsLen;
+
+	if (maxLen === 0) {
+		return { runs: [], truncated };
+	}
+
+	const runs: PolygonFillColorRun[] = [];
+	let currentColor = colors[0] ?? fallbackColor;
+	let runStart = 0;
+	for (let i = 1; i < maxLen; i++) {
+		const c = colors[i] ?? fallbackColor;
+		if (c !== currentColor) {
+			runs.push({ fromIndex: runStart, toIndex: i, color: currentColor });
+			runStart = i;
+			currentColor = c;
+		}
+	}
+	runs.push({ fromIndex: runStart, toIndex: maxLen - 1, color: currentColor });
+	return { runs, truncated };
 }
 
 export class PolygonFillPaneView implements IUpdatablePaneView {
@@ -35,6 +74,9 @@ export class PolygonFillPaneView implements IUpdatablePaneView {
 
 	private _invalidated: boolean = true;
 	private _dataInvalidated: boolean = true;
+	private _runsInvalidated: boolean = true;
+	private _runs: PolygonFillColorRun[] = [];
+	private _warnedOverlongColors: boolean = false;
 
 	private readonly _renderer: PolygonFillRenderer = new PolygonFillRenderer();
 
@@ -46,8 +88,15 @@ export class PolygonFillPaneView implements IUpdatablePaneView {
 	}
 
 	public setOptions(options: PolygonFillOptions): void {
+		const prev = this._options;
 		this._options = options;
 		this._invalidated = true;
+		if (options.colors !== prev.colors || options.fillColor !== prev.fillColor) {
+			this._runsInvalidated = true;
+		}
+		if (options.colors !== prev.colors) {
+			this._warnedOverlongColors = false;
+		}
 	}
 
 	public update(updateType?: UpdateType): void {
@@ -75,6 +124,7 @@ export class PolygonFillPaneView implements IUpdatablePaneView {
 			fillColor: this._options.fillColor,
 			topVisibleRange: this._visibleRange1,
 			bottomVisibleRange: this._visibleRange2,
+			runs: this._runs.length > 0 ? this._runs : undefined,
 		};
 
 		this._renderer.setData(data);
@@ -85,6 +135,12 @@ export class PolygonFillPaneView implements IUpdatablePaneView {
 		if (this._dataInvalidated) {
 			this._fillRawPoints();
 			this._dataInvalidated = false;
+			this._runsInvalidated = true;
+		}
+
+		if (this._runsInvalidated) {
+			this._buildRuns();
+			this._runsInvalidated = false;
 		}
 
 		if (this._invalidated) {
@@ -105,6 +161,25 @@ export class PolygonFillPaneView implements IUpdatablePaneView {
 			x: NaN as Coordinate,
 			y: NaN as Coordinate,
 		}));
+	}
+
+	private _buildRuns(): void {
+		const { runs, truncated } = buildPolygonFillRuns(
+			this._options.colors,
+			this._options.fillColor,
+			this._items1.length,
+			this._items2.length
+		);
+		this._runs = runs;
+		if (truncated && !this._warnedOverlongColors) {
+			const colorsLen = (this._options.colors as readonly unknown[]).length;
+			const itemsLen = Math.min(this._items1.length, this._items2.length);
+			// eslint-disable-next-line no-console
+			console.warn(
+				`[PolygonFill] colors array length (${colorsLen}) exceeds items length (${itemsLen}); truncating.`
+			);
+			this._warnedOverlongColors = true;
+		}
 	}
 
 	private _updatePoints(): void {

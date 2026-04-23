@@ -187,6 +187,36 @@ export interface LineStyleOptions {
 	lineType: LineType;
 
 	/**
+	 * Whether the connecting line between points is stroked. Set to
+	 * `false` to render a series as per-bar markers only (combine with
+	 * {@link pointMarkersVisible} `= true` for indicators like Parabolic
+	 * SAR where a dot-per-bar with no connecting stroke is the canonical
+	 * look).
+	 *
+	 * @defaultValue `true`
+	 */
+	lineVisible: boolean;
+
+	/**
+	 * Draw a filled circle at every data point. Orthogonal to
+	 * {@link lineVisible}: set both to `true` for a connected line with
+	 * highlighted data points, or `lineVisible: false` + this `true` for
+	 * a dots-only rendering. Dot color defaults to the per-point color
+	 * (if the item carries one) or the series's {@link color}.
+	 *
+	 * @defaultValue `false`
+	 */
+	pointMarkersVisible: boolean;
+
+	/**
+	 * Point-marker radius in pixels. Applies only when
+	 * {@link pointMarkersVisible} is `true`.
+	 *
+	 * @defaultValue `2`
+	 */
+	pointMarkersRadius?: number;
+
+	/**
 	 * Show the crosshair marker.
 	 *
 	 * @defaultValue `true`

@@ -307,7 +307,24 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 	}
 
 	public firstValue(): FirstValue | null {
-		const bar = this.firstBar();
+		// Walk past leading NaN-valued bars so the price-scale anchor is
+		// always a real number. This matters now that indicator
+		// descriptors may emit NaN values for "no data here" gap
+		// semantics (see the break-on-NaN branch in
+		// PaneRendererLine._drawLine). Without this guard, a chart whose
+		// visible left edge lands on a gap bar (e.g. scrolled into a
+		// Supertrend bearish region where the up-trail series is NaN)
+		// would anchor percentage / indexed-to-100 price calculations
+		// to NaN and propagate NaN into every coordinate the price
+		// scale produces. The binary-search walk terminates when
+		// `search(..., NearestRight)` returns null past the end of the
+		// plot list, so this is O(number-of-leading-NaNs · log n) and
+		// touches no non-indicator code paths in practice (candlestick
+		// data never has NaN closes).
+		let bar = this.firstBar();
+		while (bar !== null && Number.isNaN(bar.value[PlotRowValueIndex.Close])) {
+			bar = this._data.search((bar.index + 1) as TimePointIndex, PlotRowSearchMode.NearestRight);
+		}
 		if (bar === null) {
 			return null;
 		}

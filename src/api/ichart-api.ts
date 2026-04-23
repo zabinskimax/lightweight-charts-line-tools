@@ -19,11 +19,11 @@ import { BusinessDay, UTCTimestamp } from '../model/time-data';
 
 import { Time } from './data-consumer';
 import { IBackgroundBandApi } from './ibackground-band-api';
-import { IBarColorOverlayApi, BarColorOverlayPair, BarColorOverlayPartialOptions } from './ibar-color-overlay-api';
+import { BarColorOverlayPair, BarColorOverlayPartialOptions, IBarColorOverlayApi } from './ibar-color-overlay-api';
 import { ILineToolApi } from './iline-tool-api';
 import { IOverlayBoxApi, OverlayBoxPartialOptions } from './ioverlay-box-api';
 import { IOverlayLineApi, OverlayLinePartialOptions } from './ioverlay-line-api';
-import { IPolygonFillApi } from './ipolygon-fill-api';
+import { IPolygonFillApi, PolygonFillOptions } from './ipolygon-fill-api';
 import { IPriceScaleApi } from './iprice-scale-api';
 import { ISeriesApi } from './iseries-api';
 import { ITextLabelApi, TextLabelPartialOptions } from './itext-label-api';
@@ -476,10 +476,13 @@ export interface IChartApi {
 	 *
 	 * @param series1 - The first (top) line series.
 	 * @param series2 - The second (bottom) line series.
-	 * @param fillColor - The fill color (supports rgba for transparency).
+	 * @param options - Polygon-fill options. `fillColor` is required (supports rgba for
+	 * transparency); an optional `colors` array enables per-bar coloring where `colors[i]`
+	 * applies to the polygon segment between `series1`'s and `series2`'s i-th bar, falling
+	 * back to `fillColor` for `null`/`undefined` entries.
 	 * @returns An interface to control the polygon fill.
 	 */
-	addPolygonFill(series1: ISeriesApi<'Line'>, series2: ISeriesApi<'Line'>, fillColor: string): IPolygonFillApi;
+	addPolygonFill(series1: ISeriesApi<'Line'>, series2: ISeriesApi<'Line'>, options: PolygonFillOptions): IPolygonFillApi;
 
 	/**
 	 * Removes a polygon fill that was created with {@link addPolygonFill}.
