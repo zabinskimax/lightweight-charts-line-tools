@@ -15,11 +15,11 @@ import { LineToolFibSpeedResistanceFan } from './line-tool-fib-speed-resistance-
 import { LineToolFibSpiral } from './line-tool-fib-spiral';
 import { LineToolFibTimeZone } from './line-tool-fib-time-zone';
 import { LineToolFibWedge } from './line-tool-fib-wedge';
+import { LineToolFixedRangeVolumeProfile } from './line-tool-fixed-range-volume-profile';
 import { LineToolHighlighter } from './line-tool-highlighter';
 import { LineToolHorizontalLine } from './line-tool-horizontal-line';
 import { LineToolHorizontalRay } from './line-tool-horizontal-ray';
 import { LineToolLongShortPosition } from './line-tool-long-short-position';
-import { LineToolFixedRangeVolumeProfile } from './line-tool-fixed-range-volume-profile';
 import { LineToolMarketDepth } from './line-tool-market-depth';
 import { LineToolType } from './line-tool-options';
 import { LineToolParallelChannel } from './line-tool-parallel-channel';
@@ -29,6 +29,10 @@ import { LineToolPriceRange } from './line-tool-price-range';
 import { LineToolRay } from './line-tool-ray';
 import { LineToolRectangle } from './line-tool-rectangle';
 import { LineToolText } from './line-tool-text';
+import { LineToolTradeEntryLine } from './line-tool-trade-entry-line';
+import { LineToolTradePendingOrderLine } from './line-tool-trade-pending-order-line';
+import { LineToolTradeStopLossLine } from './line-tool-trade-stop-loss-line';
+import { LineToolTradeTakeProfitLine } from './line-tool-trade-take-profit-line';
 import { LineToolTrendBasedFibExtension } from './line-tool-trend-based-fib-extension';
 import { LineToolTrendBasedFibTime } from './line-tool-trend-based-fib-time';
 import { LineToolTrendLine } from './line-tool-trend-line';
@@ -50,6 +54,10 @@ export const LineTools: Record<LineToolType, new (...args: any) => LineTool<Line
 	Pitchfan: LineToolPitchfan,
 	ParallelChannel: LineToolParallelChannel,
 	HorizontalLine: LineToolHorizontalLine,
+	TradeEntryLine: LineToolTradeEntryLine,
+	TradeTakeProfitLine: LineToolTradeTakeProfitLine,
+	TradeStopLossLine: LineToolTradeStopLossLine,
+	TradePendingOrderLine: LineToolTradePendingOrderLine,
 	VerticalLine: LineToolVerticalLine,
 	Highlighter: LineToolHighlighter,
 	CrossLine: LineToolCrossLine,

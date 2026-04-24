@@ -56,27 +56,29 @@ chart.applyOptions(newOptions);
 
 console.log(chart)
 
-const displayHorizontalLine = true;
-const displayRectangle = true;
-const displayCircle = true;
-const displayPriceRange = true;
-const displayVerticalLine = true;
-const displayHighlighter = true;
-const displayCrossline = true;
-const displayTrendline = true;
-const displayCallout = true;
-const displayTriangle = true;
-const displayBrush = true;
-const displayPath = true;
-const displayText = true;
-const displayMarketDepth = true;
-const displayRay = true;
-const displayArrow = true;
-const displayExtendedLine = true;
-const displayHorizontalRay = true;
-const displayFibonnaciRetracement = true;
-const displayParallelChannel = true;
-const displayLongShortPosition = true;
+// Flip any of these back to `true` to re-enable that tool's demo block below.
+const displayHorizontalLine = false;
+const displayRectangle = false;
+const displayCircle = false;
+const displayPriceRange = false;
+const displayVerticalLine = false;
+const displayHighlighter = false;
+const displayCrossline = false;
+const displayTrendline = false;
+const displayCallout = false;
+const displayTriangle = false;
+const displayBrush = false;
+const displayPath = false;
+const displayText = false;
+const displayMarketDepth = false;
+const displayRay = false;
+const displayArrow = false;
+const displayExtendedLine = false;
+const displayHorizontalRay = false;
+const displayFibonnaciRetracement = false;
+const displayParallelChannel = false;
+const displayLongShortPosition = false;
+const displayTradeLines = true;
 
 // HorizontalLine
 if (displayHorizontalLine) {
@@ -1666,11 +1668,68 @@ if (displayLongShortPosition) {
 
 }
 
+// TradeEntryLine / TradeTakeProfitLine / TradeStopLossLine
+// TradingView-style active position lines. Entry is non-draggable (historical);
+// TP and SL are draggable — grab them on the pane and move vertically.
+// The pill on the right price axis shows labelText + valueText; valueText is
+// app-computed and pushed in via applyOptions() on every tick.
+if (displayTradeLines) {
+	const tradeTS = Date.parse('2019-05-06') / 1000;
+	const tradeId = 'demo-trade-1';
+
+	const tradeEntry = chart.addLineTool('TradeEntryLine', [{ price: 85, timestamp: tradeTS }], {
+		tradeId: tradeId,
+		labelText: 'Entry',
+		valueText: '85.00',
+		pillOffsetX: -200,
+	});
+
+	const tradeTP = chart.addLineTool('TradeTakeProfitLine', [{ price: 95, timestamp: tradeTS }], {
+		tradeId: tradeId,
+		labelText: 'TP',
+		valueText: '+10.00 (+11.8%)',
+		pillOffsetX: -200,
+	});
+
+	const tradeSL = chart.addLineTool('TradeStopLossLine', [{ price: 78, timestamp: tradeTS }], {
+		tradeId: tradeId,
+		labelText: 'SL',
+		valueText: '-7.00 (-8.2%)',
+		pillOffsetX: -200,
+	});
+
+	// Pending (limit/stop) order — draggable. Drag it vertically to set the
+	// trigger price. Has the same +TP/+SL spawn tabs so you can stage TP/SL
+	// around the pending order before it fills.
+	const pendingOrder = chart.addLineTool('TradePendingOrderLine', [{ price: 72, timestamp: tradeTS }], {
+		tradeId: 'pending-1',
+		labelText: 'Limit',
+		valueText: '72.00',
+		pillOffsetX: -200,
+	});
+
+	// Simulates a live P&L feed so you can see the pill redraw each tick without
+	// re-creating the tool. Drag TP or SL vertically to adjust their levels.
+	setInterval(() => {
+		const pnl = Math.sin(Date.now() / 1000) * 5;
+		const sign = pnl >= 0 ? '+' : '';
+		tradeEntry.applyOptions({ valueText: `85.00 ${sign}${pnl.toFixed(2)} pips` });
+	}, 400);
+
+	// Expose for console tinkering. Try:
+	//   window.tradeEntry.applyOptions({ isActive: false })   // dim both line + pill
+	//   window.tradeTP.applyOptions({ line: { color: '#FFC107' } })
+	window.tradeEntry = tradeEntry;
+	window.tradeTP = tradeTP;
+	window.tradeSL = tradeSL;
+	window.pendingOrder = pendingOrder;
+}
+
 //manually place a linetool without points specified "[]".  You could also not define options and it will use defaults and still let you place it
 //chart.addLineTool('HorizontalRay')  <-- will use default options and you can place it wherever you want, no need to specify options
 //this works on render with options and no points specified.
-chart.addLineTool('HorizontalRay',[],
-	{	
+if (false) chart.addLineTool('HorizontalRay',[],
+	{
 		"text": {
 			"value": "HorizontalRay Line Tool",
 			"alignment": "left",

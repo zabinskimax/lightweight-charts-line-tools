@@ -4,7 +4,7 @@ import { applyAlpha } from '../../helpers/color';
 import { defaultFontFamily } from '../../helpers/make-font';
 import { clone, merge } from '../../helpers/strict-type-checks';
 
-import { BoxHorizontalAlignment, BoxVerticalAlignment, BrushToolOptions, CalloutToolOptions, CircleToolOptions, CrossLineToolOptions, FibCirclesToolOptions, FibRetracementLevel, FibRetracementToolOptions, FibSpiralToolOptions, FixedRangeVolumeProfileToolOptions, HighlighterToolOptions, HorizontalLineToolOptions, LineJoin, LongShortPositionToolOptions, MarketDepthToolOptions, ParallelChannelToolOptions, PathToolOptions, PriceRangeToolOptions, RectangleToolOptions, TextAlignment, TextOptions, TextToolOptions, TrendLineToolOptions, TriangleToolOptions, VerticalLineToolOptions, TrendBasedFibExtensionToolOptions, FibChannelToolOptions, FibTimeZoneToolOptions, FibSpeedResistanceFanToolOptions, TrendBasedFibTimeToolOptions, FibWedgeToolOptions, PitchfanToolOptions, FibSpeedResistanceArcsToolOptions, EmojiToolOptions } from '../../model/line-tool-options';
+import { BoxHorizontalAlignment, BoxVerticalAlignment, BrushToolOptions, CalloutToolOptions, CircleToolOptions, CrossLineToolOptions, FibCirclesToolOptions, FibRetracementLevel, FibRetracementToolOptions, FibSpiralToolOptions, FixedRangeVolumeProfileToolOptions, HighlighterToolOptions, HorizontalLineToolOptions, LineJoin, LongShortPositionToolOptions, MarketDepthToolOptions, ParallelChannelToolOptions, PathToolOptions, PriceRangeToolOptions, RectangleToolOptions, TextAlignment, TextOptions, TextToolOptions, TradeEntryLineToolOptions, TradePendingOrderLineToolOptions, TradeStopLossLineToolOptions, TradeTakeProfitLineToolOptions, TrendLineToolOptions, TriangleToolOptions, VerticalLineToolOptions, TrendBasedFibExtensionToolOptions, FibChannelToolOptions, FibTimeZoneToolOptions, FibSpeedResistanceFanToolOptions, TrendBasedFibTimeToolOptions, FibWedgeToolOptions, PitchfanToolOptions, FibSpeedResistanceArcsToolOptions, EmojiToolOptions } from '../../model/line-tool-options';
 
 import { LineEnd, LineStyle } from '../..';
 
@@ -112,6 +112,112 @@ export const HorizontalLineOptionDefaults: HorizontalLineToolOptions = {
 		end: { left: LineEnd.Normal, right: LineEnd.Normal },
 	},
 	text: TextDefaults,
+};
+
+export const TradeEntryLineOptionDefaults: TradeEntryLineToolOptions = {
+	visible: true,
+	editable: true,
+	// Entry is historical — non-draggable. Drag check in line-tool-pane-view
+	// short-circuits on `locked`, so this alone is enough to make it fixed.
+	locked: true,
+	tradeId: '',
+	labelText: 'Entry',
+	valueText: '',
+	isActive: true,
+	pillAlignment: BoxHorizontalAlignment.Right,
+	pillOffsetX: -12,
+	pillPaddingX: 10,
+	pillPaddingY: 4,
+	showCloseButton: true,
+	showSpawnTP: true,
+	showSpawnSL: true,
+	line: {
+		width: 2,
+		color: '#2962FF',
+		style: LineStyle.Solid,
+		extend: { left: true, right: true },
+		end: { left: LineEnd.Normal, right: LineEnd.Normal },
+	},
+	text: clone(TextDefaults),
+};
+
+export const TradeTakeProfitLineOptionDefaults: TradeTakeProfitLineToolOptions = {
+	visible: true,
+	editable: true,
+	locked: false,
+	tradeId: '',
+	labelText: 'TP',
+	valueText: '',
+	isActive: true,
+	pillAlignment: BoxHorizontalAlignment.Right,
+	pillOffsetX: -12,
+	pillPaddingX: 10,
+	pillPaddingY: 4,
+	showCloseButton: false,
+	showSpawnTP: false,
+	showSpawnSL: false,
+	line: {
+		width: 2,
+		color: '#26A69A',
+		style: LineStyle.Dashed,
+		extend: { left: true, right: true },
+		end: { left: LineEnd.Normal, right: LineEnd.Normal },
+	},
+	text: clone(TextDefaults),
+};
+
+export const TradePendingOrderLineOptionDefaults: TradePendingOrderLineToolOptions = {
+	visible: true,
+	editable: true,
+	// Pending orders are draggable so the user can adjust the trigger price.
+	locked: false,
+	tradeId: '',
+	labelText: 'Order',
+	valueText: '',
+	isActive: true,
+	pillAlignment: BoxHorizontalAlignment.Right,
+	pillOffsetX: -12,
+	pillPaddingX: 10,
+	pillPaddingY: 4,
+	// Same affordances as the Entry line — typical workflow is to place TP/SL
+	// around the order before it fills. Hide via applyOptions once your app
+	// has created the TP/SL tools.
+	showCloseButton: true,
+	showSpawnTP: true,
+	showSpawnSL: true,
+	line: {
+		width: 2,
+		color: '#FB8C00',
+		style: LineStyle.Dashed,
+		extend: { left: true, right: true },
+		end: { left: LineEnd.Normal, right: LineEnd.Normal },
+	},
+	text: clone(TextDefaults),
+};
+
+export const TradeStopLossLineOptionDefaults: TradeStopLossLineToolOptions = {
+	visible: true,
+	editable: true,
+	locked: false,
+	tradeId: '',
+	labelText: 'SL',
+	valueText: '',
+	isActive: true,
+	pillAlignment: BoxHorizontalAlignment.Right,
+	pillOffsetX: -12,
+	pillPaddingX: 10,
+	pillPaddingY: 4,
+	showCloseButton: false,
+	showSpawnTP: false,
+	showSpawnSL: false,
+	line: {
+		width: 2,
+		color: '#EF5350',
+		style: LineStyle.Dashed,
+		extend: { left: true, right: true },
+		end: { left: LineEnd.Normal, right: LineEnd.Normal },
+	},
+	text: clone(TextDefaults),
 };
 
 export const ParallelChannelOptionDefaults: ParallelChannelToolOptions = {
@@ -403,6 +509,10 @@ export const LineToolsOptionDefaults = {
 	Pitchfan: PitchfanOptionDefaults,
 	ParallelChannel: ParallelChannelOptionDefaults,
 	HorizontalLine: HorizontalLineOptionDefaults,
+	TradeEntryLine: TradeEntryLineOptionDefaults,
+	TradeTakeProfitLine: TradeTakeProfitLineOptionDefaults,
+	TradeStopLossLine: TradeStopLossLineOptionDefaults,
+	TradePendingOrderLine: TradePendingOrderLineOptionDefaults,
 	VerticalLine: VerticalLineOptionDefaults,
 	Highlighter: HighlighterOptionDefaults,
 	CrossLine: CrossLineOptionDefaults,
