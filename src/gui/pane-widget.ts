@@ -59,10 +59,10 @@ export interface HitTestResult {
 	view: IPaneView;
 }
 
-// interface HitTestPaneViewResult {
-// view: IPaneView;
-// object?: HitTestResult;
-// }
+interface HitTestPaneViewResult {
+	view: IPaneView;
+	object?: HoveredObject;
+}
 
 interface StartScrollPosition extends Point {
 	timestamp: number;
@@ -281,8 +281,9 @@ export class PaneWidget implements IDestroyable, MouseEventHandlers {
 
 		this._setCrosshairPosition(x, y);
 		this._propagateEvent(InputEventType.MouseMove, event);
-		// const hitTest = this.hitTest(x, y);
-		// this._model().setHoveredSource(hitTest && { source: hitTest.source, object: hitTest.object });
+
+		const hit = this.hitTest(x, y);
+		this._model().setHoveredSource(hit === null ? null : { source: hit.source, object: hit.object });
 	}
 
 	public mouseClickEvent(event: MouseEventHandlerMouseEvent): void {
@@ -428,27 +429,27 @@ export class PaneWidget implements IDestroyable, MouseEventHandlers {
 		this._endScroll(event);
 	}
 
-	// public hitTest(x: Coordinate, y: Coordinate): HitTestResult | null {
-	// const state = this._state;
-	// if (state === null) {
-	// return null;
-	// }
+	public hitTest(x: Coordinate, y: Coordinate): HitTestResult | null {
+		const state = this._state;
+		if (state === null) {
+			return null;
+		}
 
-	// const sources = state.orderedSources();
-	// for (const source of sources) {
-	// const sourceResult = this._hitTestPaneView(source.paneViews(state), x, y);
-	// if (sourceResult !== null) {
-	// return {
-	// source: source,
-	// view: sourceResult.view,
-	// object: sourceResult.object,
-	// };
-	// //return sourceResult.object || null;
-	// }
-	// }
+		const ctx = getContext2D(this._canvasBinding.canvas);
+		const sources = state.orderedSources();
+		for (const source of sources) {
+			const sourceResult = this._hitTestPaneView(source.paneViews(state), x, y, ctx);
+			if (sourceResult !== null) {
+				return {
+					source: source,
+					view: sourceResult.view,
+					object: sourceResult.object,
+				};
+			}
+		}
 
-	// return null;
-	// }
+		return null;
+	}
 
 	public setPriceAxisSize(width: number, position: PriceAxisWidgetSide): void {
 		const priceAxisWidget = position === 'left' ? this._leftPriceAxisWidget : this._rightPriceAxisWidget;
@@ -677,22 +678,27 @@ export class PaneWidget implements IDestroyable, MouseEventHandlers {
 		}
 	}
 
-	// private _hitTestPaneView(paneViews: readonly IPaneView[], x: Coordinate, y: Coordinate): HitTestPaneViewResult | null {
-	// for (const paneView of paneViews) {
-	// const renderer = paneView.renderer(this._size.h, this._size.w);
-	// if (renderer !== null && renderer.hitTest) {
-	// const result = renderer.hitTest(x, y);
-	// if (result !== null) {
-	// return {
-	// view: paneView,
-	// object: result,
-	// };
-	// }
-	// }
-	// }
+	private _hitTestPaneView(paneViews: readonly IPaneView[], x: Coordinate, y: Coordinate, ctx: CanvasRenderingContext2D): HitTestPaneViewResult | null {
+		for (const paneView of paneViews) {
+			const renderer = paneView.renderer(this._size.h, this._size.w);
+			if (renderer !== null && renderer.hitTest) {
+				const result = renderer.hitTest(x, y, ctx);
+				if (result !== null) {
+					const data = result.data();
+					// HoveredObject is structurally { hitTestData?, externalId? } — any
+					// renderer's payload flows through; only the marker payload has the
+					// externalId that downstream surfaces as hoveredMarkerId.
+					const object = (data as HoveredObject | null) ?? undefined;
+					return {
+						view: paneView,
+						object,
+					};
+				}
+			}
+		}
 
-	// return null;
-	// }
+		return null;
+	}
 
 	private _recreatePriceAxisWidgets(): void {
 		if (this._state === null) {

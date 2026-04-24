@@ -599,15 +599,13 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 			// and then search that index inside the series data
 			const searchMode = timePointIndex < firstDataIndex ? PlotRowSearchMode.NearestRight : PlotRowSearchMode.NearestLeft;
 			const seriesDataIndex = ensureNotNull(this._data.search(timePointIndex, searchMode)).index;
+			// Spread the full marker so optional fields (tooltip, stroke, anchor,
+			// rotation, price) propagate through to the renderer. `time` is
+			// overridden with the series data index; `internalId` is assigned.
 			return {
+				...marker,
 				time: seriesDataIndex,
-				position: marker.position,
-				shape: marker.shape,
-				color: marker.color,
-				id: marker.id,
 				internalId: index,
-				text: marker.text,
-				size: marker.size,
 			};
 		});
 	}
