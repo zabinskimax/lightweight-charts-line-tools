@@ -402,60 +402,70 @@ export interface FixedRangeVolumeProfileOptions {
 
 	/**
 	 * Number of bins (rows) for the volume profile.
+	 *
 	 * @defaultValue `24`
 	 */
 	bins: number;
 
 	/**
 	 * Bar color.
+	 *
 	 * @defaultValue `'rgba(33,150,243,0.5)'`
 	 */
 	barColor: string;
 
 	/**
 	 * Bar color inside the value area.
+	 *
 	 * @defaultValue `'rgba(33,150,243,0.85)'`
 	 */
 	valueAreaColor: string;
 
 	/**
 	 * Color of the Point of Control line.
+	 *
 	 * @defaultValue `'rgba(255,82,82,1)'`
 	 */
 	pocColor: string;
 
 	/**
 	 * Fraction of total volume that defines the value area (0–1).
+	 *
 	 * @defaultValue `0.7`
 	 */
 	valueAreaVolume: number;
 
 	/**
 	 * Whether to draw the Point of Control line.
+	 *
 	 * @defaultValue `true`
 	 */
 	showPOC: boolean;
 
 	/**
 	 * Whether to highlight the value area.
+	 *
 	 * @defaultValue `true`
 	 */
 	showValueArea: boolean;
 
 	/**
 	 * Border color of the profile rectangle.
+	 *
 	 * @defaultValue `'rgba(150,150,150,0.8)'`
 	 */
 	borderColor: string;
 
 	/**
 	 * Background color of the profile rectangle.
+	 *
 	 * @defaultValue `'rgba(33, 150, 243, 0.1)'`
 	 */
 	backgroundColor: string;
 
 	/**
 	 * Border width in pixels.
+	 *
 	 * @defaultValue `1`
 	 */
 	borderWidth: number;
@@ -463,6 +473,7 @@ export interface FixedRangeVolumeProfileOptions {
 	/**
 	 * Direction(s) to extend the POC line beyond the profile rectangle.
 	 * `'none'` — no extension; `'right'` — extend to right edge; `'left'` — extend to left edge; `'both'` — extend in both directions.
+	 *
 	 * @defaultValue `'right'`
 	 */
 	pocExpansion: 'none' | 'left' | 'right' | 'both';
@@ -470,6 +481,7 @@ export interface FixedRangeVolumeProfileOptions {
 	/**
 	 * Maximum bar width as a fraction of the profile box width (0–1).
 	 * The highest-volume bar fills this fraction; all others scale proportionally.
+	 *
 	 * @defaultValue `0.3`
 	 */
 	barWidthRatio: number;
@@ -771,6 +783,124 @@ export interface LineToolHorizontalLineOptions {
 	 */
 	line: Omit<LineOptions, 'cap' | 'join'>;
 }
+
+/**
+ * Shared options for the TradingView-style active-position lines
+ * (Entry / Take Profit / Stop Loss). The consumer pushes pre-formatted
+ * labelText + valueText strings; the library renders whatever it's given.
+ */
+export interface TradeLineOptionsCommon {
+	/**
+	 * Groups related lines (entry/TP/SL) for a single trade so the consumer
+	 * can find and remove them together. Opaque to the library.
+	 */
+	tradeId: string;
+
+	/**
+	 * Static label (e.g. `'Entry'`, `'TP'`, `'SL'`). Shown before valueText.
+	 */
+	labelText: string;
+
+	/**
+	 * App-computed dynamic value string (e.g. price + P&L). Push on every tick.
+	 */
+	valueText: string;
+
+	/**
+	 * When `false`, both line and pill are rendered at reduced opacity to
+	 * indicate the trade has been closed but the line is still visible.
+	 *
+	 * @defaultValue `true`
+	 */
+	isActive: boolean;
+
+	/**
+	 * Horizontal anchor for the pill along the line.
+	 *
+	 * @defaultValue {@link BoxHorizontalAlignment.Right}
+	 */
+	pillAlignment: BoxHorizontalAlignment;
+
+	/**
+	 * Pixel offset from the pill alignment anchor. Positive = rightward.
+	 * With `pillAlignment: 'right'` and `pillOffsetX: -12`, the pill sits 12px in from
+	 * the right edge of the pane.
+	 *
+	 * @defaultValue `-12`
+	 */
+	pillOffsetX: number;
+
+	/**
+	 * Horizontal padding (px) inside the pill, each side.
+	 *
+	 * @defaultValue `10`
+	 */
+	pillPaddingX: number;
+
+	/**
+	 * Vertical padding (px) inside the pill, top and bottom.
+	 *
+	 * @defaultValue `4`
+	 */
+	pillPaddingY: number;
+
+	/**
+	 * Render an `×` glyph to the right of the pill text. Purely visual —
+	 * the library does not wire click behavior; consumers hook that up
+	 * themselves later.
+	 *
+	 * @defaultValue `false`
+	 */
+	showCloseButton: boolean;
+
+	/**
+	 * Render a small outline-style `+TP` tab above the line (visual only).
+	 * Typically enabled on the Entry line and hidden once the consumer
+	 * has actually created a TP line.
+	 *
+	 * @defaultValue `false`
+	 */
+	showSpawnTP: boolean;
+
+	/**
+	 * Render a small outline-style `+SL` tab below the line (visual only).
+	 *
+	 * @defaultValue `false`
+	 */
+	showSpawnSL: boolean;
+
+	/**
+	 * Horizontal-line style. `line.color` doubles as the pill background.
+	 */
+	line: Omit<LineOptions, 'cap' | 'join'>;
+
+	/**
+	 * Font/padding for the pill text.
+	 */
+	text: TextOptions;
+}
+
+/**
+ * Options for the entry price line of an active trade. Non-draggable by default
+ * (entry is historical) — defaults set `locked: true`.
+ */
+export interface LineToolTradeEntryLineOptions extends TradeLineOptionsCommon {}
+
+/**
+ * Options for the take-profit line of an active trade. Draggable by default.
+ */
+export interface LineToolTradeTakeProfitLineOptions extends TradeLineOptionsCommon {}
+
+/**
+ * Options for the stop-loss line of an active trade. Draggable by default.
+ */
+export interface LineToolTradeStopLossLineOptions extends TradeLineOptionsCommon {}
+
+/**
+ * Options for a pending order (limit / stop) that hasn't filled yet.
+ * Draggable by default so the user can adjust the trigger price.
+ */
+export interface LineToolTradePendingOrderLineOptions extends TradeLineOptionsCommon {}
 
 /**
  * Represents style options for a vertical line.
@@ -1267,6 +1397,18 @@ export type VerticalLineToolPartialOptions = LineToolPartialOptions<LineToolVert
 export type HorizontalLineToolOptions = LineToolOptions<LineToolHorizontalLineOptions>;
 export type HorizontalLineToolPartialOptions = LineToolPartialOptions<LineToolHorizontalLineOptions>;
 
+export type TradeEntryLineToolOptions = LineToolOptions<LineToolTradeEntryLineOptions>;
+export type TradeEntryLineToolPartialOptions = LineToolPartialOptions<LineToolTradeEntryLineOptions>;
+
+export type TradeTakeProfitLineToolOptions = LineToolOptions<LineToolTradeTakeProfitLineOptions>;
+export type TradeTakeProfitLineToolPartialOptions = LineToolPartialOptions<LineToolTradeTakeProfitLineOptions>;
+
+export type TradeStopLossLineToolOptions = LineToolOptions<LineToolTradeStopLossLineOptions>;
+export type TradeStopLossLineToolPartialOptions = LineToolPartialOptions<LineToolTradeStopLossLineOptions>;
+
+export type TradePendingOrderLineToolOptions = LineToolOptions<LineToolTradePendingOrderLineOptions>;
+export type TradePendingOrderLineToolPartialOptions = LineToolPartialOptions<LineToolTradePendingOrderLineOptions>;
+
 export type RectangleToolOptions = LineToolOptions<LineToolRectangleOptions>;
 export type RectangleToolPartialOptions = LineToolPartialOptions<LineToolRectangleOptions>;
 
@@ -1341,6 +1483,10 @@ export interface LineToolOptionsMap {
 	Pitchfan: PitchfanToolOptions;
 	ParallelChannel: ParallelChannelToolOptions;
 	HorizontalLine: HorizontalLineToolOptions;
+	TradeEntryLine: TradeEntryLineToolOptions;
+	TradeTakeProfitLine: TradeTakeProfitLineToolOptions;
+	TradeStopLossLine: TradeStopLossLineToolOptions;
+	TradePendingOrderLine: TradePendingOrderLineToolOptions;
 	VerticalLine: VerticalLineToolOptions;
 	Highlighter: HighlighterToolOptions;
 	CrossLine: CrossLineToolOptions;
@@ -1382,6 +1528,10 @@ export interface LineToolPartialOptionsMap {
 	Pitchfan: PitchfanToolPartialOptions;
 	ParallelChannel: ParallelChannelToolPartialOptions;
 	HorizontalLine: HorizontalLineToolPartialOptions;
+	TradeEntryLine: TradeEntryLineToolPartialOptions;
+	TradeTakeProfitLine: TradeTakeProfitLineToolPartialOptions;
+	TradeStopLossLine: TradeStopLossLineToolPartialOptions;
+	TradePendingOrderLine: TradePendingOrderLineToolPartialOptions;
 	VerticalLine: VerticalLineToolPartialOptions;
 	Highlighter: HighlighterToolPartialOptions;
 	CrossLine: CrossLineToolPartialOptions;

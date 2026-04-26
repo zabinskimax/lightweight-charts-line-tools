@@ -56,27 +56,30 @@ chart.applyOptions(newOptions);
 
 console.log(chart)
 
-const displayHorizontalLine = true;
-const displayRectangle = true;
-const displayCircle = true;
-const displayPriceRange = true;
-const displayVerticalLine = true;
-const displayHighlighter = true;
-const displayCrossline = true;
-const displayTrendline = true;
-const displayCallout = true;
-const displayTriangle = true;
-const displayBrush = true;
-const displayPath = true;
-const displayText = true;
-const displayMarketDepth = true;
-const displayRay = true;
-const displayArrow = true;
-const displayExtendedLine = true;
-const displayHorizontalRay = true;
-const displayFibonnaciRetracement = true;
-const displayParallelChannel = true;
-const displayLongShortPosition = true;
+// Flip any of these back to `true` to re-enable that tool's demo block below.
+const displayHorizontalLine = false;
+const displayRectangle = false;
+const displayCircle = false;
+const displayPriceRange = false;
+const displayVerticalLine = false;
+const displayHighlighter = false;
+const displayCrossline = false;
+const displayTrendline = false;
+const displayCallout = false;
+const displayTriangle = false;
+const displayBrush = false;
+const displayPath = false;
+const displayText = false;
+const displayMarketDepth = false;
+const displayRay = false;
+const displayArrow = false;
+const displayExtendedLine = false;
+const displayHorizontalRay = false;
+const displayFibonnaciRetracement = false;
+const displayParallelChannel = false;
+const displayLongShortPosition = false;
+const displayTradeLines = true;
+const displayMarkers = true;
 
 // HorizontalLine
 if (displayHorizontalLine) {
@@ -1666,11 +1669,273 @@ if (displayLongShortPosition) {
 
 }
 
+// TradeEntryLine / TradeTakeProfitLine / TradeStopLossLine
+// TradingView-style active position lines. Entry is non-draggable (historical);
+// TP and SL are draggable — grab them on the pane and move vertically.
+// The pill on the right price axis shows labelText + valueText; valueText is
+// app-computed and pushed in via applyOptions() on every tick.
+if (displayTradeLines) {
+	const tradeTS = Date.parse('2019-05-06') / 1000;
+	const tradeId = 'demo-trade-1';
+
+	const tradeEntry = chart.addLineTool('TradeEntryLine', [{ price: 85, timestamp: tradeTS }], {
+		tradeId: tradeId,
+		labelText: 'Entry',
+		valueText: '85.00',
+		pillOffsetX: -200,
+	});
+
+	const tradeTP = chart.addLineTool('TradeTakeProfitLine', [{ price: 95, timestamp: tradeTS }], {
+		tradeId: tradeId,
+		labelText: 'TP',
+		valueText: '+10.00 (+11.8%)',
+		pillOffsetX: -200,
+	});
+
+	const tradeSL = chart.addLineTool('TradeStopLossLine', [{ price: 78, timestamp: tradeTS }], {
+		tradeId: tradeId,
+		labelText: 'SL',
+		valueText: '-7.00 (-8.2%)',
+		pillOffsetX: -200,
+	});
+
+	// Pending (limit/stop) order — draggable. Drag it vertically to set the
+	// trigger price. Has the same +TP/+SL spawn tabs so you can stage TP/SL
+	// around the pending order before it fills.
+	const pendingOrder = chart.addLineTool('TradePendingOrderLine', [{ price: 72, timestamp: tradeTS }], {
+		tradeId: 'pending-1',
+		labelText: 'Limit',
+		valueText: '72.00',
+		pillOffsetX: -200,
+	});
+
+	// Simulates a live P&L feed so you can see the pill redraw each tick without
+	// re-creating the tool. Drag TP or SL vertically to adjust their levels.
+	setInterval(() => {
+		const pnl = Math.sin(Date.now() / 1000) * 5;
+		const sign = pnl >= 0 ? '+' : '';
+		tradeEntry.applyOptions({ valueText: `85.00 ${sign}${pnl.toFixed(2)} pips` });
+	}, 400);
+
+	// Expose for console tinkering. Try:
+	//   window.tradeEntry.applyOptions({ isActive: false })   // dim both line + pill
+	//   window.tradeTP.applyOptions({ line: { color: '#FFC107' } })
+	window.tradeEntry = tradeEntry;
+	window.tradeTP = tradeTP;
+	window.tradeSL = tradeSL;
+	window.pendingOrder = pendingOrder;
+}
+
+// Series Markers
+// series.setMarkers(data) replaces every marker on that series. There is no
+// addMarker/removeMarker — always set the full array. Fields (from
+// src/model/series-markers.ts):
+//   time      — same Time type as the series' data (string 'YYYY-MM-DD',
+//               UTCTimestamp seconds, or BusinessDay)
+//   position  — 'aboveBar' | 'belowBar' | 'inBar' | 'price'
+//               'price' requires `price` and honors `anchor`
+//   shape     — 'circle' | 'square' | 'arrowUp' | 'arrowDown' | 'triangle' | 'cross'
+//   color     — fill color (any CSS color string)
+//   size      — scalar; 1 = default. Fractional values work (e.g. 1.5)
+//   text      — optional label drawn next to the marker
+//   id        — returned as param.hoveredMarkerId in crosshair/click subscribers
+//   price     — required when position = 'price'
+//   anchor    — 'top' | 'bottom' | 'left' | 'right' | 'center' (position = 'price')
+//   stroke    — { color, width? } outline
+//   rotation  — radians; rotates the shape
+if (displayMarkers) {
+	const markers = [
+		// arrowUp below a bar — classic buy signal style.
+		// tooltip: string form uses default styling (dark rounded box, drop
+		// shadow, pointer triangle). Multi-line via '\n'.
+		{
+			time: '2019-04-11',
+			position: 'belowBar',
+			color: '#26a69a',
+			shape: 'arrowUp',
+			text: 'Buy @ 80',
+			size: 2,
+			id: 'm-buy-1',
+			tooltip: 'Entry: 80.00\nSize: 100\nFilled at 09:31',
+		},
+		// arrowDown above a bar — sell signal with custom-styled tooltip.
+		// Object form lets you override colors, font, padding, etc.
+		{
+			time: '2019-04-12',
+			position: 'aboveBar',
+			color: '#ef5350',
+			shape: 'arrowDown',
+			text: 'Sell @ 96',
+			id: 'm-sell-1',
+			tooltip: {
+				text: 'Exit: 96.00\nP&L: +16.00 (+20%)',
+				background: 'rgba(239, 83, 80, 0.95)',
+				borderColor: 'rgba(255,255,255,0.2)',
+				color: '#ffffff',
+				bold: true,
+				fontSize: 13,
+				paddingX: 12,
+				paddingY: 8,
+			},
+		},
+		// circle with tooltip forced below the marker.
+		{
+			time: '2019-04-13',
+			position: 'inBar',
+			color: '#2962ff',
+			shape: 'circle',
+			size: 1.5,
+			id: 'm-circle-1',
+			tooltip: {
+				text: 'Dividend ex-date',
+				placement: 'below',
+				offset: 14,
+			},
+		},
+		// square with stroke — stroke adds an outline around the filled shape.
+		{
+			time: '2019-04-14',
+			position: 'aboveBar',
+			color: 'rgba(255,193,7,0.8)',
+			shape: 'square',
+			stroke: { color: '#ff6f00', width: 2 },
+			text: 'Note',
+			id: 'm-square-1',
+			tooltip: 'Earnings announcement\nAfter market close',
+		},
+		// triangle below with a larger size — no tooltip on this one to show
+		// that tooltip is fully opt-in.
+		{
+			time: '2019-04-15',
+			position: 'belowBar',
+			color: '#9c27b0',
+			shape: 'triangle',
+			size: 2,
+			id: 'm-tri-1',
+		},
+		// cross with a pointer-less tooltip (flat chip look).
+		{
+			time: '2019-04-16',
+			position: 'inBar',
+			color: '#d32f2f',
+			shape: 'cross',
+			size: 1.2,
+			id: 'm-cross-1',
+			tooltip: {
+				text: 'Volume spike',
+				pointer: false,
+				borderRadius: 3,
+				shadow: false,
+			},
+		},
+		// position: 'price' — anchored to an explicit price instead of the bar.
+		{
+			time: '2019-04-17',
+			position: 'price',
+			price: 92,
+			anchor: 'left',
+			color: '#00897b',
+			shape: 'circle',
+			text: 'target 92',
+			id: 'm-price-1',
+			tooltip: 'Take-profit level',
+		},
+		// rotation is in radians — rotate an arrow 90deg to point right.
+		{
+			time: '2019-04-18',
+			position: 'aboveBar',
+			color: '#1565c0',
+			shape: 'arrowUp',
+			rotation: Math.PI / 2,
+			text: 'rotated',
+			id: 'm-rot-1',
+		},
+		// diamond — true rhombus with correct vertical/horizontal extents.
+		// Rotating 45deg gives you a square back.
+		{
+			time: '2019-04-19',
+			position: 'aboveBar',
+			color: '#fbbf24',
+			shape: 'diamond',
+			stroke: { color: '#b45309', width: 2 },
+			size: 1.4,
+			id: 'm-diamond-1',
+			tooltip: 'Pivot high\nResistance at 81.00',
+		},
+		// 5-point star — for "highlighted event" markers.
+		{
+			time: '2019-04-19',
+			position: 'belowBar',
+			color: '#fb923c',
+			shape: 'star',
+			size: 1.4,
+			id: 'm-star-1',
+			tooltip: {
+				text: 'Featured setup',
+				background: 'rgba(251,146,60,0.95)',
+				color: '#1c1917',
+				bold: true,
+			},
+		},
+		// flag — rectangle-on-pole. Good for news / dividends / announcements.
+		{
+			time: '2019-04-20',
+			position: 'aboveBar',
+			color: '#10b981',
+			shape: 'flag',
+			size: 1.3,
+			id: 'm-flag-1',
+			tooltip: 'Dividend: $0.22/share',
+		},
+		// pin — teardrop map-pin for explicit annotations.
+		{
+			time: '2019-04-20',
+			position: 'belowBar',
+			color: '#ef4444',
+			shape: 'pin',
+			stroke: { color: '#7f1d1d', width: 1.5 },
+			size: 1.3,
+			id: 'm-pin-1',
+			tooltip: 'Support breakdown',
+		},
+	];
+
+	lineSeries.setMarkers(markers);
+
+	// Markers are tied to their series. The candlestick series can carry its own
+	// independent set — here's a minimal one on the candle bars.
+	candlestickSeries.setMarkers([
+		{
+			time: '2019-04-22',
+			position: 'aboveBar',
+			color: '#ef5350',
+			shape: 'arrowDown',
+			text: 'exit',
+			id: 'c-exit',
+		},
+	]);
+
+	// Hover/click events expose the marker id so you can wire tooltips or handlers.
+	chart.subscribeCrosshairMove(param => {
+		if (param.hoveredMarkerId) console.log('hover marker:', param.hoveredMarkerId);
+	});
+	chart.subscribeClick(param => {
+		if (param.hoveredMarkerId) console.log('click marker:', param.hoveredMarkerId);
+	});
+
+	// Expose for console tinkering:
+	//   window.lineSeries.setMarkers([...])   // replace the full array
+	//   window.lineSeries.setMarkers([])      // clear all markers
+	window.lineSeries = lineSeries;
+	window.candlestickSeries = candlestickSeries;
+	window.markers = markers;
+}
+
 //manually place a linetool without points specified "[]".  You could also not define options and it will use defaults and still let you place it
 //chart.addLineTool('HorizontalRay')  <-- will use default options and you can place it wherever you want, no need to specify options
 //this works on render with options and no points specified.
-chart.addLineTool('HorizontalRay',[],
-	{	
+if (false) chart.addLineTool('HorizontalRay',[],
+	{
 		"text": {
 			"value": "HorizontalRay Line Tool",
 			"alignment": "left",

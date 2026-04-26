@@ -32,7 +32,7 @@ interface Offsets {
 	belowBar: number;
 }
 
-// eslint-disable-next-line max-params
+// eslint-disable-next-line max-params, complexity
 function fillSizeAndY(
 	rendererItem: SeriesMarkerRendererDataItem,
 	marker: SeriesMarker<TimePointIndex>,
@@ -176,9 +176,13 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 				size: 0,
 				shape: marker.shape,
 				color: marker.color,
+				stroke: marker.stroke,
+				anchor: marker.anchor,
+				rotation: marker.rotation,
 				internalId: marker.internalId,
 				externalId: marker.id,
 				text: undefined,
+				tooltip: marker.tooltip,
 			}));
 			this._dataInvalidated = false;
 		}

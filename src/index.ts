@@ -18,6 +18,15 @@ export {
 } from './api/data-consumer';
 
 export { createChart } from './api/create-chart';
+export {
+	SeriesMarker,
+	SeriesMarkerPosition,
+	SeriesMarkerShape,
+	SeriesMarkerAnchor,
+	SeriesMarkerStroke,
+	SeriesMarkerTooltip,
+	SeriesMarkerTooltipPlacement,
+} from './model/series-markers';
 export { IPolygonFillApi } from './api/ipolygon-fill-api';
 export { IBackgroundBandApi, BackgroundBandOptions } from './api/ibackground-band-api';
 export { ITextLabelApi, TextLabelOptions, TextLabelPartialOptions } from './api/itext-label-api';

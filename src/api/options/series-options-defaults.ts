@@ -37,6 +37,8 @@ export const lineStyleDefaults: LineStyleOptions = {
 	lineStyle: LineStyle.Solid,
 	lineWidth: 3,
 	lineType: LineType.Simple,
+	lineVisible: true,
+	pointMarkersVisible: false,
 	crosshairMarkerVisible: true,
 	crosshairMarkerRadius: 4,
 	crosshairMarkerBorderColor: '',
