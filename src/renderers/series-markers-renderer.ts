@@ -292,16 +292,38 @@ function resolveTooltip(
 	defaultFontFamily: string
 ): ResolvedTooltip {
 	const obj: SeriesMarkerTooltip = typeof tooltip === 'string' ? { text: tooltip } : tooltip;
-	// Spread overrides only the fields the caller supplied — `undefined` fields
-	// fall back to the static defaults. Font size/family default to the chart's
-	// layout values so they can't live on the static constant. `text` is
-	// re-applied last so its type stays `string` (a Partial spread would widen
-	// it back to `string | undefined`).
+	// Copy each field by explicit assignment instead of spreading `obj`. The
+	// ts-transformer-properties-rename pass rewrites property accesses on the
+	// internal `ResolvedTooltip` type (e.g. `background` → `_internal_background`)
+	// but leaves keys on the public `SeriesMarkerTooltip` alone — a spread of
+	// `obj` would carry user values under their public names onto a result the
+	// renderer reads via the renamed internal names, silently dropping every
+	// user override. Field-by-field assignment lets the transformer rename the
+	// destination key for each line.
+	const overrides: Partial<ResolvedTooltip> = {
+		background: obj.background,
+		color: obj.color,
+		borderColor: obj.borderColor,
+		borderWidth: obj.borderWidth,
+		borderRadius: obj.borderRadius,
+		fontSize: obj.fontSize,
+		fontFamily: obj.fontFamily,
+		bold: obj.bold,
+		paddingX: obj.paddingX,
+		paddingY: obj.paddingY,
+		lineHeight: obj.lineHeight,
+		shadow: obj.shadow,
+		pointer: obj.pointer,
+		placement: obj.placement,
+		offset: obj.offset,
+	};
+	// `text` is re-applied last so its return type stays `string` — a
+	// Partial spread would widen it back to `string | undefined`.
 	return {
 		...TOOLTIP_STATIC_DEFAULTS,
 		fontSize: defaultFontSize,
 		fontFamily: defaultFontFamily,
-		...stripUndefined(obj),
+		...stripUndefined(overrides),
 		text: obj.text,
 	};
 }
