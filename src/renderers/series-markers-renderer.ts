@@ -18,6 +18,7 @@ import { drawCircle, hitTestCircle } from './series-markers-circle';
 import { drawCross, hitTestCross } from './series-markers-cross';
 import { drawDiamond, hitTestDiamond } from './series-markers-diamond';
 import { drawFlag, hitTestFlag } from './series-markers-flag';
+import { drawLabel, hitTestLabel } from './series-markers-label';
 import { drawPin, hitTestPin } from './series-markers-pin';
 import { drawSquare, hitTestSquare } from './series-markers-square';
 import { drawStar, hitTestStar } from './series-markers-star';
@@ -112,7 +113,7 @@ export class SeriesMarkersRenderer extends ScaledRenderer {
 				item.text.width = this._textWidthCache.measureText(ctx, item.text.content);
 				item.text.height = this._fontSize;
 			}
-			drawItem(item, ctx);
+			drawItem(item, ctx, this._fontFamily);
 		}
 
 		// Tooltip goes last so it sits on top of every marker in this pass.
@@ -128,13 +129,15 @@ export class SeriesMarkersRenderer extends ScaledRenderer {
 	}
 }
 
-function drawItem(item: SeriesMarkerRendererDataItem, ctx: CanvasRenderingContext2D): void {
+function drawItem(item: SeriesMarkerRendererDataItem, ctx: CanvasRenderingContext2D, fontFamily: string): void {
 	const rotation = item.rotation || (item.anchor === 'bottom' ? 180 : item.anchor === 'right' ? 90 : item.anchor === 'left' ? -90 : 0);
 	ctx.strokeStyle = item.stroke?.color || 'transparent';
 	ctx.lineWidth = item.stroke?.width || 1;
 	ctx.fillStyle = item.color;
 
-	if (item.text !== undefined) {
+	// `label` renders the marker text inside its body, so the standalone
+	// label is skipped here to avoid duplicating it adjacent to the shape.
+	if (item.text !== undefined && item.shape !== 'label') {
 		drawText(ctx, item.text.content, item.x - item.text.width / 2, item.text.y);
 	}
 
@@ -145,14 +148,14 @@ function drawItem(item: SeriesMarkerRendererDataItem, ctx: CanvasRenderingContex
 		ctx.translate(-item.x, -item.y);
 	}
 
-	drawShape(item, ctx);
+	drawShape(item, ctx, fontFamily);
 
 	if (rotation) {
 		ctx.restore();
 	}
 }
 
-function drawShape(item: SeriesMarkerRendererDataItem, ctx: CanvasRenderingContext2D): void {
+function drawShape(item: SeriesMarkerRendererDataItem, ctx: CanvasRenderingContext2D, fontFamily: string): void {
 	if (item.size === 0) {
 		return;
 	}
@@ -188,13 +191,20 @@ function drawShape(item: SeriesMarkerRendererDataItem, ctx: CanvasRenderingConte
 		case 'pin':
 			drawPin(ctx, item.x, item.y, item.size);
 			return;
+		case 'label':
+			drawLabel(ctx, item.x, item.y, item.size, item.text?.content, fontFamily);
+			return;
 	}
 
 	ensureNever(item.shape);
 }
 
 function hitTestItem(item: SeriesMarkerRendererDataItem, x: Coordinate, y: Coordinate): boolean {
-	if (item.text !== undefined && hitTestText(item.x, item.text.y, item.text.width, item.text.height, x, y)) {
+	// `label` draws its text inside the body — its shape hit test already
+	// covers that region, and `text.y` for label is positioned at the body
+	// center (inside the shape), so the standalone text test would either
+	// duplicate the hit or test against an irrelevant location.
+	if (item.text !== undefined && item.shape !== 'label' && hitTestText(item.x, item.text.y, item.text.width, item.text.height, x, y)) {
 		return true;
 	}
 
@@ -245,6 +255,8 @@ function hitTestShape(item: SeriesMarkerRendererDataItem, x: Coordinate, y: Coor
 			return hitTestFlag(item.x, item.y, item.size, px, py);
 		case 'pin':
 			return hitTestPin(item.x, item.y, item.size, px, py);
+		case 'label':
+			return hitTestLabel(item.x, item.y, item.size, px, py);
 	}
 
 	ensureNever(item.shape);

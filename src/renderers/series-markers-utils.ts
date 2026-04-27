@@ -7,6 +7,9 @@ const enum Constants {
 	MinShapeSize = 12,
 	MaxShapeSize = 30,
 	MinShapeMargin = 3,
+	// Default total height (px) for fixed-size shapes. Used by `label`, which
+	// is intended for pattern/badge icons that should not scale with zoom.
+	LabelFixedSize = 22,
 }
 
 function size(barSpacing: number, coeff: number): number {
@@ -32,10 +35,19 @@ export function shapeSize(shape: SeriesMarkerShape, originalSize: number): numbe
 			return size(originalSize, 1.3);
 		case 'pin':
 			return size(originalSize, 1.2);
+		case 'label':
+			// Pane-view supplies the absolute label size in `originalSize`,
+			// so the bar-spacing clamp in `size()` is bypassed. `ceiledOdd`
+			// keeps the rendered value pixel-aligned.
+			return ceiledOdd(Math.max(0, originalSize));
 	}
 
 	ensureNever(shape);
 	return size(originalSize, 1);
+}
+
+export function labelFixedSize(): number {
+	return Constants.LabelFixedSize;
 }
 
 export function calculateShapeHeight(barSpacing: number): number {

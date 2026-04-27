@@ -19,6 +19,7 @@ import {
 import {
 	calculateShapeHeight,
 	shapeMargin as calculateShapeMargin,
+	labelFixedSize,
 } from '../../renderers/series-markers-utils';
 
 import { IUpdatablePaneView, UpdateType } from './iupdatable-pane-view';
@@ -48,9 +49,20 @@ function fillSizeAndY(
 	const highPrice = isNumber(seriesData) ? seriesData : seriesData.high;
 	const lowPrice = isNumber(seriesData) ? seriesData : seriesData.low;
 	const sizeMultiplier = isNumber(marker.size) ? Math.max(marker.size, 0) : 1;
-	const shapeSize = calculateShapeHeight(timeScale.barSpacing()) * sizeMultiplier;
+	// `label` is a fixed-size pattern/badge icon — it should not change with
+	// zoom level, unlike the bar-spacing-derived sizing used for every other
+	// shape. The user can still scale it via `marker.size`.
+	const baseSize = marker.shape === 'label'
+		? labelFixedSize()
+		: calculateShapeHeight(timeScale.barSpacing());
+	const shapeSize = baseSize * sizeMultiplier;
 	const halfSize = shapeSize / 2;
 	rendererItem.size = shapeSize;
+
+	// `label` draws its text inside the shape body — it doesn't reserve any
+	// extra vertical space and shouldn't bump per-bar stack offsets the way
+	// the external-text shapes do.
+	const hasExternalText = rendererItem.text !== undefined && marker.shape !== 'label';
 
 	switch (marker.position) {
 		case 'price': {
@@ -62,23 +74,23 @@ function fillSizeAndY(
 
 			rendererItem.y = (priceScale.priceToCoordinate(markerPrice, firstValue) + halfSize * displaceY) as Coordinate;
 			rendererItem.x = (rendererItem.x + halfSize * displaceX) as Coordinate;
-			if (rendererItem.text !== undefined) {
-				rendererItem.text.y = (rendererItem.y + (halfSize + shapeMargin + textHeight * (0.5 + Constants.TextMargin)) * displaceY ||
+			if (hasExternalText) {
+				rendererItem.text!.y = (rendererItem.y + (halfSize + shapeMargin + textHeight * (0.5 + Constants.TextMargin)) * displaceY ||
 					1) as Coordinate;
 			}
 			return;
 		}
 		case 'inBar': {
 			rendererItem.y = priceScale.priceToCoordinate(inBarPrice, firstValue);
-			if (rendererItem.text !== undefined) {
-				rendererItem.text.y = rendererItem.y + halfSize + shapeMargin + textHeight * (0.5 + Constants.TextMargin) as Coordinate;
+			if (hasExternalText) {
+				rendererItem.text!.y = rendererItem.y + halfSize + shapeMargin + textHeight * (0.5 + Constants.TextMargin) as Coordinate;
 			}
 			return;
 		}
 		case 'aboveBar': {
 			rendererItem.y = (priceScale.priceToCoordinate(highPrice, firstValue) - halfSize - offsets.aboveBar) as Coordinate;
-			if (rendererItem.text !== undefined) {
-				rendererItem.text.y = rendererItem.y - halfSize - textHeight * (0.5 + Constants.TextMargin) as Coordinate;
+			if (hasExternalText) {
+				rendererItem.text!.y = rendererItem.y - halfSize - textHeight * (0.5 + Constants.TextMargin) as Coordinate;
 				offsets.aboveBar += textHeight * (1 + 2 * Constants.TextMargin);
 			}
 			offsets.aboveBar += shapeSize + shapeMargin;
@@ -86,8 +98,8 @@ function fillSizeAndY(
 		}
 		case 'belowBar': {
 			rendererItem.y = (priceScale.priceToCoordinate(lowPrice, firstValue) + halfSize + offsets.belowBar) as Coordinate;
-			if (rendererItem.text !== undefined) {
-				rendererItem.text.y = rendererItem.y + halfSize + shapeMargin + textHeight * (0.5 + Constants.TextMargin) as Coordinate;
+			if (hasExternalText) {
+				rendererItem.text!.y = rendererItem.y + halfSize + shapeMargin + textHeight * (0.5 + Constants.TextMargin) as Coordinate;
 				offsets.belowBar += textHeight * (1 + 2 * Constants.TextMargin);
 			}
 			offsets.belowBar += shapeSize + shapeMargin;
