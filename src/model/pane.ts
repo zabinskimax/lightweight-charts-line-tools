@@ -216,6 +216,11 @@ export class Pane implements IDestroyable {
 		}
 
 		this._cachedOrderedSources = null;
+
+		const destroyable = (source as { destroy?: () => void });
+		if (typeof destroyable.destroy === 'function') {
+			destroyable.destroy();
+		}
 	}
 
 	public getAllLineTools(): LineTool<LineToolType>[] {

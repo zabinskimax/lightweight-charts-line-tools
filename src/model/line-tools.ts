@@ -16,6 +16,7 @@ import { LineToolFibSpiral } from './line-tool-fib-spiral';
 import { LineToolFibTimeZone } from './line-tool-fib-time-zone';
 import { LineToolFibWedge } from './line-tool-fib-wedge';
 import { LineToolFixedRangeVolumeProfile } from './line-tool-fixed-range-volume-profile';
+import { LineToolVisibleRangeVolumeProfile } from './line-tool-visible-range-volume-profile';
 import { LineToolHighlighter } from './line-tool-highlighter';
 import { LineToolHorizontalLine } from './line-tool-horizontal-line';
 import { LineToolHorizontalRay } from './line-tool-horizontal-ray';
@@ -79,4 +80,5 @@ export const LineTools: Record<LineToolType, new (...args: any) => LineTool<Line
 	HorizontalRay: LineToolHorizontalRay,
 	MarketDepth: LineToolMarketDepth,
 	FixedRangeVolumeProfile: LineToolFixedRangeVolumeProfile,
+	VisibleRangeVolumeProfile: LineToolVisibleRangeVolumeProfile,
 };

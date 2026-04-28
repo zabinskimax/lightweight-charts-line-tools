@@ -15,7 +15,7 @@ import { SegmentRenderer } from '../../renderers/segment-renderer';
 
 import { LineToolPaneView } from './line-tool-pane-view';
 
-function computeValueArea(bars: VolumeProfileBar[], targetFraction: number): [number, number] {
+export function computeValueArea(bars: VolumeProfileBar[], targetFraction: number): [number, number] {
 	if (bars.length === 0) { return [0, 0]; }
 	const totalVolume = bars.reduce((s, b) => s + b.volume, 0);
 	const target = totalVolume * targetFraction;
@@ -42,7 +42,7 @@ function computeValueArea(bars: VolumeProfileBar[], targetFraction: number): [nu
 }
 
 export class FixedRangeVolumeProfilePaneView extends LineToolPaneView {
-	private _profileRenderer: FixedRangeVolumeProfileRenderer = new FixedRangeVolumeProfileRenderer();
+	protected _profileRenderer: FixedRangeVolumeProfileRenderer = new FixedRangeVolumeProfileRenderer();
 	private _lineRenderer: SegmentRenderer = new SegmentRenderer();
 	// Anchor index recorded at mousedown so that slight mouse movement off the
 	// circle during a drag still targets the correct anchor.
@@ -118,6 +118,7 @@ export class FixedRangeVolumeProfilePaneView extends LineToolPaneView {
 			const sortedBars = [...vp.bars].sort((a, b) => b.price - a.price);
 
 			if (sortedBars.length > 0) {
+				const isTwoTone = sortedBars.some(b => b.buyVolume !== undefined && b.sellVolume !== undefined);
 				const maxVolume = sortedBars.reduce((m, b) => Math.max(m, b.volume), 0);
 				const pocIndex = sortedBars.reduce((mi, b, i) => b.volume > sortedBars[mi].volume ? i : mi, 0);
 				const [vaHigh, vaLow] = computeValueArea(sortedBars, vp.valueAreaVolume);
@@ -135,13 +136,20 @@ export class FixedRangeVolumeProfilePaneView extends LineToolPaneView {
 					const topY = priceScale.priceToCoordinate(barTopPrice, firstValue.value);
 					const bottomY = priceScale.priceToCoordinate(barBottomPrice, firstValue.value);
 
-					return {
+					const rendered: RenderedVolumeBar = {
 						y: Math.min(topY, bottomY) as Coordinate,
 						h: Math.abs(bottomY - topY),
 						widthRatio: maxVolume > 0 ? bar.volume / maxVolume : 0,
 						isPOC: i === pocIndex,
 						isInValueArea: vp.showValueArea && i >= vaHigh && i <= vaLow,
 					};
+
+					if (isTwoTone && maxVolume > 0) {
+						rendered.buyRatio = (bar.buyVolume ?? 0) / maxVolume;
+						rendered.sellRatio = (bar.sellVolume ?? 0) / maxVolume;
+					}
+
+					return rendered;
 				});
 
 				const topExtreme = Math.max(...vp.bars.map(b => b.price)) + binSizePrice / 2;
@@ -157,6 +165,9 @@ export class FixedRangeVolumeProfilePaneView extends LineToolPaneView {
 					bars: renderedBars,
 					barColor: vp.barColor,
 					valueAreaColor: vp.valueAreaColor,
+					buyColor: vp.buyColor,
+					sellColor: vp.sellColor,
+					isTwoTone,
 					pocColor: vp.pocColor,
 					showPOC: vp.showPOC,
 					showValueArea: vp.showValueArea,
@@ -165,6 +176,7 @@ export class FixedRangeVolumeProfilePaneView extends LineToolPaneView {
 					backgroundColor: vp.backgroundColor,
 					pocExpansion: vp.pocExpansion,
 					barWidthRatio: vp.barWidthRatio,
+					barAnchorSide: vp.barAnchorSide,
 				});
 
 				compositeRenderer.append(this._profileRenderer);

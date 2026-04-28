@@ -4,7 +4,7 @@ import { applyAlpha } from '../../helpers/color';
 import { defaultFontFamily } from '../../helpers/make-font';
 import { clone, merge } from '../../helpers/strict-type-checks';
 
-import { BoxHorizontalAlignment, BoxVerticalAlignment, BrushToolOptions, CalloutToolOptions, CircleToolOptions, CrossLineToolOptions, FibCirclesToolOptions, FibRetracementLevel, FibRetracementToolOptions, FibSpiralToolOptions, FixedRangeVolumeProfileToolOptions, HighlighterToolOptions, HorizontalLineToolOptions, LineJoin, LongShortPositionToolOptions, MarketDepthToolOptions, ParallelChannelToolOptions, PathToolOptions, PriceRangeToolOptions, RectangleToolOptions, TextAlignment, TextOptions, TextToolOptions, TradeEntryLineToolOptions, TradePendingOrderLineToolOptions, TradeStopLossLineToolOptions, TradeTakeProfitLineToolOptions, TrendLineToolOptions, TriangleToolOptions, VerticalLineToolOptions, TrendBasedFibExtensionToolOptions, FibChannelToolOptions, FibTimeZoneToolOptions, FibSpeedResistanceFanToolOptions, TrendBasedFibTimeToolOptions, FibWedgeToolOptions, PitchfanToolOptions, FibSpeedResistanceArcsToolOptions, EmojiToolOptions } from '../../model/line-tool-options';
+import { BoxHorizontalAlignment, BoxVerticalAlignment, BrushToolOptions, CalloutToolOptions, CircleToolOptions, CrossLineToolOptions, FibCirclesToolOptions, FibRetracementLevel, FibRetracementToolOptions, FibSpiralToolOptions, FixedRangeVolumeProfileToolOptions, HighlighterToolOptions, HorizontalLineToolOptions, LineJoin, LongShortPositionToolOptions, MarketDepthToolOptions, ParallelChannelToolOptions, PathToolOptions, PriceRangeToolOptions, RectangleToolOptions, TextAlignment, TextOptions, TextToolOptions, TradeEntryLineToolOptions, TradePendingOrderLineToolOptions, TradeStopLossLineToolOptions, TradeTakeProfitLineToolOptions, TrendLineToolOptions, TriangleToolOptions, VerticalLineToolOptions, TrendBasedFibExtensionToolOptions, FibChannelToolOptions, FibTimeZoneToolOptions, FibSpeedResistanceFanToolOptions, TrendBasedFibTimeToolOptions, FibWedgeToolOptions, PitchfanToolOptions, FibSpeedResistanceArcsToolOptions, EmojiToolOptions, VisibleRangeVolumeProfileToolOptions } from '../../model/line-tool-options';
 
 import { LineEnd, LineStyle } from '../..';
 
@@ -477,6 +477,8 @@ export const FixedRangeVolumeProfileOptionDefaults: FixedRangeVolumeProfileToolO
 		bins: 24,
 		barColor: applyAlpha('#2196F3', 0.5),
 		valueAreaColor: applyAlpha('#2196F3', 0.85),
+		buyColor: applyAlpha('#26a69a', 0.7),
+		sellColor: applyAlpha('#ef5350', 0.7),
 		pocColor: applyAlpha('#FF5252', 1),
 		valueAreaVolume: 0.7,
 		showPOC: true,
@@ -486,8 +488,19 @@ export const FixedRangeVolumeProfileOptionDefaults: FixedRangeVolumeProfileToolO
 		borderWidth: 0,
 		pocExpansion: 'right',
 		barWidthRatio: 0.3,
+		barAnchorSide: 'left',
 	},
 };
+
+export const VisibleRangeVolumeProfileOptionDefaults: VisibleRangeVolumeProfileToolOptions = merge(
+	clone(FixedRangeVolumeProfileOptionDefaults),
+	{
+		// Viewport-anchored profile is rendered as a passive overlay — no selection,
+		// no draggable handles. Bars hang from the right edge of the visible range.
+		editable: false,
+		volumeProfile: { barAnchorSide: 'right' },
+	}
+) as unknown as VisibleRangeVolumeProfileToolOptions;
 
 /** @public */
 export const LineToolsOptionDefaults = {
@@ -529,4 +542,5 @@ export const LineToolsOptionDefaults = {
 	Emoji: EmojiOptionDefaults,
 	MarketDepth: MarketDepthOptionDefaults,
 	FixedRangeVolumeProfile: FixedRangeVolumeProfileOptionDefaults,
+	VisibleRangeVolumeProfile: VisibleRangeVolumeProfileOptionDefaults,
 };

@@ -12,6 +12,10 @@ export interface RenderedVolumeBar {
 	h: number;
 	/** Fraction of max-volume bar width [0–1]. */
 	widthRatio: number;
+	/** Buy-side fraction of max-volume bar width [0–1]. Only set in two-tone mode. */
+	buyRatio?: number;
+	/** Sell-side fraction of max-volume bar width [0–1]. Only set in two-tone mode. */
+	sellRatio?: number;
 	isPOC: boolean;
 	isInValueArea: boolean;
 }
@@ -22,6 +26,10 @@ export interface FixedRangeVolumeProfileRendererData {
 	bars: RenderedVolumeBar[];
 	barColor: string;
 	valueAreaColor: string;
+	buyColor: string;
+	sellColor: string;
+	/** When true, render each bar as buy+sell segments and skip value-area tinting. */
+	isTwoTone: boolean;
 	pocColor: string;
 	showPOC: boolean;
 	showValueArea: boolean;
@@ -30,6 +38,8 @@ export interface FixedRangeVolumeProfileRendererData {
 	backgroundColor?: string;
 	pocExpansion: 'none' | 'left' | 'right' | 'both';
 	barWidthRatio: number;
+	/** Which side of the box bars hang from. */
+	barAnchorSide: 'left' | 'right';
 }
 
 export class FixedRangeVolumeProfileRenderer implements IPaneRenderer {
@@ -71,7 +81,7 @@ export class FixedRangeVolumeProfileRenderer implements IPaneRenderer {
 	public draw(ctx: CanvasRenderingContext2D, pixelRatio: number): void {
 		if (!this._data || this._data.points.length < 2) { return; }
 
-		const { bars, barColor, valueAreaColor, pocColor, showPOC, showValueArea } = this._data;
+		const { bars, barColor, valueAreaColor, buyColor, sellColor, isTwoTone, pocColor, showPOC, showValueArea } = this._data;
 		const [p0, p1] = this._getBoundsPhysical(pixelRatio);
 		const x0 = p0.x;
 		const y0 = p0.y;
@@ -89,14 +99,44 @@ export class FixedRangeVolumeProfileRenderer implements IPaneRenderer {
 			ctx.fillRect(x0, y0, totalWidth, totalHeight);
 		}
 
+		const widthScale = totalWidth * this._data.barWidthRatio;
+		const rightAnchored = this._data.barAnchorSide === 'right';
+
 		for (const bar of bars) {
 			const barY = Math.round(bar.y * pixelRatio);
 			const barH = Math.max(1, Math.round(bar.h * pixelRatio));
-			const barW = Math.round(bar.widthRatio * totalWidth * this._data.barWidthRatio);
 
-			if (barW > 0) {
-				ctx.fillStyle = (showValueArea && bar.isInValueArea) ? valueAreaColor : barColor;
-				ctx.fillRect(x0, barY, barW, barH);
+			if (isTwoTone) {
+				const buyW = Math.round((bar.buyRatio ?? 0) * widthScale);
+				const sellW = Math.round((bar.sellRatio ?? 0) * widthScale);
+				// Buy is drawn on the chart-interior side and sell on the edge side, so when
+				// right-anchored: buy sits left of sell, with sell flush against x1.
+				if (rightAnchored) {
+					if (buyW > 0) {
+						ctx.fillStyle = buyColor;
+						ctx.fillRect(x1 - buyW - sellW, barY, buyW, barH);
+					}
+					if (sellW > 0) {
+						ctx.fillStyle = sellColor;
+						ctx.fillRect(x1 - sellW, barY, sellW, barH);
+					}
+				} else {
+					if (buyW > 0) {
+						ctx.fillStyle = buyColor;
+						ctx.fillRect(x0, barY, buyW, barH);
+					}
+					if (sellW > 0) {
+						ctx.fillStyle = sellColor;
+						ctx.fillRect(x0 + buyW, barY, sellW, barH);
+					}
+				}
+			} else {
+				const barW = Math.round(bar.widthRatio * widthScale);
+				if (barW > 0) {
+					ctx.fillStyle = (showValueArea && bar.isInValueArea) ? valueAreaColor : barColor;
+					const barX = rightAnchored ? x1 - barW : x0;
+					ctx.fillRect(barX, barY, barW, barH);
+				}
 			}
 		}
 

@@ -389,9 +389,21 @@ export interface VolumeProfileBar {
 	price: number;
 
 	/**
-	 * Total volume in this bin.
+	 * Total volume in this bin. When `buyVolume` and `sellVolume` are both supplied,
+	 * this is expected to equal their sum (callers may simply pass `buyVolume + sellVolume`).
 	 */
 	volume: number;
+
+	/**
+	 * Optional buy-side volume in this bin. When set together with `sellVolume`,
+	 * the bin renders as two horizontally-stacked segments coloured with `buyColor`/`sellColor`.
+	 */
+	buyVolume?: number;
+
+	/**
+	 * Optional sell-side volume in this bin. See `buyVolume`.
+	 */
+	sellVolume?: number;
 }
 
 export interface FixedRangeVolumeProfileOptions {
@@ -420,6 +432,20 @@ export interface FixedRangeVolumeProfileOptions {
 	 * @defaultValue `'rgba(33,150,243,0.85)'`
 	 */
 	valueAreaColor: string;
+
+	/**
+	 * Buy-segment color used when bars define both `buyVolume` and `sellVolume`.
+	 *
+	 * @defaultValue `'rgba(38,166,154,0.7)'`
+	 */
+	buyColor: string;
+
+	/**
+	 * Sell-segment color used when bars define both `buyVolume` and `sellVolume`.
+	 *
+	 * @defaultValue `'rgba(239,83,80,0.7)'`
+	 */
+	sellColor: string;
 
 	/**
 	 * Color of the Point of Control line.
@@ -485,6 +511,15 @@ export interface FixedRangeVolumeProfileOptions {
 	 * @defaultValue `0.3`
 	 */
 	barWidthRatio: number;
+
+	/**
+	 * Which side of the profile box the histogram bars hang from.
+	 * `'left'` (default) — bars start at the left edge and grow rightward.
+	 * `'right'` — bars start at the right edge and grow leftward, useful for visible-range profiles.
+	 *
+	 * @defaultValue `'left'`
+	 */
+	barAnchorSide: 'left' | 'right';
 }
 
 export interface LineToolFixedRangeVolumeProfileOptions {
@@ -498,6 +533,13 @@ export interface LineToolFixedRangeVolumeProfileOptions {
 	 */
 	line: Omit<LineOptions, 'cap' | 'extend' | 'join' | 'end'>;
 }
+
+/**
+ * Options for the viewport-anchored variant. Shape matches the fixed-range tool —
+ * the only difference is that the profile auto-spans the chart's visible time range
+ * and re-anchors on pan, zoom, and during playback.
+ */
+export interface LineToolVisibleRangeVolumeProfileOptions extends LineToolFixedRangeVolumeProfileOptions {}
 
 export interface MarketDepthSingleAggregatesData {
 	EarliestTime: string;
@@ -1466,6 +1508,9 @@ export type PitchfanToolPartialOptions = LineToolPartialOptions<LineToolPitchfan
 export type FixedRangeVolumeProfileToolOptions = LineToolOptions<LineToolFixedRangeVolumeProfileOptions>;
 export type FixedRangeVolumeProfileToolPartialOptions = LineToolPartialOptions<LineToolFixedRangeVolumeProfileOptions>;
 
+export type VisibleRangeVolumeProfileToolOptions = LineToolOptions<LineToolVisibleRangeVolumeProfileOptions>;
+export type VisibleRangeVolumeProfileToolPartialOptions = LineToolPartialOptions<LineToolVisibleRangeVolumeProfileOptions>;
+
 /**
  * Represents the type of options for each line tool type.
  */
@@ -1509,6 +1554,7 @@ export interface LineToolOptionsMap {
 
 	MarketDepth: MarketDepthToolOptions;
 	FixedRangeVolumeProfile: FixedRangeVolumeProfileToolOptions;
+	VisibleRangeVolumeProfile: VisibleRangeVolumeProfileToolOptions;
 }
 
 /**
@@ -1554,6 +1600,7 @@ export interface LineToolPartialOptionsMap {
 
 	MarketDepth: MarketDepthToolPartialOptions;
 	FixedRangeVolumeProfile: FixedRangeVolumeProfileToolPartialOptions;
+	VisibleRangeVolumeProfile: VisibleRangeVolumeProfileToolPartialOptions;
 }
 
 /**
