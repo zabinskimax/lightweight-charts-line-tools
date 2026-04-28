@@ -1,10 +1,10 @@
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 
-import { ChartModel } from '../../src/model/chart-model';
 import { Delegate } from '../../src/helpers/delegate';
-import { LineToolVisibleRangeVolumeProfile } from '../../src/model/line-tool-visible-range-volume-profile';
+import { ChartModel } from '../../src/model/chart-model';
 import { VisibleRangeVolumeProfileToolOptions } from '../../src/model/line-tool-options';
+import { LineToolVisibleRangeVolumeProfile } from '../../src/model/line-tool-visible-range-volume-profile';
 
 interface FakeTimeScale {
 	visibleBarsChanged: () => Delegate;
@@ -70,7 +70,8 @@ function minimalOptions(): VisibleRangeVolumeProfileToolOptions {
 describe('LineToolVisibleRangeVolumeProfile — auto-re-anchor on viewport change', () => {
 	it('subscribes to both visibleBarsChanged and logicalRangeChanged on construction', () => {
 		const model = buildFakeModel();
-		new LineToolVisibleRangeVolumeProfile(model as unknown as ChartModel, minimalOptions(), []);
+		const tool = new LineToolVisibleRangeVolumeProfile(model as unknown as ChartModel, minimalOptions(), []);
+		expect(tool.toolType()).to.be.equal('VisibleRangeVolumeProfile');
 
 		expect(model.visibleBarsDelegate.hasListeners()).to.be.equal(true, 'visibleBarsChanged must have a listener');
 		expect(model.logicalRangeDelegate.hasListeners()).to.be.equal(true, 'logicalRangeChanged must have a listener');
@@ -78,7 +79,8 @@ describe('LineToolVisibleRangeVolumeProfile — auto-re-anchor on viewport chang
 
 	it('invalidates the source when logicalRangeChanged fires (pan/zoom)', () => {
 		const model = buildFakeModel();
-		new LineToolVisibleRangeVolumeProfile(model as unknown as ChartModel, minimalOptions(), []);
+		const tool = new LineToolVisibleRangeVolumeProfile(model as unknown as ChartModel, minimalOptions(), []);
+		expect(tool.toolType()).to.be.equal('VisibleRangeVolumeProfile');
 
 		const before = model.updateSourceCalls;
 		model.logicalRangeDelegate.fire(undefined, undefined);
@@ -88,7 +90,8 @@ describe('LineToolVisibleRangeVolumeProfile — auto-re-anchor on viewport chang
 
 	it('invalidates the source when visibleBarsChanged fires (playback tick)', () => {
 		const model = buildFakeModel();
-		new LineToolVisibleRangeVolumeProfile(model as unknown as ChartModel, minimalOptions(), []);
+		const tool = new LineToolVisibleRangeVolumeProfile(model as unknown as ChartModel, minimalOptions(), []);
+		expect(tool.toolType()).to.be.equal('VisibleRangeVolumeProfile');
 
 		const before = model.updateSourceCalls;
 		model.visibleBarsDelegate.fire(undefined, undefined);
@@ -98,7 +101,8 @@ describe('LineToolVisibleRangeVolumeProfile — auto-re-anchor on viewport chang
 
 	it('handles repeated viewport changes (rapid pan/zoom) without dropping events', () => {
 		const model = buildFakeModel();
-		new LineToolVisibleRangeVolumeProfile(model as unknown as ChartModel, minimalOptions(), []);
+		const tool = new LineToolVisibleRangeVolumeProfile(model as unknown as ChartModel, minimalOptions(), []);
+		expect(tool.toolType()).to.be.equal('VisibleRangeVolumeProfile');
 
 		for (let i = 0; i < 25; i++) {
 			model.logicalRangeDelegate.fire(undefined, undefined);

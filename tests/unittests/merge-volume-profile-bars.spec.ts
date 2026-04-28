@@ -62,7 +62,7 @@ describe('merge() — volume-profile bars array semantics', () => {
 			const len = (i % 5) + 1;
 			const src = {
 				volumeProfile: {
-					bars: Array.from({ length: len }, (_, j) => ({
+					bars: Array.from({ length: len }, (unused: unknown, j: number) => ({
 						price: 100 + j,
 						volume: i * 10 + j,
 						buyVolume: i * 4 + j,

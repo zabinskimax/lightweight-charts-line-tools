@@ -16,7 +16,6 @@ import { LineToolFibSpiral } from './line-tool-fib-spiral';
 import { LineToolFibTimeZone } from './line-tool-fib-time-zone';
 import { LineToolFibWedge } from './line-tool-fib-wedge';
 import { LineToolFixedRangeVolumeProfile } from './line-tool-fixed-range-volume-profile';
-import { LineToolVisibleRangeVolumeProfile } from './line-tool-visible-range-volume-profile';
 import { LineToolHighlighter } from './line-tool-highlighter';
 import { LineToolHorizontalLine } from './line-tool-horizontal-line';
 import { LineToolHorizontalRay } from './line-tool-horizontal-ray';
@@ -39,6 +38,7 @@ import { LineToolTrendBasedFibTime } from './line-tool-trend-based-fib-time';
 import { LineToolTrendLine } from './line-tool-trend-line';
 import { LineToolTriangle } from './line-tool-triangle';
 import { LineToolVerticalLine } from './line-tool-vertical-line';
+import { LineToolVisibleRangeVolumeProfile } from './line-tool-visible-range-volume-profile';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const LineTools: Record<LineToolType, new (...args: any) => LineTool<LineToolType>> = {

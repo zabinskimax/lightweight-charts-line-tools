@@ -4,10 +4,9 @@ import { PaneWidget } from '../../gui/pane-widget';
 import { ChartModel } from '../../model/chart-model';
 import { Coordinate } from '../../model/coordinate';
 import { HitTestType } from '../../model/hit-test-result';
-import { LineTool, LineToolHitTestData, LineToolOptionsInternal } from '../../model/line-tool';
+import { LineTool, LineToolOptionsInternal } from '../../model/line-tool';
 import { LineToolType, VolumeProfileBar } from '../../model/line-tool-options';
 import { Point } from '../../model/point';
-
 import { CompositeRenderer } from '../../renderers/composite-renderer';
 import { FixedRangeVolumeProfileRenderer, RenderedVolumeBar } from '../../renderers/fixed-range-volume-profile-renderer';
 import { AnchorPoint } from '../../renderers/line-anchor-renderer';
@@ -17,10 +16,10 @@ import { LineToolPaneView } from './line-tool-pane-view';
 
 export function computeValueArea(bars: VolumeProfileBar[], targetFraction: number): [number, number] {
 	if (bars.length === 0) { return [0, 0]; }
-	const totalVolume = bars.reduce((s, b) => s + b.volume, 0);
+	const totalVolume = bars.reduce((s: number, b: VolumeProfileBar) => s + b.volume, 0);
 	const target = totalVolume * targetFraction;
 
-	const pocIndex = bars.reduce((mi, b, i) => b.volume > bars[mi].volume ? i : mi, 0);
+	const pocIndex = bars.reduce((mi: number, b: VolumeProfileBar, i: number) => b.volume > bars[mi].volume ? i : mi, 0);
 	let vaHigh = pocIndex;
 	let vaLow = pocIndex;
 	let accumulated = bars[pocIndex].volume;
@@ -59,7 +58,7 @@ export class FixedRangeVolumeProfilePaneView extends LineToolPaneView {
 		if (this._source.finished()) {
 			const hitResult = this._hitTest(paneWidget, ctx, originPoint);
 			if (hitResult !== null && hitResult.type() === HitTestType.ChangePoint) {
-				this._pressedAnchorIndex = (hitResult.data() as LineToolHitTestData | null)?.pointIndex ?? null;
+				this._pressedAnchorIndex = hitResult.data()?.pointIndex ?? null;
 			}
 		}
 		return result;
@@ -115,12 +114,12 @@ export class FixedRangeVolumeProfilePaneView extends LineToolPaneView {
 			if (!firstValue) { return; }
 
 			// Sort bars high-to-low price (top of chart = highest price)
-			const sortedBars = [...vp.bars].sort((a, b) => b.price - a.price);
+			const sortedBars = [...vp.bars].sort((a: VolumeProfileBar, b: VolumeProfileBar) => b.price - a.price);
 
 			if (sortedBars.length > 0) {
-				const isTwoTone = sortedBars.some(b => b.buyVolume !== undefined && b.sellVolume !== undefined);
-				const maxVolume = sortedBars.reduce((m, b) => Math.max(m, b.volume), 0);
-				const pocIndex = sortedBars.reduce((mi, b, i) => b.volume > sortedBars[mi].volume ? i : mi, 0);
+				const isTwoTone = sortedBars.some((b: VolumeProfileBar) => b.buyVolume !== undefined && b.sellVolume !== undefined);
+				const maxVolume = sortedBars.reduce((m: number, b: VolumeProfileBar) => Math.max(m, b.volume), 0);
+				const pocIndex = sortedBars.reduce((mi: number, b: VolumeProfileBar, i: number) => b.volume > sortedBars[mi].volume ? i : mi, 0);
 				const [vaHigh, vaLow] = computeValueArea(sortedBars, vp.valueAreaVolume);
 
 				let binSizePrice = 0;
@@ -130,7 +129,7 @@ export class FixedRangeVolumeProfilePaneView extends LineToolPaneView {
 					binSizePrice = sortedBars[0].price * 0.001; // fallback
 				}
 
-				const renderedBars = sortedBars.map((bar, i): RenderedVolumeBar => {
+				const renderedBars = sortedBars.map((bar: VolumeProfileBar, i: number): RenderedVolumeBar => {
 					const barTopPrice = bar.price + binSizePrice / 2;
 					const barBottomPrice = bar.price - binSizePrice / 2;
 					const topY = priceScale.priceToCoordinate(barTopPrice, firstValue.value);
@@ -152,8 +151,8 @@ export class FixedRangeVolumeProfilePaneView extends LineToolPaneView {
 					return rendered;
 				});
 
-				const topExtreme = Math.max(...vp.bars.map(b => b.price)) + binSizePrice / 2;
-				const bottomExtreme = Math.min(...vp.bars.map(b => b.price)) - binSizePrice / 2;
+				const topExtreme = Math.max(...vp.bars.map((b: VolumeProfileBar) => b.price)) + binSizePrice / 2;
+				const bottomExtreme = Math.min(...vp.bars.map((b: VolumeProfileBar) => b.price)) - binSizePrice / 2;
 				const topY = priceScale.priceToCoordinate(topExtreme, firstValue.value);
 				const bottomY = priceScale.priceToCoordinate(bottomExtreme, firstValue.value);
 
