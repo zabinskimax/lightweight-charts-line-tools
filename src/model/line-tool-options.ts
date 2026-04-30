@@ -404,6 +404,20 @@ export interface VolumeProfileBar {
 	 * Optional sell-side volume in this bin. See `buyVolume`.
 	 */
 	sellVolume?: number;
+
+	/**
+	 * Optional lower price bound of this bin. When both `priceLow` and `priceHigh`
+	 * are supplied, the renderer uses them directly for the bin's vertical extent
+	 * (enabling non-uniform layouts such as logarithmic or ATR-anchored binning).
+	 * When either is absent, the renderer falls back to a uniform extent derived
+	 * from the spacing of the first two `price` values.
+	 */
+	priceLow?: number;
+
+	/**
+	 * Optional upper price bound of this bin. See `priceLow`.
+	 */
+	priceHigh?: number;
 }
 
 export interface FixedRangeVolumeProfileOptions {

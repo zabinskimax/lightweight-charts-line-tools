@@ -13,6 +13,7 @@ import { AnchorPoint } from '../../renderers/line-anchor-renderer';
 import { SegmentRenderer } from '../../renderers/segment-renderer';
 
 import { LineToolPaneView } from './line-tool-pane-view';
+import { BarPriceExtent, resolveBarPriceExtents } from './volume-profile-bar-extents';
 
 export function computeValueArea(bars: VolumeProfileBar[], targetFraction: number): [number, number] {
 	if (bars.length === 0) { return [0, 0]; }
@@ -122,18 +123,12 @@ export class FixedRangeVolumeProfilePaneView extends LineToolPaneView {
 				const pocIndex = sortedBars.reduce((mi: number, b: VolumeProfileBar, i: number) => b.volume > sortedBars[mi].volume ? i : mi, 0);
 				const [vaHigh, vaLow] = computeValueArea(sortedBars, vp.valueAreaVolume);
 
-				let binSizePrice = 0;
-				if (sortedBars.length > 1) {
-					binSizePrice = Math.abs(sortedBars[0].price - sortedBars[1].price);
-				} else {
-					binSizePrice = sortedBars[0].price * 0.001; // fallback
-				}
+				const extents = resolveBarPriceExtents(sortedBars);
 
 				const renderedBars = sortedBars.map((bar: VolumeProfileBar, i: number): RenderedVolumeBar => {
-					const barTopPrice = bar.price + binSizePrice / 2;
-					const barBottomPrice = bar.price - binSizePrice / 2;
-					const topY = priceScale.priceToCoordinate(barTopPrice, firstValue.value);
-					const bottomY = priceScale.priceToCoordinate(barBottomPrice, firstValue.value);
+					const { top, bottom } = extents[i];
+					const topY = priceScale.priceToCoordinate(top, firstValue.value);
+					const bottomY = priceScale.priceToCoordinate(bottom, firstValue.value);
 
 					const rendered: RenderedVolumeBar = {
 						y: Math.min(topY, bottomY) as Coordinate,
@@ -151,8 +146,11 @@ export class FixedRangeVolumeProfilePaneView extends LineToolPaneView {
 					return rendered;
 				});
 
-				const topExtreme = Math.max(...vp.bars.map((b: VolumeProfileBar) => b.price)) + binSizePrice / 2;
-				const bottomExtreme = Math.min(...vp.bars.map((b: VolumeProfileBar) => b.price)) - binSizePrice / 2;
+				// Anchor box must cover the actual rendered extents — driving it from
+				// `vp.bars.map(b => b.price) ± binSizePrice/2` would clip bars whose
+				// explicit `priceHigh` exceeds that uniform derivation.
+				const topExtreme = Math.max(...extents.map((e: BarPriceExtent) => e.top));
+				const bottomExtreme = Math.min(...extents.map((e: BarPriceExtent) => e.bottom));
 				const topY = priceScale.priceToCoordinate(topExtreme, firstValue.value);
 				const bottomY = priceScale.priceToCoordinate(bottomExtreme, firstValue.value);
 
