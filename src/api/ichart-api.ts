@@ -320,6 +320,47 @@ export interface IChartApi {
 	clearCrossHair(): void;
 
 	/**
+	 * Programmatically position the crosshair at a given (price, time) on the
+	 * chart. Useful for syncing crosshairs across multiple charts on the same
+	 * page — subscribe to a source chart's `crosshairMove` event and call this
+	 * on every other chart with the time from the event and any reference
+	 * price (e.g. via `seriesApi.coordinateToPrice` of the source's y).
+	 *
+	 * The chart's own `crosshairMove` event is NOT fired by this call, so two
+	 * charts sync'd to each other won't feedback-loop.
+	 *
+	 * If the chart has multiple panes, the supplied series determines which
+	 * pane and which price scale the price is interpreted against.
+	 *
+	 * @param price - Price for the horizontal crosshair line, in the
+	 * coordinate space of `seriesApi`'s price scale.
+	 * @param horizontalPosition - Time for the vertical crosshair line.
+	 * @param seriesApi - Series whose price scale and pane are used.
+	 *
+	 * @example
+	 * ```js
+	 * chartA.subscribeCrosshairMove(param => {
+	 *     if (param.time === undefined || param.point === undefined) {
+	 *         chartB.clearCrosshairPosition();
+	 *         return;
+	 *     }
+	 *     const price = seriesA.coordinateToPrice(param.point.y);
+	 *     if (price !== null) {
+	 *         chartB.setCrosshairPosition(price, param.time, seriesB);
+	 *     }
+	 * });
+	 * ```
+	 */
+	setCrosshairPosition(price: number, horizontalPosition: Time, seriesApi: ISeriesApi<SeriesType>): void;
+
+	/**
+	 * Clears the crosshair position previously set via
+	 * {@link setCrosshairPosition}. Does not fire the chart's `crosshairMove`
+	 * event, mirroring the no-fire behavior of `setCrosshairPosition`.
+	 */
+	clearCrosshairPosition(): void;
+
+	/**
 	 * Unsubscribe a handler that was previously subscribed using {@link subscribeCrosshairMove}.
 	 *
 	 * @param handler - Previously subscribed handler

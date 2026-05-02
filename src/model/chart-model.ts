@@ -694,11 +694,16 @@ export class ChartModel implements IDestroyable {
 		this._crosshairMoved.fire(this._crosshair.appliedIndex(), new Point(x, y));
 	}
 
-	public clearCurrentPosition(): void {
+	public clearCurrentPosition(fire: boolean = true): void {
 		const crosshair = this.crosshairSource();
 		crosshair.clearPosition();
 		this.cursorUpdate();
-		this._crosshairMoved.fire(null, null);
+		// `fire=false` is used by the programmatic crosshair sync API so a
+		// receiver chart's clear doesn't bounce a `crosshairMove` event back
+		// to the source in bidirectional sync setups.
+		if (fire) {
+			this._crosshairMoved.fire(null, null);
+		}
 	}
 
 	public updateCrosshair(): void {

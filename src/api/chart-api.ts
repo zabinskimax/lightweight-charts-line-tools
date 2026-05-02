@@ -44,8 +44,10 @@ import {
 import { BackgroundBandApi } from './background-band-api';
 import { BarColorOverlayApi } from './bar-color-overlay-api';
 import { CandlestickSeriesApi } from './candlestick-series-api';
+import { Coordinate } from '../model/coordinate';
+
 import { DataUpdatesConsumer, SeriesDataItemTypeMap, Time } from './data-consumer';
-import { DataLayer, DataUpdateResponse, SeriesChanges } from './data-layer';
+import { DataLayer, DataUpdateResponse, SeriesChanges, convertTime } from './data-layer';
 import { IBackgroundBandApi } from './ibackground-band-api';
 import { IBarColorOverlayApi, BarColorOverlayPair, BarColorOverlayPartialOptions } from './ibar-color-overlay-api';
 import { IChartApi, LineToolsAfterEditEventHandler, LineToolsAfterEditEventParams, LineToolsDoubleClickEventHandler, LineToolsDoubleClickEventParams, MouseEventHandler, MouseEventParams } from './ichart-api';
@@ -252,6 +254,38 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 
 	public clearCrossHair(): void {
 		this._chartWidget.paneWidgets()[0].clearCrossHair();
+	}
+
+	public setCrosshairPosition(price: number, horizontalPosition: Time, seriesApi: ISeriesApi<SeriesType>): void {
+		const series = this._seriesMap.get(seriesApi as SeriesApi<SeriesType>);
+		if (series === undefined) {
+			return;
+		}
+		const model = this._chartWidget.model();
+		const pane = model.paneForSource(series);
+		if (pane === null) {
+			return;
+		}
+		// Snap the time to the nearest indexed bar — important when the
+		// source chart's hover lands on a bar this chart doesn't have, so
+		// the crosshair still anchors to a real bar instead of disappearing.
+		const timePointIndex = model.timeScale().timeToIndex(convertTime(horizontalPosition), true);
+		if (timePointIndex === null) {
+			return;
+		}
+		const x = model.timeScale().indexToCoordinate(timePointIndex);
+		const firstValue = series.firstValue();
+		if (firstValue === null) {
+			return;
+		}
+		const y = series.priceScale().priceToCoordinate(price, firstValue.value);
+		// `fire=false` avoids re-emitting `crosshairMove` so paired charts
+		// can sync bidirectionally without an event feedback loop.
+		model.setAndSaveCurrentPositionFire(x as Coordinate, y as Coordinate, false, pane);
+	}
+
+	public clearCrosshairPosition(): void {
+		this._chartWidget.model().clearCurrentPosition(false);
 	}
 
 	public remove(): void {
