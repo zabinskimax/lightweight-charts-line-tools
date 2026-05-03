@@ -18,7 +18,7 @@ import { drawCircle, hitTestCircle } from './series-markers-circle';
 import { drawCross, hitTestCross } from './series-markers-cross';
 import { drawDiamond, hitTestDiamond } from './series-markers-diamond';
 import { drawFlag, hitTestFlag } from './series-markers-flag';
-import { drawLabel, hitTestLabel } from './series-markers-label';
+import { drawLabel, hitTestLabel, LabelOrientation } from './series-markers-label';
 import { drawPin, hitTestPin } from './series-markers-pin';
 import { drawSquare, hitTestSquare } from './series-markers-square';
 import { drawStar, hitTestStar } from './series-markers-star';
@@ -54,6 +54,13 @@ export interface SeriesMarkerRendererDataItem extends TimedValue {
 	externalId?: string;
 	text?: SeriesMarkerText;
 	tooltip?: string | SeriesMarkerTooltip;
+	// Set for `shape: 'label'`. Controls whether the body sits above or below
+	// the anchor point — derived from `marker.position` (aboveBar → 'down',
+	// everything else → 'up') so labels point at the candle they tag.
+	labelOrientation?: LabelOrientation;
+	// Cached body width measured in the bold label font during the draw pass.
+	// Read by hit-testing so the hit rect matches the rendered shape.
+	labelBodyWidth?: number;
 }
 
 export interface SeriesMarkerRendererData {
@@ -130,7 +137,12 @@ export class SeriesMarkersRenderer extends ScaledRenderer {
 }
 
 function drawItem(item: SeriesMarkerRendererDataItem, ctx: CanvasRenderingContext2D, fontFamily: string): void {
-	const rotation = item.rotation || (item.anchor === 'bottom' ? 180 : item.anchor === 'right' ? 90 : item.anchor === 'left' ? -90 : 0);
+	// Labels handle their up/down orientation via geometry inside `drawLabel`
+	// so the letter stays upright. Rotating the canvas would also flip the
+	// text, which is wrong for a readable badge.
+	const rotation = item.shape === 'label'
+		? 0
+		: item.rotation || (item.anchor === 'bottom' ? 180 : item.anchor === 'right' ? 90 : item.anchor === 'left' ? -90 : 0);
 	ctx.strokeStyle = item.stroke?.color || 'transparent';
 	ctx.lineWidth = item.stroke?.width || 1;
 	ctx.fillStyle = item.color;
@@ -192,7 +204,7 @@ function drawShape(item: SeriesMarkerRendererDataItem, ctx: CanvasRenderingConte
 			drawPin(ctx, item.x, item.y, item.size);
 			return;
 		case 'label':
-			drawLabel(ctx, item.x, item.y, item.size, item.text?.content, fontFamily);
+			drawLabel(ctx, item.x, item.y, item.size, item.text?.content, fontFamily, item.labelOrientation ?? 'up', item);
 			return;
 	}
 
@@ -218,8 +230,11 @@ function hitTestShape(item: SeriesMarkerRendererDataItem, x: Coordinate, y: Coor
 	}
 
 	// Rotation is applied around the shape center at draw time; undo it on the
-	// test point so the shape-local helpers see unrotated coordinates.
-	const rotationDeg = item.rotation || (item.anchor === 'bottom' ? 180 : item.anchor === 'right' ? 90 : item.anchor === 'left' ? -90 : 0);
+	// test point so the shape-local helpers see unrotated coordinates. Labels
+	// don't canvas-rotate (see `drawItem`), so skip the inverse here too.
+	const rotationDeg = item.shape === 'label'
+		? 0
+		: item.rotation || (item.anchor === 'bottom' ? 180 : item.anchor === 'right' ? 90 : item.anchor === 'left' ? -90 : 0);
 	let tx = x as number;
 	let ty = y as number;
 	if (rotationDeg) {
@@ -256,7 +271,7 @@ function hitTestShape(item: SeriesMarkerRendererDataItem, x: Coordinate, y: Coor
 		case 'pin':
 			return hitTestPin(item.x, item.y, item.size, px, py);
 		case 'label':
-			return hitTestLabel(item.x, item.y, item.size, px, py);
+			return hitTestLabel(item.x, item.y, item.size, px, py, item.labelBodyWidth);
 	}
 
 	ensureNever(item.shape);

@@ -195,6 +195,11 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 				externalId: marker.id,
 				text: undefined,
 				tooltip: marker.tooltip,
+				// Label markers above the bar should point down at the bar
+				// (apex below the body); below or in-bar labels point up.
+				labelOrientation: marker.shape === 'label'
+					? (marker.position === 'aboveBar' ? 'down' : 'up')
+					: undefined,
 			}));
 			this._dataInvalidated = false;
 		}

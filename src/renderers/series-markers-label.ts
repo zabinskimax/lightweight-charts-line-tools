@@ -4,16 +4,20 @@ import { Coordinate } from '../model/coordinate';
 
 import { shapeSize } from './series-markers-utils';
 
-// Vertical share of the total marker height taken by the upward pointer.
+// Vertical share of the total marker height taken by the pointer.
 const POINTER_HEIGHT_RATIO = 0.22;
-// Body width as a fraction of body height — slightly narrower than tall.
-const BODY_WIDTH_RATIO = 0.95;
-// Bottom-corner radius as a fraction of body height. Top corners are sharp
-// because the pointer's base sits across the full body width.
+// Body width as a fraction of body height — the floor used for short letters
+// like "D" so the label still reads as a square badge.
+const MIN_BODY_WIDTH_RATIO = 0.95;
+// Corner radius as a fraction of body height. The corners that meet the
+// pointer's base stay sharp; the opposite-side corners are rounded.
 const CORNER_RADIUS_RATIO = 0.22;
-// Letter height as a fraction of body height — leaves a small breathing
-// margin on either side.
+// Letter height as a fraction of body height.
 const LETTER_SIZE_RATIO = 0.6;
+// Horizontal padding from the body edge to the letter, in CSS pixels.
+const LETTER_PADDING_X = 4;
+
+export type LabelOrientation = 'up' | 'down';
 
 interface LabelGeometry {
 	bodyLeft: number;
@@ -23,23 +27,78 @@ interface LabelGeometry {
 	pointerApexX: number;
 	pointerApexY: number;
 	cornerRadius: number;
+	orientation: LabelOrientation;
 }
 
-function labelGeometry(totalHeight: number, centerX: number, centerY: number): LabelGeometry {
+interface LabelLayout {
+	bodyWidth: number;
+	letterPx: number;
+}
+
+interface LabelWidthCache {
+	labelBodyWidth?: number;
+}
+
+function computeLabelLayout(
+	ctx: CanvasRenderingContext2D,
+	totalHeight: number,
+	letter: string | undefined,
+	fontFamily: string
+): LabelLayout {
+	const pointerHeight = totalHeight * POINTER_HEIGHT_RATIO;
+	const bodyHeight = totalHeight - pointerHeight;
+	const minBodyWidth = bodyHeight * MIN_BODY_WIDTH_RATIO;
+	const letterPx = Math.max(8, Math.round(bodyHeight * LETTER_SIZE_RATIO));
+
+	let bodyWidth = minBodyWidth;
+	if (letter !== undefined && letter.length > 0) {
+		// Measure with the same bold font used to draw the letter so the body
+		// expansion is accurate. Restore the previous font afterwards so the
+		// caller's draw context is untouched.
+		const prevFont = ctx.font;
+		ctx.font = `bold ${letterPx}px ${fontFamily}`;
+		const textWidth = ctx.measureText(letter).width;
+		ctx.font = prevFont;
+		bodyWidth = Math.max(minBodyWidth, textWidth + LETTER_PADDING_X * 2);
+	}
+	return { bodyWidth, letterPx };
+}
+
+function labelGeometry(
+	totalHeight: number,
+	centerX: number,
+	centerY: number,
+	bodyWidth: number,
+	orientation: LabelOrientation
+): LabelGeometry {
 	const half = totalHeight / 2;
 	const pointerHeight = totalHeight * POINTER_HEIGHT_RATIO;
-	const bodyTop = centerY - half + pointerHeight;
-	const bodyBottom = centerY + half;
+	let bodyTop: number;
+	let bodyBottom: number;
+	let pointerApexY: number;
+	if (orientation === 'up') {
+		// Apex at the top, body hangs below — pointer points up at whatever
+		// the marker is anchored to (e.g. a bar's low when belowBar).
+		bodyTop = centerY - half + pointerHeight;
+		bodyBottom = centerY + half;
+		pointerApexY = centerY - half;
+	} else {
+		// Apex at the bottom, body sits above — pointer points down at the
+		// anchor (e.g. a bar's high when aboveBar).
+		bodyTop = centerY - half;
+		bodyBottom = centerY + half - pointerHeight;
+		pointerApexY = centerY + half;
+	}
 	const bodyHeight = bodyBottom - bodyTop;
-	const bodyWidth = bodyHeight * BODY_WIDTH_RATIO;
 	return {
 		bodyLeft: centerX - bodyWidth / 2,
 		bodyRight: centerX + bodyWidth / 2,
 		bodyTop,
 		bodyBottom,
 		pointerApexX: centerX,
-		pointerApexY: centerY - half,
+		pointerApexY,
 		cornerRadius: bodyHeight * CORNER_RADIUS_RATIO,
+		orientation,
 	};
 }
 
@@ -48,17 +107,27 @@ function buildLabelPath(ctx: CanvasRenderingContext2D, g: LabelGeometry): void {
 	const bodyWidth = g.bodyRight - g.bodyLeft;
 	const r = Math.max(0, Math.min(g.cornerRadius, bodyHeight / 2, bodyWidth / 2));
 
-	// Single closed path: pointer apex → down the right side of the triangle
-	// to the body's top-right corner → straight down → rounded bottom-right →
-	// across to rounded bottom-left → straight up → diagonal back to apex.
 	ctx.beginPath();
-	ctx.moveTo(g.pointerApexX, g.pointerApexY);
-	ctx.lineTo(g.bodyRight, g.bodyTop);
-	ctx.lineTo(g.bodyRight, g.bodyBottom - r);
-	ctx.quadraticCurveTo(g.bodyRight, g.bodyBottom, g.bodyRight - r, g.bodyBottom);
-	ctx.lineTo(g.bodyLeft + r, g.bodyBottom);
-	ctx.quadraticCurveTo(g.bodyLeft, g.bodyBottom, g.bodyLeft, g.bodyBottom - r);
-	ctx.lineTo(g.bodyLeft, g.bodyTop);
+	if (g.orientation === 'up') {
+		// Sharp top corners (triangle base spans the body width), rounded bottom.
+		ctx.moveTo(g.pointerApexX, g.pointerApexY);
+		ctx.lineTo(g.bodyRight, g.bodyTop);
+		ctx.lineTo(g.bodyRight, g.bodyBottom - r);
+		ctx.quadraticCurveTo(g.bodyRight, g.bodyBottom, g.bodyRight - r, g.bodyBottom);
+		ctx.lineTo(g.bodyLeft + r, g.bodyBottom);
+		ctx.quadraticCurveTo(g.bodyLeft, g.bodyBottom, g.bodyLeft, g.bodyBottom - r);
+		ctx.lineTo(g.bodyLeft, g.bodyTop);
+	} else {
+		// Rounded top corners, sharp bottom — the triangle hangs off the body's
+		// bottom edge with apex pointing down.
+		ctx.moveTo(g.bodyLeft, g.bodyTop + r);
+		ctx.quadraticCurveTo(g.bodyLeft, g.bodyTop, g.bodyLeft + r, g.bodyTop);
+		ctx.lineTo(g.bodyRight - r, g.bodyTop);
+		ctx.quadraticCurveTo(g.bodyRight, g.bodyTop, g.bodyRight, g.bodyTop + r);
+		ctx.lineTo(g.bodyRight, g.bodyBottom);
+		ctx.lineTo(g.pointerApexX, g.pointerApexY);
+		ctx.lineTo(g.bodyLeft, g.bodyBottom);
+	}
 	ctx.closePath();
 }
 
@@ -68,13 +137,21 @@ export function drawLabel(
 	centerY: Coordinate,
 	size: number,
 	letter: string | undefined,
-	fontFamily: string
+	fontFamily: string,
+	orientation: LabelOrientation,
+	cache: LabelWidthCache
 ): void {
 	const totalHeight = shapeSize('label', size);
 	if (totalHeight <= 0) {
 		return;
 	}
-	const g = labelGeometry(totalHeight, centerX, centerY);
+
+	const { bodyWidth, letterPx } = computeLabelLayout(ctx, totalHeight, letter, fontFamily);
+	// Stash the resolved width so hitTestLabel can use the same bounds —
+	// hit-testing has no canvas context to re-measure with.
+	cache.labelBodyWidth = bodyWidth;
+
+	const g = labelGeometry(totalHeight, centerX, centerY, bodyWidth, orientation);
 
 	buildLabelPath(ctx, g);
 	ctx.fill();
@@ -83,12 +160,9 @@ export function drawLabel(
 	}
 
 	if (letter !== undefined && letter.length > 0) {
-		const bodyHeight = g.bodyBottom - g.bodyTop;
-		const letterPx = Math.max(8, Math.round(bodyHeight * LETTER_SIZE_RATIO));
-
-		// Pick a foreground that reads against the marker color (which is the
-		// current fill style). `generateContrastColors` only takes a string,
-		// so fall back to white if the fill is a gradient/pattern.
+		// Pick a foreground that reads against the marker color (the current
+		// fill style). `generateContrastColors` only handles strings, so fall
+		// back to white for gradients/patterns.
 		const fill = ctx.fillStyle;
 		const foreground = typeof fill === 'string' ? generateContrastColors(fill).foreground : '#ffffff';
 
@@ -102,9 +176,6 @@ export function drawLabel(
 		ctx.fillStyle = foreground;
 		ctx.fillText(letter, centerX, (g.bodyTop + g.bodyBottom) / 2);
 
-		// Restore so the marker stroke that runs after this draw doesn't
-		// inherit the letter font / alignment. Fill is restored by the
-		// renderer before each item.
 		ctx.fillStyle = fill;
 		ctx.font = prevFont;
 		ctx.textAlign = prevAlign;
@@ -117,14 +188,20 @@ export function hitTestLabel(
 	centerY: Coordinate,
 	size: number,
 	x: Coordinate,
-	y: Coordinate
+	y: Coordinate,
+	bodyWidth: number | undefined
 ): boolean {
 	const totalHeight = shapeSize('label', size);
 	if (totalHeight <= 0) {
 		return false;
 	}
-	const g = labelGeometry(totalHeight, centerX, centerY);
-	// Bounding-rect approximation that includes the pointer apex above the
-	// body. Same shortcut taken by `triangle` and `pin`.
-	return x >= g.bodyLeft && x <= g.bodyRight && y >= g.pointerApexY && y <= g.bodyBottom;
+	const half = totalHeight / 2;
+	const pointerHeight = totalHeight * POINTER_HEIGHT_RATIO;
+	const bodyHeight = totalHeight - pointerHeight;
+	// First-frame fallback: if the draw pass hasn't measured yet, use the
+	// minimum (square-badge) width so a hit test before paint still works.
+	const w = bodyWidth ?? bodyHeight * MIN_BODY_WIDTH_RATIO;
+	// Bounding rect spans the full marker height (apex extends in either
+	// orientation). Same shortcut taken by `triangle` and `pin`.
+	return x >= centerX - w / 2 && x <= centerX + w / 2 && y >= centerY - half && y <= centerY + half;
 }
