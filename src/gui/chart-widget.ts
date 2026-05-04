@@ -73,6 +73,7 @@ export class ChartWidget implements IDestroyable {
 	private _lineToolsAfterEdit: Delegate<LineToolsAfterEditEventParamsImplSupplier> = new Delegate();
 	private _onWheelBound: (event: WheelEvent) => void;
 	private _onKeyDownBound: (event: KeyboardEvent) => void;
+	private _onContextMenuBound: (event: MouseEvent) => void;
 
 	public constructor(container: HTMLElement, options: ChartOptionsInternal) {
 		this._options = options;
@@ -95,6 +96,12 @@ export class ChartWidget implements IDestroyable {
 		this._element.style.outline = 'none';
 		this._onKeyDownBound = this._onKeyDown.bind(this);
 		this._element.addEventListener('keydown', this._onKeyDownBound);
+
+		// Suppress the browser's default right-click menu so callers can
+		// build their own context menu on top of mousedown/contextmenu
+		// events without it flashing up first.
+		this._onContextMenuBound = (event: MouseEvent) => event.preventDefault();
+		this._element.addEventListener('contextmenu', this._onContextMenuBound);
 
 		this._model = new ChartModel(
 			this._invalidateHandler.bind(this),
@@ -158,6 +165,7 @@ export class ChartWidget implements IDestroyable {
 	public destroy(): void {
 		this._element.removeEventListener('wheel', this._onWheelBound);
 		this._element.removeEventListener('keydown', this._onKeyDownBound);
+		this._element.removeEventListener('contextmenu', this._onContextMenuBound);
 		if (this._drawRafId !== 0) {
 			window.cancelAnimationFrame(this._drawRafId);
 		}
