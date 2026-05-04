@@ -182,6 +182,23 @@ export interface IChartApi {
 	setActiveLineTool<T extends LineToolType>(name: T, options: LineToolPartialOptionsMap[T]): void;
 
 	/**
+	 * Toggles the drawing-tool lock. When `true`, the most recently armed
+	 * line tool stays armed after each completed drawing — the user can keep
+	 * placing new shapes of the same type without re-clicking the toolbar.
+	 * Set to `false` to fall back to the default one-shot behaviour.
+	 *
+	 * The lock applies to whichever tool was last passed to
+	 * {@link setActiveLineTool}; toggling the lock mid-session picks up the
+	 * tool from the next `setActiveLineTool` call.
+	 */
+	setDrawingToolLock(locked: boolean): void;
+
+	/**
+	 * Returns the current state of the drawing-tool lock toggle.
+	 */
+	isDrawingToolLocked(): boolean;
+
+	/**
      * Remove a LineTool by its ID.
      */
 	removeLineToolsById(ids: string[]): void;

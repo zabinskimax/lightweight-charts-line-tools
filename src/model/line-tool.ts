@@ -112,6 +112,9 @@ export abstract class LineTool<T extends LineToolType = LineToolType> extends Pr
 			this._creating = false;
 			this._lastPoint = null;
 			this.model().updateSource(this);
+			// Notify the creator so the drawing-tool lock can re-arm with
+			// the same tool type/options for the next placement.
+			this.model().lineToolCreator().notifyToolFinished(this);
 		}
 	}
 

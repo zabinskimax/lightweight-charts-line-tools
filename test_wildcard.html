@@ -22,6 +22,11 @@
   <div class="container">
     <div id="chart"></div>
     <div class="buttons-container">
+      <label style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; background: #f0f4ff; border-radius: 4px; margin-right: 12px;">
+        <input type="checkbox" id="DrawingToolLockToggle" />
+        Drawing tool lock (keep tool armed)
+      </label>
+      <br>
       <button id="TrendLineButton">Add TrendLine</button> <button id="HorizontalLineButton">Add HorizontalLine</button>
       <button id="FibRetracementButton">Add FibRetracement</button>
       <button id="RectangleButton">Add Rectangle</button>
@@ -228,6 +233,10 @@
       document.getElementById(type + 'Button').addEventListener('click', () => {
         chart.setActiveLineTool(type, {});
       });
+    });
+
+    document.getElementById('DrawingToolLockToggle').addEventListener('change', (e) => {
+      chart.setDrawingToolLock(e.target.checked);
     });
 
     document.getElementById('EmojiButton').addEventListener('click', () => {

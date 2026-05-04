@@ -695,6 +695,14 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 		return new LineToolApi<T>(tool);
 	}
 
+	public setDrawingToolLock(locked: boolean): void {
+		this._chartWidget.model().lineToolCreator().setLocked(locked);
+	}
+
+	public isDrawingToolLocked(): boolean {
+		return this._chartWidget.model().lineToolCreator().isLocked();
+	}
+
 	public setActiveLineTool<T extends LineToolType>(name: T, options?: LineToolPartialOptionsMap[T]): void {
 		this._chartWidget.model().lineToolCreator().setActiveLineTool(name, options);
 	}
