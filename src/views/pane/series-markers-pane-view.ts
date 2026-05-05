@@ -19,7 +19,7 @@ import {
 import {
 	calculateShapeHeight,
 	shapeMargin as calculateShapeMargin,
-	labelFixedSize,
+	fixedShapeSize,
 } from '../../renderers/series-markers-utils';
 
 import { IUpdatablePaneView, UpdateType } from './iupdatable-pane-view';
@@ -49,12 +49,12 @@ function fillSizeAndY(
 	const highPrice = isNumber(seriesData) ? seriesData : seriesData.high;
 	const lowPrice = isNumber(seriesData) ? seriesData : seriesData.low;
 	const sizeMultiplier = isNumber(marker.size) ? Math.max(marker.size, 0) : 1;
-	// `label` is a fixed-size pattern/badge icon — it should not change with
-	// zoom level, unlike the bar-spacing-derived sizing used for every other
-	// shape. The user can still scale it via `marker.size`.
-	const baseSize = marker.shape === 'label'
-		? labelFixedSize()
-		: calculateShapeHeight(timeScale.barSpacing());
+	// Fixed-size shapes (`label`, `warning`, `xCircle`) use absolute pixel
+	// sizes so they read consistently across zoom levels — unlike the
+	// bar-spacing-derived sizing used for the regular marker shapes. The
+	// user can still scale individual markers via `marker.size`.
+	const fixed = fixedShapeSize(marker.shape);
+	const baseSize = fixed !== null ? fixed : calculateShapeHeight(timeScale.barSpacing());
 	const shapeSize = baseSize * sizeMultiplier;
 	const halfSize = shapeSize / 2;
 	rendererItem.size = shapeSize;

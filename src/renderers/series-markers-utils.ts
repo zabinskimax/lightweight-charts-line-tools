@@ -10,6 +10,8 @@ const enum Constants {
 	// Default total height (px) for fixed-size shapes. Used by `label`, which
 	// is intended for pattern/badge icons that should not scale with zoom.
 	LabelFixedSize = 22,
+	// Smaller fixed size for outline-style status icons (`warning`, `xCircle`).
+	IconFixedSize = 18,
 }
 
 function size(barSpacing: number, coeff: number): number {
@@ -36,9 +38,11 @@ export function shapeSize(shape: SeriesMarkerShape, originalSize: number): numbe
 		case 'pin':
 			return size(originalSize, 1.2);
 		case 'label':
-			// Pane-view supplies the absolute label size in `originalSize`,
-			// so the bar-spacing clamp in `size()` is bypassed. `ceiledOdd`
-			// keeps the rendered value pixel-aligned.
+		case 'warning':
+		case 'xCircle':
+			// Pane-view supplies the absolute size in `originalSize` for
+			// fixed-size shapes, so the bar-spacing clamp in `size()` is
+			// bypassed. `ceiledOdd` keeps the rendered value pixel-aligned.
 			return ceiledOdd(Math.max(0, originalSize));
 	}
 
@@ -48,6 +52,17 @@ export function shapeSize(shape: SeriesMarkerShape, originalSize: number): numbe
 
 export function labelFixedSize(): number {
 	return Constants.LabelFixedSize;
+}
+
+export function fixedShapeSize(shape: SeriesMarkerShape): number | null {
+	switch (shape) {
+		case 'label':
+			return Constants.LabelFixedSize;
+		case 'warning':
+		case 'xCircle':
+			return Constants.IconFixedSize;
+	}
+	return null;
 }
 
 export function calculateShapeHeight(barSpacing: number): number {

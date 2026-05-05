@@ -24,6 +24,8 @@ import { drawSquare, hitTestSquare } from './series-markers-square';
 import { drawStar, hitTestStar } from './series-markers-star';
 import { drawText, hitTestText } from './series-markers-text';
 import { drawTriangle, hitTestTriangle } from './series-markers-triangle';
+import { drawWarning, hitTestWarning } from './series-markers-warning';
+import { drawXCircle, hitTestXCircle } from './series-markers-xcircle';
 
 /**
  * Payload returned from the marker renderer's hit test. Matches the shape
@@ -206,6 +208,12 @@ function drawShape(item: SeriesMarkerRendererDataItem, ctx: CanvasRenderingConte
 		case 'label':
 			drawLabel(ctx, item.x, item.y, item.size, item.text?.content, fontFamily, item.labelOrientation ?? 'up', item);
 			return;
+		case 'warning':
+			drawWarning(ctx, item.x, item.y, item.size);
+			return;
+		case 'xCircle':
+			drawXCircle(ctx, item.x, item.y, item.size);
+			return;
 	}
 
 	ensureNever(item.shape);
@@ -272,6 +280,10 @@ function hitTestShape(item: SeriesMarkerRendererDataItem, x: Coordinate, y: Coor
 			return hitTestPin(item.x, item.y, item.size, px, py);
 		case 'label':
 			return hitTestLabel(item.x, item.y, item.size, px, py, item.labelBodyWidth);
+		case 'warning':
+			return hitTestWarning(item.x, item.y, item.size, px, py);
+		case 'xCircle':
+			return hitTestXCircle(item.x, item.y, item.size, px, py);
 	}
 
 	ensureNever(item.shape);
