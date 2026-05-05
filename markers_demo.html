@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Series markers — all shapes</title>
+  <script src="./dist/lightweight-charts.standalone.development.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #fafbfc;
+    }
+
+    .page {
+      width: 1100px;
+      margin: 24px auto;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    .chart {
+      width: 1100px;
+      height: 500px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+    }
+
+    table.legend {
+      margin-top: 16px;
+      width: 1100px;
+      border-collapse: collapse;
+      font-size: 13px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    table.legend th,
+    table.legend td {
+      padding: 6px 12px;
+      text-align: left;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    table.legend th {
+      background: #f8fafc;
+      font-weight: 600;
+    }
+
+    table.legend tr:last-child td {
+      border-bottom: 0;
+    }
+
+    code {
+      background: #f1f5f9;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <h1>Series markers — every shape</h1>
+    <p class="subtitle">
+      One marker per shape, anchored on consecutive bars. Hover any marker to see its tooltip.
+    </p>
+
+    <div id="chart" class="chart"></div>
+
+    <table class="legend">
+      <thead>
+        <tr>
+          <th>Shape</th>
+          <th>Position</th>
+          <th>Color</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="legend-body"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const chart = LightweightCharts.createChart(document.getElementById('chart'), {
+      width: 1100,
+      height: 500,
+      rightPriceScale: { scaleMargins: { top: 0.25, bottom: 0.25 } },
+      timeScale: { timeVisible: true, secondsVisible: false },
+    });
+
+    const series = chart.addCandlestickSeries();
+
+    // Generate enough flat-ish candles to fit one marker per shape on its
+    // own bar without crowding.
+    const baseDate = new Date('2024-01-01T00:00:00Z');
+    const candles = [];
+    let price = 100;
+    for (let i = 0; i < 30; i++) {
+      const t = new Date(baseDate.getTime());
+      t.setUTCDate(baseDate.getUTCDate() + i);
+      const drift = Math.sin(i / 3) * 4;
+      const o = price;
+      const c = price + drift;
+      const h = Math.max(o, c) + 2;
+      const l = Math.min(o, c) - 2;
+      candles.push({
+        time: t.toISOString().slice(0, 10),
+        open: o, high: h, low: l, close: c,
+      });
+      price = c;
+    }
+    series.setData(candles);
+
+    // Each entry maps to one marker on a unique bar.
+    const SHAPES = [
+      { shape: 'circle',     color: '#2563eb', position: 'aboveBar', text: '',  note: 'Filled disc.' },
+      { shape: 'square',     color: '#16a34a', position: 'belowBar', text: '',  note: 'Filled square.' },
+      { shape: 'arrowUp',    color: '#22c55e', position: 'belowBar', text: '',  note: 'Up arrow — bull signal.' },
+      { shape: 'arrowDown',  color: '#dc2626', position: 'aboveBar', text: '',  note: 'Down arrow — bear signal.' },
+      { shape: 'triangle',   color: '#a855f7', position: 'aboveBar', text: '',  note: 'Filled triangle.' },
+      { shape: 'cross',      color: '#0ea5e9', position: 'belowBar', text: '',  note: 'Plus / cross.' },
+      { shape: 'diamond',    color: '#f97316', position: 'aboveBar', text: '',  note: 'Filled diamond.' },
+      { shape: 'star',       color: '#eab308', position: 'belowBar', text: '',  note: 'Filled five-point star.' },
+      { shape: 'flag',       color: '#ef4444', position: 'aboveBar', text: '',  note: 'Flag on a pole.' },
+      { shape: 'pin',        color: '#06b6d4', position: 'belowBar', text: '',  note: 'Pin / map marker.' },
+      { shape: 'label',      color: '#737583', position: 'aboveBar', text: 'D', note: 'Adaptive-width badge — flips to point down for aboveBar.' },
+      { shape: 'label',      color: '#2563eb', position: 'belowBar', text: 'BE', note: 'Same shape, longer text grows the badge body.' },
+      { shape: 'warning',    color: '#f59e0b', position: 'belowBar', text: '',  note: 'Stroke triangle with rounded corners + exclamation.' },
+      { shape: 'xCircle',    color: '#dc2626', position: 'aboveBar', text: '',  note: 'Stroke circle with X.' },
+    ];
+
+    // Spread one marker per bar starting a few bars in so the chart paints
+    // them clearly. Markers must be sorted by time before setMarkers.
+    const startIndex = 2;
+    const markers = SHAPES.map((entry, i) => ({
+      time: candles[startIndex + i].time,
+      position: entry.position,
+      shape: entry.shape,
+      color: entry.color,
+      text: entry.text,
+      tooltip: `${entry.shape}${entry.text ? ' "' + entry.text + '"' : ''}`,
+    }));
+
+    series.setMarkers(markers);
+
+    chart.timeScale().fitContent();
+
+    // Build the legend table so the page also reads as documentation.
+    const legendBody = document.getElementById('legend-body');
+    SHAPES.forEach((entry) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><code>${entry.shape}${entry.text ? ` (text: "${entry.text}")` : ''}</code></td>
+        <td>${entry.position}</td>
+        <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${entry.color};vertical-align:middle;margin-right:6px;"></span>${entry.color}</td>
+        <td>${entry.note}</td>
+      `;
+      legendBody.appendChild(tr);
+    });
+  </script>
+</body>
+
+</html>

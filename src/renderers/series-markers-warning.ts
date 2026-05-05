@@ -7,10 +7,54 @@ import { shapeSize } from './series-markers-utils';
 const TRIANGLE_HEIGHT_RATIO = 0.92;
 // Stroke width in CSS pixels for the triangle outline and exclamation mark.
 const STROKE_WIDTH = 1.75;
+// Vertex radius as a fraction of triangle height. Geometry-rounded — each
+// corner of the path is pulled back by this distance and joined with a
+// quadratic curve, so the rounding is visible at any stroke width.
+const CORNER_RADIUS_RATIO = 0.18;
 // Vertical extent of the exclamation bar as a fraction of total height.
 const BAR_HEIGHT_RATIO = 0.28;
 // Diameter of the exclamation dot as a fraction of total height.
 const DOT_DIAMETER_RATIO = 0.11;
+
+function tracePolygonRounded(
+	ctx: CanvasRenderingContext2D,
+	vertices: readonly (readonly [number, number])[],
+	radius: number
+): void {
+	const n = vertices.length;
+	ctx.beginPath();
+	for (let i = 0; i < n; i++) {
+		const prev = vertices[(i + n - 1) % n];
+		const curr = vertices[i];
+		const next = vertices[(i + 1) % n];
+
+		// Vector from current vertex toward previous, normalized → entry
+		// point on the incoming edge, pulled back by `radius`.
+		const dxIn = prev[0] - curr[0];
+		const dyIn = prev[1] - curr[1];
+		const lenIn = Math.hypot(dxIn, dyIn) || 1;
+		const r = Math.min(radius, lenIn / 2);
+		const inX = curr[0] + (dxIn / lenIn) * r;
+		const inY = curr[1] + (dyIn / lenIn) * r;
+
+		// Same for the outgoing edge.
+		const dxOut = next[0] - curr[0];
+		const dyOut = next[1] - curr[1];
+		const lenOut = Math.hypot(dxOut, dyOut) || 1;
+		const rOut = Math.min(radius, lenOut / 2);
+		const outX = curr[0] + (dxOut / lenOut) * rOut;
+		const outY = curr[1] + (dyOut / lenOut) * rOut;
+
+		if (i === 0) {
+			ctx.moveTo(inX, inY);
+		} else {
+			ctx.lineTo(inX, inY);
+		}
+		// Round the vertex with a quadratic curve through it.
+		ctx.quadraticCurveTo(curr[0], curr[1], outX, outY);
+	}
+	ctx.closePath();
+}
 
 export function drawWarning(
 	ctx: CanvasRenderingContext2D,
@@ -48,12 +92,17 @@ export function drawWarning(
 	ctx.lineJoin = 'round';
 	ctx.lineCap = 'round';
 
-	// Triangle outline.
-	ctx.beginPath();
-	ctx.moveTo(centerX, apexY);
-	ctx.lineTo(centerX + triHalfBase, baseY);
-	ctx.lineTo(centerX - triHalfBase, baseY);
-	ctx.closePath();
+	// Triangle outline with geometry-rounded corners.
+	const cornerRadius = triHeight * CORNER_RADIUS_RATIO;
+	tracePolygonRounded(
+		ctx,
+		[
+			[centerX, apexY],
+			[centerX + triHalfBase, baseY],
+			[centerX - triHalfBase, baseY],
+		],
+		cornerRadius
+	);
 	ctx.stroke();
 
 	// Exclamation: vertical bar + dot below it. Bar centered on the centroid,
