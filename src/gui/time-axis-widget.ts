@@ -269,6 +269,14 @@ export class TimeAxisWidget implements MouseEventHandlers, IDestroyable {
 			return;
 		}
 
+		// fancy-canvas nulls the binding's canvas in destroy(); a paint rAF queued
+		// before chart.remove() can fire after teardown, so guard against the race.
+		// The .canvas type is non-nullable, hence the cast.
+		if ((this._canvasBinding.canvas as HTMLCanvasElement | null) === null ||
+			(this._topCanvasBinding.canvas as HTMLCanvasElement | null) === null) {
+			return;
+		}
+
 		if (type !== InvalidationLevel.Cursor) {
 			const ctx = getContext2D(this._canvasBinding.canvas);
 			this._drawBackground(ctx, this._canvasBinding.pixelRatio);

@@ -1,5 +1,3 @@
-import { ensureNotNull } from '../../helpers/assertions';
-
 import { BarPrice } from '../../model/bar';
 import { ChartModel } from '../../model/chart-model';
 import { Coordinate } from '../../model/coordinate';
@@ -76,12 +74,12 @@ export class CrosshairMarksPaneView implements IUpdatablePaneView {
 			const data = this._markersData[index];
 			const seriesData = s.markerDataAtIndex(timePointIndex);
 
-			if (seriesData === null || !s.visible()) {
+			const firstValue = s.firstValue();
+			if (seriesData === null || !s.visible() || firstValue === null) {
 				data.visibleRange = null;
 				return;
 			}
 
-			const firstValue = ensureNotNull(s.firstValue());
 			data.lineColor = seriesData.backgroundColor;
 			data.radius = seriesData.radius;
 			data.items[0].price = seriesData.price;
