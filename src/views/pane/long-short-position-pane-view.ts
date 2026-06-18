@@ -81,7 +81,9 @@ export class LongShortPositionPaneView extends LineToolPaneView {
 
         if (!isOffScreenVertical && !isOffScreenHorizontal ||
             options.entryStopLossRectangle.extend.left || options.entryStopLossRectangle.extend.right ||
-            options.entryTpRectangle.extend.left || options.entryTpRectangle.extend.right) {
+            options.entryStopLossRectangle.extend.up || options.entryStopLossRectangle.extend.down ||
+            options.entryTpRectangle.extend.left || options.entryTpRectangle.extend.right ||
+            options.entryTpRectangle.extend.up || options.entryTpRectangle.extend.down) {
             super._updateImpl();
 
             if (this._points.length < 3) { return; }

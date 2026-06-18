@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/tslint/config */
-import { ChartWidget, LineToolsAfterEditEventParamsImpl, LineToolsAfterEditEventParamsImplSupplier, LineToolsDoubleClickEventParamsImpl, LineToolsDoubleClickEventParamsImplSupplier, MouseEventParamsImpl, MouseEventParamsImplSupplier } from '../gui/chart-widget';
+import { ChartWidget, LineToolsAfterEditEventParamsImpl, LineToolsAfterEditEventParamsImplSupplier, LineToolsButtonClickEventParamsImpl, LineToolsButtonClickEventParamsImplSupplier, LineToolsDoubleClickEventParamsImpl, LineToolsDoubleClickEventParamsImplSupplier, LineToolsDuringEditEventParamsImpl, LineToolsDuringEditEventParamsImplSupplier, MouseEventParamsImpl, MouseEventParamsImplSupplier } from '../gui/chart-widget';
 
 import { ensureDefined } from '../helpers/assertions';
 import { Delegate } from '../helpers/delegate';
@@ -20,7 +20,7 @@ import { PolygonFillDataSource } from '../model/polygon-fill-data-source';
 import { PriceLevelMarkerDataSource } from '../model/price-level-marker-data-source';
 import { Series } from '../model/series';
 import { TextLabelDataSource } from '../model/text-label-data-source';
-import { LineStyle, LineWidth } from '../renderers/draw-line';
+import { LineStyle } from '../renderers/draw-line';
 import {
 	AreaSeriesOptions,
 	AreaSeriesPartialOptions,
@@ -44,13 +44,12 @@ import {
 import { BackgroundBandApi } from './background-band-api';
 import { BarColorOverlayApi } from './bar-color-overlay-api';
 import { CandlestickSeriesApi } from './candlestick-series-api';
-import { Coordinate } from '../model/coordinate';
 
 import { DataUpdatesConsumer, SeriesDataItemTypeMap, Time } from './data-consumer';
 import { DataLayer, DataUpdateResponse, SeriesChanges, convertTime } from './data-layer';
 import { IBackgroundBandApi } from './ibackground-band-api';
 import { IBarColorOverlayApi, BarColorOverlayPair, BarColorOverlayPartialOptions } from './ibar-color-overlay-api';
-import { IChartApi, LineToolsAfterEditEventHandler, LineToolsAfterEditEventParams, LineToolsDoubleClickEventHandler, LineToolsDoubleClickEventParams, MouseEventHandler, MouseEventParams } from './ichart-api';
+import { IChartApi, LineToolsAfterEditEventHandler, LineToolsAfterEditEventParams, LineToolsButtonClickEventHandler, LineToolsButtonClickEventParams, LineToolsDoubleClickEventHandler, LineToolsDoubleClickEventParams, LineToolsDuringEditEventHandler, LineToolsDuringEditEventParams, MouseEventHandler, MouseEventParams } from './ichart-api';
 import { IOverlayBoxApi, OverlayBoxPartialOptions } from './ioverlay-box-api';
 import { IOverlayLineApi, OverlayLinePartialOptions } from './ioverlay-line-api';
 import { IPolygonFillApi, PolygonFillOptions } from './ipolygon-fill-api';
@@ -199,6 +198,8 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 	private readonly _crosshairMovedDelegate: Delegate<MouseEventParams> = new Delegate();
 	private readonly _lineToolsDoubleClickDelegate: Delegate<LineToolsDoubleClickEventParams> = new Delegate();
 	private readonly _lineToolsAfterEditDelegate: Delegate<LineToolsAfterEditEventParams> = new Delegate();
+	private readonly _lineToolsDuringEditDelegate: Delegate<LineToolsDuringEditEventParams> = new Delegate();
+	private readonly _lineToolsButtonClickDelegate: Delegate<LineToolsButtonClickEventParams> = new Delegate();
 
 	private readonly _timeScaleApi: TimeScaleApi;
 
@@ -244,6 +245,24 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 			this
 		);
 
+		this._chartWidget.lineToolsDuringEdit().subscribe(
+			(paramSupplier: LineToolsDuringEditEventParamsImplSupplier) => {
+				if (this._lineToolsDuringEditDelegate.hasListeners()) {
+					this._lineToolsDuringEditDelegate.fire(this._convertLineToolsDuringEditParams(paramSupplier()));
+				}
+			},
+			this
+		);
+
+		this._chartWidget.lineToolsButtonClick().subscribe(
+			(paramSupplier: LineToolsButtonClickEventParamsImplSupplier) => {
+				if (this._lineToolsButtonClickDelegate.hasListeners()) {
+					this._lineToolsButtonClickDelegate.fire(this._convertLineToolsButtonClickParams(paramSupplier()));
+				}
+			},
+			this
+		);
+
 		const model = this._chartWidget.model();
 		this._timeScaleApi = new TimeScaleApi(model, this._chartWidget.timeAxisWidget());
 	}
@@ -281,7 +300,7 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 		const y = series.priceScale().priceToCoordinate(price, firstValue.value);
 		// `fire=false` avoids re-emitting `crosshairMove` so paired charts
 		// can sync bidirectionally without an event feedback loop.
-		model.setAndSaveCurrentPositionFire(x as Coordinate, y as Coordinate, false, pane);
+		model.setAndSaveCurrentPositionFire(x, y, false, pane);
 	}
 
 	public clearCrosshairPosition(): void {
@@ -293,6 +312,8 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 		this._chartWidget.crosshairMoved().unsubscribeAll(this);
 		this._chartWidget.lineToolsDoubleClick().unsubscribeAll(this);
 		this._chartWidget.lineToolsAfterEdit().unsubscribeAll(this);
+		this._chartWidget.lineToolsDuringEdit().unsubscribeAll(this);
+		this._chartWidget.lineToolsButtonClick().unsubscribeAll(this);
 
 		this._timeScaleApi.destroy();
 		this._chartWidget.destroy();
@@ -304,6 +325,8 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 		this._crosshairMovedDelegate.destroy();
 		this._lineToolsDoubleClickDelegate.destroy();
 		this._lineToolsAfterEditDelegate.destroy();
+		this._lineToolsDuringEditDelegate.destroy();
+		this._lineToolsButtonClickDelegate.destroy();
 		this._dataLayer.destroy();
 	}
 
@@ -607,6 +630,7 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 		this._chartWidget.model().lightUpdate();
 	}
 
+	// eslint-disable-next-line complexity
 	public addPriceLevelMarker(
 		seriesApi: SeriesApi<'Line' | 'Area' | 'Baseline' | 'Bar' | 'Candlestick' | 'Histogram'>,
 		time: Time,
@@ -626,7 +650,7 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 			showLine: options.showLine ?? true,
 			showLabel: options.showLabel ?? true,
 			lineStyle: options.lineStyle ?? LineStyle.Solid,
-			lineWidth: (options.lineWidth ?? 2) as LineWidth,
+			lineWidth: options.lineWidth ?? 2,
 			fontSize: options.fontSize ?? 12,
 			fontFamily: options.fontFamily ?? "'Trebuchet MS', Roboto, Ubuntu, sans-serif",
 			bold: options.bold ?? true,
@@ -962,6 +986,22 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 		this._lineToolsAfterEditDelegate.unsubscribe(handler);
 	}
 
+	public subscribeLineToolsDuringEdit(handler: LineToolsDuringEditEventHandler): void {
+		this._lineToolsDuringEditDelegate.subscribe(handler);
+	}
+
+	public unsubscribeLineToolsDuringEdit(handler: LineToolsDuringEditEventHandler): void {
+		this._lineToolsDuringEditDelegate.unsubscribe(handler);
+	}
+
+	public subscribeLineToolsButtonClick(handler: LineToolsButtonClickEventHandler): void {
+		this._lineToolsButtonClickDelegate.subscribe(handler);
+	}
+
+	public unsubscribeLineToolsButtonClick(handler: LineToolsButtonClickEventHandler): void {
+		this._lineToolsButtonClickDelegate.unsubscribe(handler);
+	}
+
 	public priceScale(priceScaleId?: string): IPriceScaleApi {
 		if (priceScaleId === undefined) {
 			warn('Using ChartApi.priceScale() method without arguments has been deprecated, pass valid price scale id instead');
@@ -1031,6 +1071,20 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 		return {
 			selectedLineTool: param.selectedLineTool,
 			stage: param.stage,
+		};
+	}
+
+	private _convertLineToolsDuringEditParams(param: LineToolsDuringEditEventParamsImpl): LineToolsDuringEditEventParams {
+		return {
+			selectedLineTool: param.selectedLineTool,
+			stage: param.stage,
+		};
+	}
+
+	private _convertLineToolsButtonClickParams(param: LineToolsButtonClickEventParamsImpl): LineToolsButtonClickEventParams {
+		return {
+			selectedLineTool: param.selectedLineTool,
+			button: param.button,
 		};
 	}
 }

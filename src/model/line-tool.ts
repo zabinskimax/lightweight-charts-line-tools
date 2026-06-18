@@ -40,6 +40,18 @@ export interface LineToolHitTestData {
 	cursorType: PaneCursorType;
 }
 
+/**
+ * Identifies which pill button (on the trade-line tools) was clicked.
+ */
+export type LineToolButtonId = 'close' | 'addTP' | 'addSL';
+
+/**
+ * Hit-test payload returned when a trade-line pill button glyph is hit.
+ */
+export interface LineToolButtonHitData {
+	button: LineToolButtonId;
+}
+
 export interface LineToolExport<T extends LineToolType> {
 	id: string;
 	toolType: LineToolType;

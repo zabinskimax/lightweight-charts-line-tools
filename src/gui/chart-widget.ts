@@ -14,7 +14,7 @@ import {
 	TimeScaleInvalidation,
 	TimeScaleInvalidationType,
 } from '../model/invalidate-mask';
-import { LineTool, LineToolExport, LineToolPoint } from '../model/line-tool';
+import { LineTool, LineToolButtonId, LineToolExport, LineToolPoint } from '../model/line-tool';
 import { LineToolType } from '../model/line-tool-options';
 import { LineTools } from '../model/line-tools';
 import { Point } from '../model/point';
@@ -46,9 +46,23 @@ export interface LineToolsAfterEditEventParamsImpl {
 	stage: string;
 }
 
+export interface LineToolsDuringEditEventParamsImpl {
+	selectedLineTool: LineToolExport<LineToolType>;
+	stage: string;
+}
+
+export interface LineToolsButtonClickEventParamsImpl {
+	selectedLineTool: LineToolExport<LineToolType>;
+	button: LineToolButtonId;
+}
+
 export type LineToolsDoubleClickEventParamsImplSupplier = () => LineToolsDoubleClickEventParamsImpl;
 
 export type LineToolsAfterEditEventParamsImplSupplier = () => LineToolsAfterEditEventParamsImpl;
+
+export type LineToolsDuringEditEventParamsImplSupplier = () => LineToolsDuringEditEventParamsImpl;
+
+export type LineToolsButtonClickEventParamsImplSupplier = () => LineToolsButtonClickEventParamsImpl;
 
 export class ChartWidget implements IDestroyable {
 	private static _clipboard: LineToolExport<LineToolType>[] = [];
@@ -71,6 +85,8 @@ export class ChartWidget implements IDestroyable {
 	private _crosshairMoved: Delegate<MouseEventParamsImplSupplier> = new Delegate();
 	private _lineToolsDoubleClick: Delegate<LineToolsDoubleClickEventParamsImplSupplier> = new Delegate();
 	private _lineToolsAfterEdit: Delegate<LineToolsAfterEditEventParamsImplSupplier> = new Delegate();
+	private _lineToolsDuringEdit: Delegate<LineToolsDuringEditEventParamsImplSupplier> = new Delegate();
+	private _lineToolsButtonClick: Delegate<LineToolsButtonClickEventParamsImplSupplier> = new Delegate();
 	private _onWheelBound: (event: WheelEvent) => void;
 	private _onKeyDownBound: (event: KeyboardEvent) => void;
 	private _onContextMenuBound: (event: MouseEvent) => void;
@@ -110,6 +126,8 @@ export class ChartWidget implements IDestroyable {
 		this.model().crosshairMoved().subscribe(this._onPaneWidgetCrosshairMoved.bind(this), this);
 		this.model().lineToolsDoubleClick().subscribe(this._onLineToolsDoubleClick.bind(this), this);
 		this.model().lineToolsAfterEdit().subscribe(this._onLineToolsAfterEdit.bind(this), this);
+		this.model().lineToolsDuringEdit().subscribe(this._onLineToolsDuringEdit.bind(this), this);
+		this.model().lineToolsButtonClick().subscribe(this._onLineToolsButtonClick.bind(this), this);
 
 		this._timeAxisWidget = new TimeAxisWidget(this);
 		this._tableElement.appendChild(this._timeAxisWidget.getElement());
@@ -263,6 +281,14 @@ export class ChartWidget implements IDestroyable {
 
 	public lineToolsAfterEdit(): ISubscription<LineToolsAfterEditEventParamsImplSupplier> {
 		return this._lineToolsAfterEdit;
+	}
+
+	public lineToolsDuringEdit(): ISubscription<LineToolsDuringEditEventParamsImplSupplier> {
+		return this._lineToolsDuringEdit;
+	}
+
+	public lineToolsButtonClick(): ISubscription<LineToolsButtonClickEventParamsImplSupplier> {
+		return this._lineToolsButtonClick;
 	}
 
 	public takeScreenshot(): HTMLCanvasElement {
@@ -704,6 +730,20 @@ export class ChartWidget implements IDestroyable {
 		};
 	}
 
+	private _getLineToolsDuringEditEventParamsImpl(selectedLineTool: LineToolExport<LineToolType>, stage: string): LineToolsDuringEditEventParamsImpl {
+		return {
+			selectedLineTool: selectedLineTool,
+			stage: stage,
+		};
+	}
+
+	private _getLineToolsButtonClickEventParamsImpl(selectedLineTool: LineToolExport<LineToolType>, button: LineToolButtonId): LineToolsButtonClickEventParamsImpl {
+		return {
+			selectedLineTool: selectedLineTool,
+			button: button,
+		};
+	}
+
 	private _onPaneWidgetClicked(time: TimePointIndex | null, point: Point): void {
 		this._element.focus();
 		this._clicked.fire(() => this._getMouseEventParamsImpl(time, point));
@@ -719,6 +759,14 @@ export class ChartWidget implements IDestroyable {
 
 	private _onLineToolsAfterEdit(selectedLineTool: LineToolExport<LineToolType>, stage: string): void {
 		this._lineToolsAfterEdit.fire(() => this._getLineToolsAfterEditEventParamsImpl(selectedLineTool, stage));
+	}
+
+	private _onLineToolsDuringEdit(selectedLineTool: LineToolExport<LineToolType>, stage: string): void {
+		this._lineToolsDuringEdit.fire(() => this._getLineToolsDuringEditEventParamsImpl(selectedLineTool, stage));
+	}
+
+	private _onLineToolsButtonClick(selectedLineTool: LineToolExport<LineToolType>, button: LineToolButtonId): void {
+		this._lineToolsButtonClick.fire(() => this._getLineToolsButtonClickEventParamsImpl(selectedLineTool, button));
 	}
 
 	private _updateTimeAxisVisibility(): void {

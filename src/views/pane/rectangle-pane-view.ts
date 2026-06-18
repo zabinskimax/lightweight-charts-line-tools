@@ -80,7 +80,7 @@ export class RectanglePaneView extends LineToolPaneView {
 
 		const isOutsideView = isOffScreenVertical || isOffScreenHorizontal;
 
-		if (!isOutsideView || options.rectangle.extend.left || options.rectangle.extend.right) {
+		if (!isOutsideView || options.rectangle.extend.left || options.rectangle.extend.right || options.rectangle.extend.up || options.rectangle.extend.down) {
 			// console.log('draw rectangle');
 			super._updateImpl();
 			if (this._points.length < 2) { return; }

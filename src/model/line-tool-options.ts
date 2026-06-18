@@ -55,6 +55,24 @@ export interface ExtendOptions {
 	 * @defaultValue `false`
 	 */
 	left: boolean;
+
+	/**
+	 * Extend area up to the top edge of the pane.
+	 *
+	 * Only honored by box-area tools (Rectangle, LongShortPosition); ignored by line/Fib tools.
+	 *
+	 * @defaultValue `false`
+	 */
+	up?: boolean;
+
+	/**
+	 * Extend area down to the bottom edge of the pane.
+	 *
+	 * Only honored by box-area tools (Rectangle, LongShortPosition); ignored by line/Fib tools.
+	 *
+	 * @defaultValue `false`
+	 */
+	down?: boolean;
 }
 
 export interface EndOptions {

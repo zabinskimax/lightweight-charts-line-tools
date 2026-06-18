@@ -3,6 +3,7 @@ import { Point } from '../model/point';
 import { LineStyle } from '..';
 import { setLineStyle } from './draw-line';
 
+// eslint-disable-next-line max-params
 export function drawRoundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number | number[], borderStyle?: number): void {
 	let a; let b; let c; let d;
 
@@ -45,7 +46,7 @@ export function drawRoundRect(ctx: CanvasRenderingContext2D, x: number, y: numbe
 	ctx.stroke();
 }
 
-// eslint-disable-next-line max-params
+// eslint-disable-next-line max-params, complexity
 export function fillRectWithBorder(
 	ctx: CanvasRenderingContext2D,
 	point0: Point,
@@ -57,14 +58,19 @@ export function fillRectWithBorder(
 	borderAlign: 'outer' | 'center' | 'inner',
 	extendLeft: boolean,
 	extendRight: boolean,
-	containerWidth: number
+	containerWidth: number,
+	extendUp: boolean = false,
+	extendDown: boolean = false,
+	containerHeight: number = 0
 ): void {
 	const x1 = extendLeft ? 0 : point0.x;
 	const x2 = extendRight ? containerWidth : point1.x;
+	const y1 = extendUp ? 0 : point0.y;
+	const y2 = extendDown ? containerHeight : point1.y;
 
 	if (backgroundColor !== undefined) {
 		ctx.fillStyle = backgroundColor;
-		ctx.fillRect(x1, point0.y, x2 - x1, point1.y - point0.y);
+		ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
 	}
 
 	if (borderColor !== undefined && borderWidth > 0) {
@@ -112,14 +118,29 @@ export function fillRectWithBorder(
 		ctx.lineWidth = borderWidth;
 		ctx.strokeStyle = borderColor;
 
-		ctx.moveTo(x1 - bottomRight.x, point0.y - bottomRight.y);
-		ctx.lineTo(x2 + bottomLeft.x, point0.y - bottomLeft.y);
-		ctx.moveTo(point1.x + topRight.x, point0.y + topRight.y);
-		ctx.lineTo(point1.x + topRight.x, point1.y - topRight.y);
-		ctx.moveTo(x1 - bottomRight.x, point1.y + bottomRight.y);
-		ctx.lineTo(x2 + bottomLeft.x, point1.y + bottomLeft.y);
-		ctx.moveTo(point0.x - topLeft.x, point0.y + topLeft.y);
-		ctx.lineTo(point0.x - topLeft.x, point1.y - topLeft.y);
+		// When a side is extended to infinity, the border edge perpendicular to that
+		// extension is no longer a real edge of the shape, so it is omitted. e.g. extending
+		// left/right turns the shape into an infinite horizontal band with no vertical edges.
+		if (!extendUp) {
+			// Top horizontal edge
+			ctx.moveTo(x1 - bottomRight.x, point0.y - bottomRight.y);
+			ctx.lineTo(x2 + bottomLeft.x, point0.y - bottomLeft.y);
+		}
+		if (!extendRight) {
+			// Right vertical edge
+			ctx.moveTo(point1.x + topRight.x, y1 + topRight.y);
+			ctx.lineTo(point1.x + topRight.x, y2 - topRight.y);
+		}
+		if (!extendDown) {
+			// Bottom horizontal edge
+			ctx.moveTo(x1 - bottomRight.x, point1.y + bottomRight.y);
+			ctx.lineTo(x2 + bottomLeft.x, point1.y + bottomLeft.y);
+		}
+		if (!extendLeft) {
+			// Left vertical edge
+			ctx.moveTo(point0.x - topLeft.x, y1 + topLeft.y);
+			ctx.lineTo(point0.x - topLeft.x, y2 - topLeft.y);
+		}
 		ctx.stroke();
 	}
 }

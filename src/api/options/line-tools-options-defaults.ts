@@ -314,7 +314,7 @@ export const RectangleOptionDefaults: RectangleToolOptions = {
 	editable: true,
 	locked: false,
 	rectangle: {
-		extend: { left: false, right: false },
+		extend: { left: false, right: false, up: false, down: false },
 		background: { color: applyAlpha('#9c27b0', 0.2) },
 		border: { width: 1, style: LineStyle.Solid, color: '#9c27b0' },
 	},
@@ -329,12 +329,12 @@ export const LongShortPositionOptionDefaults: LongShortPositionToolOptions = {
 	entryStopLossRectangle: {
 		background: { color: applyAlpha('red', 0.2) },
 		border: { width: 1, style: LineStyle.Solid, color: 'red' },
-		extend: { left: false, right: false },
+		extend: { left: false, right: false, up: false, down: false },
 	},
 	entryTpRectangle: {
 		background: { color: applyAlpha('green', 0.2) },
 		border: { width: 1, style: LineStyle.Solid, color: 'green' },
-		extend: { left: false, right: false },
+		extend: { left: false, right: false, up: false, down: false },
 	},
 	entryStopLossText: clone(TextDefaults),
 	entryTpText: clone(TextDefaults),

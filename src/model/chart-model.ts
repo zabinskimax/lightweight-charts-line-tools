@@ -17,7 +17,7 @@ import { GridOptions } from './grid';
 import { InvalidateMask, InvalidationLevel } from './invalidate-mask';
 import { IPriceDataSource } from './iprice-data-source';
 import { ColorType, LayoutOptions, LayoutOptionsInternal } from './layout-options';
-import { LineTool, LineToolExport, LineToolPoint } from './line-tool';
+import { LineTool, LineToolButtonId, LineToolExport, LineToolPoint } from './line-tool';
 import { LineToolCreator } from './line-tool-creator';
 import { LineToolOptionsMap, LineToolType } from './line-tool-options';
 import { LineTools } from './line-tools';
@@ -348,6 +348,8 @@ export class ChartModel implements IDestroyable {
 	private _crosshairMoved: Delegate<TimePointIndex | null, Point | null> = new Delegate();
 	private _lineToolsDoubleClick: Delegate<LineToolExport<LineToolType>> = new Delegate();
 	private _lineToolsAfterEdit: Delegate<LineToolExport<LineToolType>, string> = new Delegate();
+	private _lineToolsDuringEdit: Delegate<LineToolExport<LineToolType>, string> = new Delegate();
+	private _lineToolsButtonClick: Delegate<LineToolExport<LineToolType>, LineToolButtonId> = new Delegate();
 
 	private _backgroundTopColor: string;
 	private _backgroundBottomColor: string;
@@ -519,6 +521,14 @@ export class ChartModel implements IDestroyable {
 
 	public lineToolsAfterEdit(): ISubscription<LineToolExport<LineToolType>, string> {
 		return this._lineToolsAfterEdit;
+	}
+
+	public lineToolsDuringEdit(): ISubscription<LineToolExport<LineToolType>, string> {
+		return this._lineToolsDuringEdit;
+	}
+
+	public lineToolsButtonClick(): ISubscription<LineToolExport<LineToolType>, LineToolButtonId> {
+		return this._lineToolsButtonClick;
 	}
 
 	public setPaneHeight(pane: Pane, height: number): void {
@@ -796,6 +806,14 @@ export class ChartModel implements IDestroyable {
 
 	public fireLineToolsAfterEdit(selectedLineTools: LineToolExport<LineToolType>, stage: string): void {
 		this._lineToolsAfterEdit.fire(selectedLineTools, stage);
+	}
+
+	public fireLineToolsDuringEdit(selectedLineTools: LineToolExport<LineToolType>, stage: string): void {
+		this._lineToolsDuringEdit.fire(selectedLineTools, stage);
+	}
+
+	public fireLineToolsButtonClick(selectedLineTools: LineToolExport<LineToolType>, button: LineToolButtonId): void {
+		this._lineToolsButtonClick.fire(selectedLineTools, button);
 	}
 
 	public destroy(): void {

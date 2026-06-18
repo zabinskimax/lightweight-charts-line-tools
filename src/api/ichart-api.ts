@@ -2,7 +2,7 @@ import { DeepPartial } from '../helpers/strict-type-checks';
 
 import { BarPrice, BarPrices } from '../model/bar';
 import { ChartOptions } from '../model/chart-model';
-import { LineToolExport, LineToolPoint } from '../model/line-tool';
+import { LineToolButtonId, LineToolExport, LineToolPoint } from '../model/line-tool';
 import { LineToolPartialOptionsMap, LineToolType } from '../model/line-tool-options';
 import { Point } from '../model/point';
 import { SeriesMarker } from '../model/series-markers';
@@ -77,9 +77,23 @@ export interface LineToolsAfterEditEventParams {
 	stage: string;
 }
 
+export interface LineToolsDuringEditEventParams {
+	selectedLineTool: LineToolExport<LineToolType>;
+	stage: string;
+}
+
+export interface LineToolsButtonClickEventParams {
+	selectedLineTool: LineToolExport<LineToolType>;
+	button: LineToolButtonId;
+}
+
 export type LineToolsDoubleClickEventHandler = (param: LineToolsDoubleClickEventParams) => void;
 
 export type LineToolsAfterEditEventHandler = (param: LineToolsAfterEditEventParams) => void;
+
+export type LineToolsDuringEditEventHandler = (param: LineToolsDuringEditEventParams) => void;
+
+export type LineToolsButtonClickEventHandler = (param: LineToolsButtonClickEventParams) => void;
 
 /**
  * The main interface of a single chart.
@@ -415,6 +429,41 @@ export interface IChartApi {
 	 * @param handler - previously subscribed handler
 	 */
 	unsubscribeLineToolsAfterEdit(handler: LineToolsAfterEditEventHandler): void;
+
+	/**
+	 * Adds a subscription that fires continuously while a line tool is being created or
+	 * dragged, before the edit is finished. Useful for live readouts (e.g. risk/reward
+	 * on the position tool) that should update on every mouse move rather than only on
+	 * mouse release. For end-of-edit notifications use {@link subscribeLineToolsAfterEdit}.
+	 *
+	 * @param handler - handler (function) to be called on every change during an edit
+	 */
+	subscribeLineToolsDuringEdit(handler: LineToolsDuringEditEventHandler): void;
+
+	/**
+	 * Removes a subscription previously added with {@link subscribeLineToolsDuringEdit}.
+	 *
+	 * @param handler - previously subscribed handler
+	 */
+	unsubscribeLineToolsDuringEdit(handler: LineToolsDuringEditEventHandler): void;
+
+	/**
+	 * Adds a subscription that fires when a trade-line pill button glyph
+	 * (`×` close, `+TP`, `+SL`) is clicked. The handler receives the clicked
+	 * `button` and the `selectedLineTool` (id, toolType, options incl. tradeId,
+	 * points). The click is swallowed by the chart (the line is not selected or
+	 * dragged), so the host app needs no canvas hit-testing of its own.
+	 *
+	 * @param handler - handler (function) to be called on a pill button click
+	 */
+	subscribeLineToolsButtonClick(handler: LineToolsButtonClickEventHandler): void;
+
+	/**
+	 * Removes a subscription previously added with {@link subscribeLineToolsButtonClick}.
+	 *
+	 * @param handler - previously subscribed handler
+	 */
+	unsubscribeLineToolsButtonClick(handler: LineToolsButtonClickEventHandler): void;
 
 	/**
 	 * Returns API to manipulate a price scale.

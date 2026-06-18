@@ -30,10 +30,12 @@ export class RectangleRenderer implements IPaneRenderer {
 		this._data = data;
 	}
 
+	// eslint-disable-next-line complexity
 	public hitTest(x: Coordinate, y: Coordinate, ctx: CanvasRenderingContext2D): HitTestResult<void> | null {
 		if (null === this._data || this._data.points.length < 2) { return null; }
 		const pixelRatio = ctx.canvas.ownerDocument && ctx.canvas.ownerDocument.defaultView && ctx.canvas.ownerDocument.defaultView.devicePixelRatio || 1;
 		const physicalWidth = ctx.canvas.width;
+		const physicalHeight = ctx.canvas.height;
 		const tolerance = interactionTolerance.line + 2;
 		const scaledPoint = new Point(x * pixelRatio, y * pixelRatio);
 		const [topLeft, bottomRight] = this._getPointsInPhysicalSpace(pixelRatio);
@@ -46,13 +48,18 @@ export class RectangleRenderer implements IPaneRenderer {
 		const bottomLineHitResult = this._extendAndHitTestLineSegment(scaledPoint, bottomLeft, bottomRight, physicalWidth, tolerance);
 		if (bottomLineHitResult !== null) { return bottomLineHitResult; }
 
-		const rightSegmentDistance = distanceToSegment(topRight, bottomRight, scaledPoint);
+		// Vertical side segments extend to the pane top/bottom edges when extend.up/down are set.
+		const { up, down } = this._data.extend || {};
+		const sideTop = up ? 0 : topLeft.y;
+		const sideBottom = down ? physicalHeight : bottomRight.y;
+
+		const rightSegmentDistance = distanceToSegment(new Point(topRight.x, sideTop), new Point(bottomRight.x, sideBottom), scaledPoint);
 		if (rightSegmentDistance.distance <= tolerance) { return this._hitTest; }
 
-		const leftSegmentDistance = distanceToSegment(topLeft, bottomLeft, scaledPoint);
+		const leftSegmentDistance = distanceToSegment(new Point(topLeft.x, sideTop), new Point(bottomLeft.x, sideBottom), scaledPoint);
 		if (leftSegmentDistance.distance <= tolerance) { return this._hitTest; }
 
-		const backgroundHitResult = this._hitTestBackground(scaledPoint, topLeft, bottomRight, physicalWidth);
+		const backgroundHitResult = this._hitTestBackground(scaledPoint, topLeft, bottomRight, physicalWidth, physicalHeight);
 		if (this._data.hitTestBackground && backgroundHitResult !== null) { return backgroundHitResult; }
 
 		return null;
@@ -69,10 +76,11 @@ export class RectangleRenderer implements IPaneRenderer {
 		const scaledBorderWidth = borderWidth ? Math.max(1, Math.floor(borderWidth * pixelRatio)) : 0;
 		const borderStyle = this._data.border?.style || LineStyle.Solid;
 		const [point0, point1] = this._getPointsInPhysicalSpace(pixelRatio);
-		const { left, right } = this._data.extend || {};
+		const { left, right, up, down } = this._data.extend || {};
 
 		const physicalWidth = ctx.canvas.width;
-		fillRectWithBorder(ctx, point0, point1, background, borderColor, scaledBorderWidth, borderStyle, 'center', !!left, !!right, physicalWidth);
+		const physicalHeight = ctx.canvas.height;
+		fillRectWithBorder(ctx, point0, point1, background, borderColor, scaledBorderWidth, borderStyle, 'center', !!left, !!right, physicalWidth, !!up, !!down, physicalHeight);
 		ctx.restore();
 	}
 
@@ -107,8 +115,12 @@ export class RectangleRenderer implements IPaneRenderer {
 		return null;
 	}
 
-	protected _hitTestBackground(point: Point, end0: Point, end1: Point, physicalWidth: number): HitTestResult<void> | null {
+	protected _hitTestBackground(point: Point, end0: Point, end1: Point, physicalWidth: number, physicalHeight: number): HitTestResult<void> | null {
 		const line = this._extendAndClipLineSegment(end0, end1, physicalWidth);
-		return line !== null && pointInBox(point, new Box(line[0], line[1])) ? this._backHitTest : null;
+		if (line === null) { return null; }
+		const { up, down } = this._data?.extend || {};
+		const y1 = up ? 0 : line[0].y;
+		const y2 = down ? physicalHeight : line[1].y;
+		return pointInBox(point, new Box(new Point(line[0].x, y1), new Point(line[1].x, y2))) ? this._backHitTest : null;
 	}
 }

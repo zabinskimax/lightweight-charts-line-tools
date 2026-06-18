@@ -80,6 +80,7 @@ const displayParallelChannel = false;
 const displayLongShortPosition = false;
 const displayTradeLines = true;
 const displayMarkers = true;
+const displayExtendToInfinity = true; // NEW: demo of up/down (vertical) extend on box tools
 
 // HorizontalLine
 if (displayHorizontalLine) {
@@ -252,6 +253,41 @@ if (displayRectangle) {
 		"visible": true,
 		"editable": true
 	});
+}
+
+// Extend-to-infinity demo (NEW: vertical up/down extend on box tools).
+// `extend` is now 4-way: { left, right, up, down }. left/right already existed (horizontal
+// price band); up/down are the new directions (extend a box to the pane top/bottom edge).
+if (displayExtendToInfinity) {
+	const day = (d) => Date.parse(d) / 1000;
+	const demoRect = (p1, p2, label, color, extend) => chart.addLineTool('Rectangle', [p1, p2], {
+		text: { value: label, font: { color: color, size: 14, bold: true } },
+		rectangle: {
+			background: { color: color.replace('1)', '0.15)') },
+			border: { color: color, width: 1 },
+			extend: extend,
+		},
+	});
+
+	// 1) up + down  -> full-height vertical band (e.g. a session / time-window highlight)
+	demoRect(
+		{ price: 86, timestamp: day('2019-04-11') }, { price: 80, timestamp: day('2019-04-12') },
+		'up + down (vertical band)', 'rgba(41,98,255,1)', { left: false, right: false, up: true, down: true });
+
+	// 2) down only -> box top stays put, bottom runs to the pane bottom edge
+	demoRect(
+		{ price: 90, timestamp: day('2019-04-15') }, { price: 86, timestamp: day('2019-04-16') },
+		'down', 'rgba(245,124,0,1)', { left: false, right: false, up: false, down: true });
+
+	// 3) up only -> box bottom stays put, top runs to the pane top edge
+	demoRect(
+		{ price: 80, timestamp: day('2019-04-18') }, { price: 76, timestamp: day('2019-04-19') },
+		'up', 'rgba(67,160,71,1)', { left: false, right: false, up: true, down: false });
+
+	// 4) left + right -> horizontal price band (existing behaviour, shown for contrast)
+	demoRect(
+		{ price: 94, timestamp: day('2019-04-13') }, { price: 92, timestamp: day('2019-04-14') },
+		'left + right (price band)', 'rgba(142,36,170,1)', { left: true, right: true, up: false, down: false });
 }
 
 // Circle
@@ -1685,12 +1721,22 @@ if (displayTradeLines) {
 		pillOffsetX: -200,
 	});
 
-	const tradeTP = chart.addLineTool('TradeTakeProfitLine', [{ price: 95, timestamp: tradeTS }], {
+	// MULTIPLE TAKE-PROFIT LEVELS:
+	// Each target is just its own TradeTakeProfitLine sharing the same tradeId. Add as many
+	// as you like — the library has no one-TP limit. Your app owns the group (tradeId) and
+	// decides partial-exit sizing; here we show three staged exits (50% / 30% / 20%).
+	const takeProfitLevels = [
+		{ price: 89, labelText: 'TP1', valueText: '+4.00 (+4.7%) · 50%', color: '#26a69a' },
+		{ price: 92, labelText: 'TP2', valueText: '+7.00 (+8.2%) · 30%', color: '#2e9e8f' },
+		{ price: 95, labelText: 'TP3', valueText: '+10.00 (+11.8%) · 20%', color: '#1b7a6e' },
+	];
+	const tradeTPs = takeProfitLevels.map(level => chart.addLineTool('TradeTakeProfitLine', [{ price: level.price, timestamp: tradeTS }], {
 		tradeId: tradeId,
-		labelText: 'TP',
-		valueText: '+10.00 (+11.8%)',
+		labelText: level.labelText,
+		valueText: level.valueText,
 		pillOffsetX: -200,
-	});
+		line: { color: level.color },
+	}));
 
 	const tradeSL = chart.addLineTool('TradeStopLossLine', [{ price: 78, timestamp: tradeTS }], {
 		tradeId: tradeId,
@@ -1718,10 +1764,11 @@ if (displayTradeLines) {
 	}, 400);
 
 	// Expose for console tinkering. Try:
-	//   window.tradeEntry.applyOptions({ isActive: false })   // dim both line + pill
-	//   window.tradeTP.applyOptions({ line: { color: '#FFC107' } })
+	//   window.tradeEntry.applyOptions({ isActive: false })       // dim both line + pill
+	//   window.tradeTPs[0].applyOptions({ line: { color: '#FFC107' } })
+	//   chart.addLineTool('TradeTakeProfitLine', [{ price: 96, timestamp: Date.parse('2019-05-06')/1000 }], { tradeId: 'demo-trade-1', labelText: 'TP4', valueText: '+11 · 0%', pillOffsetX: -200 })  // add a 4th TP live
 	window.tradeEntry = tradeEntry;
-	window.tradeTP = tradeTP;
+	window.tradeTPs = tradeTPs;
 	window.tradeSL = tradeSL;
 	window.pendingOrder = pendingOrder;
 }

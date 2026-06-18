@@ -3,9 +3,12 @@ import { applyAlpha } from '../helpers/color';
 import { makeFont } from '../helpers/make-font';
 
 import { HitTestResult, HitTestType } from '../model/hit-test-result';
+import { LineToolButtonHitData, LineToolButtonId } from '../model/line-tool';
 import { BoxHorizontalAlignment } from '../model/line-tool-options';
 
 import { IPaneRenderer } from './ipane-renderer';
+
+interface PillRect { x: number; y: number; w: number; h: number }
 
 export interface TradeLinePanePillRendererData {
 	visible: boolean;
@@ -42,11 +45,18 @@ const SPAWN_TAB_BORDER = 1;
 
 export class TradeLinePanePillRenderer implements IPaneRenderer {
 	private _data: TradeLinePanePillRendererData | null = null;
-	private _hitRect: { x: number; y: number; w: number; h: number } | null = null;
+	private _hitRect: PillRect | null = null;
+	// Sub-region rects (logical pane px) for the clickable glyphs, captured at draw time.
+	private _closeRect: PillRect | null = null;
+	private _spawnTPRect: PillRect | null = null;
+	private _spawnSLRect: PillRect | null = null;
 
 	public setData(data: TradeLinePanePillRendererData): void {
 		this._data = data;
 		this._hitRect = null;
+		this._closeRect = null;
+		this._spawnTPRect = null;
+		this._spawnSLRect = null;
 	}
 
 	public draw(ctx: CanvasRenderingContext2D, pixelRatio: number): void {
@@ -107,15 +117,18 @@ export class TradeLinePanePillRenderer implements IPaneRenderer {
 				ctx.fillStyle = data.color;
 				ctx.textAlign = 'center';
 				ctx.fillText(CLOSE_GLYPH, separatorX + separatorW + CLOSE_LEFT_PADDING + closeGlyphWidth / 2, data.y);
+
+				// clickable close area: from the divider to the pill's right inner edge
+				this._closeRect = { x: separatorX, y: top, w: right - separatorX, h: pillHeight };
 			}
 
-			// outline-style spawn tabs above/below (purely visual)
+			// outline-style spawn tabs above/below
 			ctx.font = spawnFont;
 			if (data.showSpawnTP) {
-				this._drawSpawnTab(ctx, '+TP', centerX, top - SPAWN_TAB_GAP, 'above', data, spawnFontSize);
+				this._spawnTPRect = this._drawSpawnTab(ctx, '+TP', centerX, top - SPAWN_TAB_GAP, 'above', data, spawnFontSize);
 			}
 			if (data.showSpawnSL) {
-				this._drawSpawnTab(ctx, '+SL', centerX, bottom + SPAWN_TAB_GAP, 'below', data, spawnFontSize);
+				this._spawnSLRect = this._drawSpawnTab(ctx, '+SL', centerX, bottom + SPAWN_TAB_GAP, 'below', data, spawnFontSize);
 			}
 
 			this._hitRect = { x: left, y: top, w: pillWidth, h: pillHeight };
@@ -123,11 +136,26 @@ export class TradeLinePanePillRenderer implements IPaneRenderer {
 		ctx.restore();
 	}
 
-	public hitTest(x: number, y: number): HitTestResult<void> | null {
+	public hitTest(x: number, y: number): HitTestResult<LineToolButtonHitData> | null {
+		// Glyph sub-regions take priority over the pill body so a button click is
+		// distinguishable (HitTestType.Custom + button payload) from a move (MovePoint).
+		const closeHit = this._hitButton(x, y, this._closeRect, 'close');
+		if (closeHit !== null) { return closeHit; }
+		const tpHit = this._hitButton(x, y, this._spawnTPRect, 'addTP');
+		if (tpHit !== null) { return tpHit; }
+		const slHit = this._hitButton(x, y, this._spawnSLRect, 'addSL');
+		if (slHit !== null) { return slHit; }
+
 		const rect = this._hitRect;
 		if (rect === null) { return null; }
 		if (x < rect.x || x > rect.x + rect.w || y < rect.y || y > rect.y + rect.h) { return null; }
-		return new HitTestResult(HitTestType.MovePoint);
+		return new HitTestResult<LineToolButtonHitData>(HitTestType.MovePoint);
+	}
+
+	private _hitButton(x: number, y: number, rect: PillRect | null, button: LineToolButtonId): HitTestResult<LineToolButtonHitData> | null {
+		if (rect === null) { return null; }
+		if (x < rect.x || x > rect.x + rect.w || y < rect.y || y > rect.y + rect.h) { return null; }
+		return new HitTestResult(HitTestType.Custom, { button });
 	}
 
 	// eslint-disable-next-line max-params
@@ -139,7 +167,7 @@ export class TradeLinePanePillRenderer implements IPaneRenderer {
 		placement: 'above' | 'below',
 		data: TradeLinePanePillRendererData,
 		fontSize: number
-	): void {
+	): PillRect {
 		const textWidth = Math.ceil(ctx.measureText(label).width);
 		const tabWidth = textWidth + SPAWN_TAB_PADDING_X * 2;
 		const tabHeight = fontSize + SPAWN_TAB_PADDING_Y * 2;
@@ -174,6 +202,8 @@ export class TradeLinePanePillRenderer implements IPaneRenderer {
 		ctx.textAlign = 'center';
 		ctx.textBaseline = 'middle';
 		ctx.fillText(label, centerX, (tabTop + tabBottom) / 2);
+
+		return { x: tabLeft, y: tabTop, w: tabWidth, h: tabHeight };
 	}
 
 	private _resolveCenterX(data: TradeLinePanePillRendererData, pillWidth: number): number {

@@ -9,7 +9,7 @@ import { ChartModel } from '../../model/chart-model';
 import { Coordinate } from '../../model/coordinate';
 import { HitTestResult, HitTestType } from '../../model/hit-test-result';
 import { FirstValue } from '../../model/iprice-data-source';
-import { LineTool, LineToolHitTestData, LineToolPoint } from '../../model/line-tool';
+import { LineTool, LineToolButtonId, LineToolHitTestData, LineToolPoint } from '../../model/line-tool';
 import { LineToolLongShortPosition } from '../../model/line-tool-long-short-position';
 import { LineToolType } from '../../model/line-tool-options';
 import { PaneCursorType } from '../../model/pane';
@@ -154,6 +154,22 @@ export abstract class LineToolPaneView implements IUpdatablePaneView, IInputEven
 		}
 	}
 
+	// Fires continuously while a line tool is being created or dragged, before the edit is
+	// finished. Lets the host app drive live readouts that should update on every mouse move
+	// rather than only on release (getSelectedAndFireAfterEdit).
+	public getSelectedAndFireDuringEdit(stage: string): void {
+		// Use the source directly: during a preview/creation drag the tool may not yet be
+		// resolvable via paneWidget.state().getLineTool(), but this._source is always current.
+		const selectedLineTool = clone(this._source.exportLineToolToLineToolExport());
+		this._model.fireLineToolsDuringEdit(selectedLineTool, stage);
+	}
+
+	// Fires when a pill button glyph (× / +TP / +SL) on a trade line is clicked.
+	public getSelectedAndFireButtonClick(button: LineToolButtonId): void {
+		const selectedLineTool = clone(this._source.exportLineToolToLineToolExport());
+		this._model.fireLineToolsButtonClick(selectedLineTool, button);
+	}
+
 	public get isFlipped(): boolean {
 		return this._isFlipped;
 	}
@@ -249,6 +265,10 @@ export abstract class LineToolPaneView implements IUpdatablePaneView, IInputEven
 				this._lastMovePoint = appliedPoint;
 				this._updateSourcePoints();
 			}
+
+			// Notify listeners of the in-progress edit (anchor drag or whole-tool move) so
+			// live readouts can update on every move, not just on mouse release.
+			this.getSelectedAndFireDuringEdit('lineToolMoving');
 		}
 		return false;
 	}
@@ -573,6 +593,12 @@ export abstract class LineToolPaneView implements IUpdatablePaneView, IInputEven
 			if (this._source.hasMagnet()) { this._model.magnet().enable(); }
 			this._tryApplyLineToolShift(appliedPoint, event, false, originPoint);
 			this._source.setLastPoint(this._source.screenPointToPoint(appliedPoint) as LineToolPoint);
+		}
+
+		// Emit live updates while drawing too, but only once at least the first point exists
+		// so the export is meaningful.
+		if (this._source.points().length > 0) {
+			this.getSelectedAndFireDuringEdit('lineToolCreating');
 		}
 		return false;
 	}
