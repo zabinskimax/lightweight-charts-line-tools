@@ -389,6 +389,15 @@ export class PaneWidget implements IDestroyable, MouseEventHandlers {
 
 		this._mouseTouchDownEvent();
 
+		// Mirror mouseDownEvent: move the crosshair to the touch point *before*
+		// propagating the MouseDown. Line-tool creation/selection reads the
+		// applied (crosshair) position, not the raw event — without this a touch
+		// tap places points at the stale crosshair location, so drawing appears
+		// not to work. Skip while tracking mode owns the crosshair.
+		if (this._startTrackPoint === null) {
+			this._setCrosshairPosition(event.localX, event.localY);
+		}
+
 		this._propagateEvent(InputEventType.MouseDown, event);
 
 		if (this._startTrackPoint !== null) {

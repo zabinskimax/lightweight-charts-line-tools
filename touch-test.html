@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+	<title>Touch test — line tools</title>
+	<script type="text/javascript" src="./dist/lightweight-charts.standalone.development.js"></script>
+	<style>
+		html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; touch-action: none;
+			font-family: -apple-system, system-ui, Arial, sans-serif; }
+		#toolbar { position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+			display: flex; flex-wrap: wrap; gap: 4px; padding: 6px;
+			background: #1b2330; border-bottom: 1px solid #2b3647; }
+		#toolbar button { font-size: 13px; padding: 9px 11px; border: 1px solid #3a4660;
+			background: #222d3d; color: #cdd6e3; border-radius: 6px; cursor: pointer;
+			min-height: 38px; -webkit-tap-highlight-color: transparent; }
+		#toolbar button:active { background: #2d3a4f; }
+		#toolbar button.active { background: #2962ff; border-color: #2962ff; color: #fff; }
+		#toolbar button.toggle.on { background: #00a96e; border-color: #00a96e; color: #fff; }
+		#toolbar .sep { width: 1px; background: #3a4660; margin: 0 4px; }
+		#chart { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
+		#log { position: fixed; bottom: 0; left: 0; right: 0; z-index: 10; max-height: 22%;
+			overflow: auto; background: rgba(12,16,22,0.86); color: #9fb3c8; font: 11px/1.4 monospace;
+			padding: 6px 8px; border-top: 1px solid #2b3647; white-space: pre-wrap; }
+	</style>
+</head>
+
+<body>
+	<div id="toolbar"></div>
+	<div id="chart"></div>
+	<div id="log"></div>
+
+	<script type="text/javascript">
+		// ---- chart -------------------------------------------------------
+		const chartEl = document.getElementById('chart');
+		const chart = LightweightCharts.createChart(chartEl, {
+			layout: { background: { color: '#0e1420' }, textColor: '#cdd6e3' },
+			grid: { vertLines: { color: '#1b2330' }, horzLines: { color: '#1b2330' } },
+			crosshair: { mode: 0 },
+			timeScale: { timeVisible: true, secondsVisible: false },
+		});
+
+		// sample candle data (deterministic)
+		const series = chart.addCandlestickSeries();
+		(function () {
+			const data = [];
+			let t = Date.parse('2023-01-01') / 1000;
+			let p = 100;
+			for (let i = 0; i < 180; i++) {
+				const drift = Math.sin(i / 9) * 4 + (((i * 9301 + 49297) % 233280) / 233280 - 0.5) * 6;
+				const open = p;
+				const close = p + drift;
+				const high = Math.max(open, close) + 2;
+				const low = Math.min(open, close) - 2;
+				data.push({ time: t, open, high, low, close });
+				p = close;
+				t += 24 * 3600;
+			}
+			series.setData(data);
+		})();
+		chart.timeScale().fitContent();
+
+		// ---- toolbar -----------------------------------------------------
+		const TOOLS = [
+			'Rectangle', 'TrendLine', 'HorizontalLine', 'VerticalLine', 'CrossLine',
+			'Circle', 'PriceRange', 'Triangle', 'Callout', 'Text',
+			'Brush', 'Path', 'FibRetracement', 'ParallelChannel', 'LongShortPosition',
+			'TradeEntryLine', 'TradeTakeProfitLine', 'TradeStopLossLine',
+			'FixedRangeVolumeProfile', 'VisibleRangeVolumeProfile',
+		];
+
+		// Volume-profile tools read their histogram from options, not the series.
+		// Supply a synthetic profile (POC near 100) so the box actually renders
+		// and its range anchors are there to drag-test on touch.
+		const vpBars = [];
+		for (let pr = 78; pr <= 122; pr += 2) {
+			vpBars.push({ price: pr, volume: Math.max(5, 120 - Math.abs(pr - 100) * 4) });
+		}
+		const TOOL_OPTIONS = {
+			FixedRangeVolumeProfile: { volumeProfile: { bars: vpBars } },
+			VisibleRangeVolumeProfile: { volumeProfile: { bars: vpBars } },
+		};
+		const toolbar = document.getElementById('toolbar');
+		let activeBtn = null;
+
+		function setActive(btn) {
+			if (activeBtn) { activeBtn.classList.remove('active'); }
+			activeBtn = btn;
+			if (btn) { btn.classList.add('active'); }
+		}
+
+		TOOLS.forEach((name) => {
+			const btn = document.createElement('button');
+			btn.textContent = name;
+			btn.addEventListener('click', () => {
+				try {
+					chart.setActiveLineTool(name, TOOL_OPTIONS[name] || {});
+					setActive(btn);
+					logMsg('armed: ' + name + '  (now tap/drag on the chart to draw it)');
+				} catch (e) {
+					logMsg('ERROR arming ' + name + ': ' + e.message);
+				}
+			});
+			toolbar.appendChild(btn);
+		});
+
+		const sep = document.createElement('div'); sep.className = 'sep'; toolbar.appendChild(sep);
+
+		// lock toggle
+		const lockBtn = document.createElement('button');
+		lockBtn.textContent = '🔒 Lock';
+		lockBtn.className = 'toggle';
+		lockBtn.addEventListener('click', () => {
+			const next = !chart.isDrawingToolLocked();
+			chart.setDrawingToolLock(next);
+			lockBtn.classList.toggle('on', next);
+			logMsg('drawing-tool lock: ' + (next ? 'ON (stays armed)' : 'off'));
+		});
+		toolbar.appendChild(lockBtn);
+
+		// delete selected
+		const delBtn = document.createElement('button');
+		delBtn.textContent = 'Delete sel';
+		delBtn.addEventListener('click', () => { chart.removeSelectedLineTools(); logMsg('removed selected'); });
+		toolbar.appendChild(delBtn);
+
+		// clear all
+		const clearBtn = document.createElement('button');
+		clearBtn.textContent = 'Clear all';
+		clearBtn.addEventListener('click', () => {
+			chart.removeAllLineTools();
+			setActive(null);
+			logMsg('cleared all tools');
+		});
+		toolbar.appendChild(clearBtn);
+
+		// ---- event log ---------------------------------------------------
+		const logEl = document.getElementById('log');
+		const lines = [];
+		function logMsg(s) {
+			lines.push(s);
+			if (lines.length > 60) { lines.shift(); }
+			logEl.textContent = lines.join('\n');
+			logEl.scrollTop = logEl.scrollHeight;
+		}
+		function brief(params) {
+			try {
+				if (params == null) { return ''; }
+				if (typeof params === 'string') { return params.slice(0, 140); }
+				const e = params.eventType || params.type || '';
+				const id = params.id || params.lineToolId || (params.lineTool && params.lineTool.id) || '';
+				return (e ? e + ' ' : '') + (id ? '#' + id : '') || JSON.stringify(params).slice(0, 140);
+			} catch (_) { return ''; }
+		}
+
+		chart.subscribeLineToolsAfterEdit && chart.subscribeLineToolsAfterEdit((p) => logMsg('afterEdit  ' + brief(p)));
+		chart.subscribeLineToolsDoubleClick && chart.subscribeLineToolsDoubleClick((p) => logMsg('dblClick   ' + brief(p)));
+		chart.subscribeLineToolsButtonClick && chart.subscribeLineToolsButtonClick((p) => logMsg('btnClick   ' + brief(p)));
+
+		// throttle the high-frequency duringEdit stream
+		let lastDuring = 0;
+		chart.subscribeLineToolsDuringEdit && chart.subscribeLineToolsDuringEdit((p) => {
+			const n = performance.now();
+			if (n - lastDuring > 250) { lastDuring = n; logMsg('duringEdit ' + brief(p)); }
+		});
+
+		logMsg('ready. pick a tool above, then draw on the chart. (DevTools device mode = touch events)');
+	</script>
+</body>
+
+</html>

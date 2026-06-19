@@ -36,6 +36,11 @@ export abstract class LineToolPaneView implements IUpdatablePaneView, IInputEven
 	protected _invalidated: boolean = true;
 	protected _lastMovePoint: Point | null = null;
 	protected _editedPointIndex: number | null = null;
+	// Whether the press (mousedown/touchstart) landed on this tool. Captured at
+	// press time — when the pointer is still exactly on the anchor — so a drag
+	// can start editing even on touch, where there's no hover and the first move
+	// event already fires away from a small anchor.
+	protected _mouseDownHit: boolean = false;
 	protected _lineAnchorRenderers: LineAnchorRenderer[] = [];
 	protected _renderer: IPaneRenderer | null = null;
 	protected _onMouseDownInitialPoints: AnchorPoint[] = [];
@@ -182,6 +187,8 @@ export abstract class LineToolPaneView implements IUpdatablePaneView, IInputEven
 	}
 
 	protected _onMouseUp(paneWidget: PaneWidget): boolean {
+		// The grab ends on release; clear it so a later press starts clean.
+		this._mouseDownHit = false;
 		if (this._source.toolType() === 'LongShortPosition') {
 			// For LongShortPosition, reset the flipped state on mouse up,
 			// as we don't want to carry the flipped state between drags
@@ -234,43 +241,58 @@ export abstract class LineToolPaneView implements IUpdatablePaneView, IInputEven
 		if (!this._source.selected() || this._source.options().locked) { return false; }
 
 		if (!this._source.editing()) {
-			const hitResult = this._hitTest(paneWidget, ctx, originPoint);
-			const hitData = hitResult?.data();
-			this._source.setEditing(this._source.hovered() || !!hitResult);
-
-			this._lastMovePoint = appliedPoint;
-			this._editedPointIndex = hitData?.pointIndex ?? this._editedPointIndex;
-			if (hitData) { this._model.magnet().enable(); }
+			this._beginEditFromPress(paneWidget, ctx, originPoint, appliedPoint);
 		} else {
-			paneWidget.setCursor(this._editedPointIndex !== null ? PaneCursorType.Default : PaneCursorType.Grabbing);
-
-			if (this._editedPointIndex !== null) {
-				this._tryApplyLineToolShift(appliedPoint, event, true, originPoint);
-
-				// LongShortPosition needs special handeling because it can flip to long to short and then enter the 3x TP constraint
-				if (this._source.toolType() === 'LongShortPosition') {
-					this._onPressedMouseMoveLongShortPosition(appliedPoint);
-				} else {
-					// For other tools, update the point normally
-					this._source.setPoint(this._editedPointIndex, this._source.screenPointToPoint(appliedPoint) as LineToolPoint);
-				}
-			} else if (this._lastMovePoint) {
-				// ... (Logic for moving the entire tool) ...
-				const diff = appliedPoint.subtract(this._lastMovePoint);
-				this._points.forEach((point: Point) => {
-					point.x = (point.x + diff.x) as Coordinate;
-					point.y = (point.y + diff.y) as Coordinate;
-				});
-
-				this._lastMovePoint = appliedPoint;
-				this._updateSourcePoints();
-			}
-
-			// Notify listeners of the in-progress edit (anchor drag or whole-tool move) so
-			// live readouts can update on every move, not just on mouse release.
-			this.getSelectedAndFireDuringEdit('lineToolMoving');
+			this._applyActiveEdit(paneWidget, originPoint, appliedPoint, event);
 		}
 		return false;
+	}
+
+	// First pressed-move after the tool was grabbed: begin editing if the pointer
+	// is on the tool now (mouse hover / live hit) or the press landed on it (touch
+	// has no hover, and this first move event already fired away from a small
+	// anchor). Seeds which anchor (if any) the subsequent moves will drag.
+	protected _beginEditFromPress(paneWidget: PaneWidget, ctx: CanvasRenderingContext2D, originPoint: Point, appliedPoint: Point): void {
+		const hitResult = this._hitTest(paneWidget, ctx, originPoint);
+		const hitData = hitResult?.data();
+		this._source.setEditing(this._source.hovered() || !!hitResult || this._mouseDownHit);
+
+		this._lastMovePoint = appliedPoint;
+		// Prefer the live anchor hit; otherwise keep the one grabbed at press.
+		this._editedPointIndex = hitData?.pointIndex ?? this._editedPointIndex;
+		if (hitData || this._editedPointIndex !== null) { this._model.magnet().enable(); }
+	}
+
+	// Apply an in-progress edit on each subsequent move: drag the grabbed anchor,
+	// or move the whole tool when no anchor was grabbed.
+	protected _applyActiveEdit(paneWidget: PaneWidget, originPoint: Point, appliedPoint: Point, event: TouchMouseEvent): void {
+		paneWidget.setCursor(this._editedPointIndex !== null ? PaneCursorType.Default : PaneCursorType.Grabbing);
+
+		if (this._editedPointIndex !== null) {
+			this._tryApplyLineToolShift(appliedPoint, event, true, originPoint);
+
+			// LongShortPosition needs special handeling because it can flip to long to short and then enter the 3x TP constraint
+			if (this._source.toolType() === 'LongShortPosition') {
+				this._onPressedMouseMoveLongShortPosition(appliedPoint);
+			} else {
+				// For other tools, update the point normally
+				this._source.setPoint(this._editedPointIndex, this._source.screenPointToPoint(appliedPoint) as LineToolPoint);
+			}
+		} else if (this._lastMovePoint) {
+			// ... (Logic for moving the entire tool) ...
+			const diff = appliedPoint.subtract(this._lastMovePoint);
+			this._points.forEach((point: Point) => {
+				point.x = (point.x + diff.x) as Coordinate;
+				point.y = (point.y + diff.y) as Coordinate;
+			});
+
+			this._lastMovePoint = appliedPoint;
+			this._updateSourcePoints();
+		}
+
+		// Notify listeners of the in-progress edit (anchor drag or whole-tool move) so
+		// live readouts can update on every move, not just on mouse release.
+		this.getSelectedAndFireDuringEdit('lineToolMoving');
 	}
 
 	protected _onMouseMove(paneWidget: PaneWidget, ctx: CanvasRenderingContext2D, originPoint: Point, appliedPoint: Point, event: TouchMouseEvent): boolean {
@@ -332,8 +354,17 @@ export abstract class LineToolPaneView implements IUpdatablePaneView, IInputEven
 			}
 
 			const hitResult = this._hitTest(paneWidget, ctx, originPoint);
+			const hitData = hitResult?.data();
+			// Remember the grab while the pointer is still on the anchor: which
+			// anchor (pointIndex) and that we hit the tool at all. The drag handler
+			// re-hit-tests at the moved position, which misses small anchors on
+			// touch — so editing/anchor selection is seeded from here instead.
+			this._mouseDownHit = hitResult !== null;
+			this._editedPointIndex = hitData?.pointIndex ?? null;
 			return this._source.setSelected(hitResult !== null);
 		}
+		this._mouseDownHit = false;
+		this._editedPointIndex = null;
 		return false;
 	}
 
