@@ -131,6 +131,9 @@ export class Crosshair extends DataSource {
 	private _price: number = NaN;
 	private _index: TimePointIndex = 0 as TimePointIndex;
 	private _visible: boolean = true;
+	// When true the crosshair has a valid position (line tools read it) but its visual views
+	// (guide lines, axis labels, marks) are suppressed — used to hide the crosshair on touch.
+	private _renderHidden: boolean = false;
 	private readonly _model: ChartModel;
 	private _priceAxisViews: Map<PriceScale, CrosshairPriceAxisView> = new Map();
 	private readonly _timeAxisView: CrosshairTimeAxisView;
@@ -214,12 +217,13 @@ export class Crosshair extends DataSource {
 		return this._originY;
 	}
 
-	public setPosition(index: TimePointIndex, price: number, pane: Pane): void {
+	public setPosition(index: TimePointIndex, price: number, pane: Pane, renderHidden: boolean = false): void {
 		if (!this._subscribed) {
 			this._subscribed = true;
 		}
 
 		this._visible = true;
+		this._renderHidden = renderHidden;
 
 		this._tryToUpdateViews(index, price, pane);
 	}
@@ -240,8 +244,16 @@ export class Crosshair extends DataSource {
 		return this._visible;
 	}
 
+	// Whether the crosshair should be drawn. Distinct from `visible()` (which tracks whether the
+	// crosshair has a position at all): the position can be active for line-tool editing while the
+	// crosshair is visually suppressed on touch.
+	public renderVisible(): boolean {
+		return this._visible && !this._renderHidden;
+	}
+
 	public clearPosition(): void {
 		this._visible = false;
+		this._renderHidden = false;
 		this._setIndexToLastSeriesBarIndex();
 
 		this._price = NaN;

@@ -7,6 +7,7 @@ import { gridOptionsDefaults } from './grid-options-defaults';
 import { layoutOptionsDefaults } from './layout-options-defaults';
 import { priceScaleOptionsDefaults } from './price-scale-options-defaults';
 import { timeScaleOptionsDefaults } from './time-scale-options-defaults';
+import { touchOptionsDefaults } from './touch-options-defaults';
 import { watermarkOptionsDefaults } from './watermark-options-defaults';
 
 export const chartOptionsDefaults: ChartOptionsInternal = {
@@ -54,4 +55,5 @@ export const chartOptionsDefaults: ChartOptionsInternal = {
 	trackingMode: {
 		exitMode: TrackingModeExitMode.OnNextTap,
 	},
+	touch: touchOptionsDefaults,
 };

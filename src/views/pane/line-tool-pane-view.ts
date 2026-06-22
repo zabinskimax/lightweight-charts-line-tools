@@ -118,6 +118,7 @@ export abstract class LineToolPaneView implements IUpdatablePaneView, IInputEven
 		this._lineAnchorRenderers.forEach((renderer: LineAnchorRenderer) => {
 			renderer.updateData({
 				points: this._points,
+				radius: this._anchorRadius(),
 				selected: this._source.selected(),
 				visible: this.areAnchorsVisible(),
 				currentPoint: this.currentPoint(),
@@ -132,7 +133,7 @@ export abstract class LineToolPaneView implements IUpdatablePaneView, IInputEven
 		const renderer = this._getLineAnchorRenderer(index);
 		renderer.setData({
 			...data,
-			radius: 6,
+			radius: this._anchorRadius(),
 			strokeWidth: 1,
 			color: '#1E53E5',
 			hoveredStrokeWidth: 4,
@@ -379,6 +380,14 @@ export abstract class LineToolPaneView implements IUpdatablePaneView, IInputEven
 	protected _hitTest(paneWidget: PaneWidget, ctx: CanvasRenderingContext2D, point: Point): HitTestResult<LineToolHitTestData> | null {
 		if (!this._renderer?.hitTest) { return null; }
 		return this._renderer.hitTest(point.x, point.y, ctx) as HitTestResult<LineToolHitTestData> | null;
+	}
+
+	// Drag-handle radius: enlarged for touch (easier to grab with a finger), normal for mouse.
+	// The hit area grows with the radius (see LineAnchorRenderer.hitTest), so no separate
+	// tolerance change is needed.
+	protected _anchorRadius(): number {
+		const touch = this._model.options().touch;
+		return touch.enlargeHandles && this._model.touchInput() ? touch.handleRadius : 6;
 	}
 
 	protected _lineAnchorColors(points: AnchorPoint[]): string[] {

@@ -32,7 +32,7 @@ export class CrosshairPriceAxisView extends PriceAxisView {
 		}
 
 		const firstValue = this._priceScale.firstValue();
-		if (!this._source.visible() || this._priceScale.isEmpty() || (firstValue === null)) {
+		if (!this._source.renderVisible() || this._priceScale.isEmpty() || (firstValue === null)) {
 			return;
 		}
 

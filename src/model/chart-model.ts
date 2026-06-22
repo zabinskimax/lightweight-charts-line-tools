@@ -213,6 +213,40 @@ export interface TrackingModeOptions {
 }
 
 /**
+ * Represents options tuning chart behavior specifically for touch (tablet/phone) input.
+ *
+ * These only affect interactions that originate from touch events; mouse input is unchanged,
+ * so the same chart adapts on hybrid laptop/tablet devices.
+ */
+export interface TouchInteractionOptions {
+	/**
+	 * Hide the crosshair during normal touch interaction (taps and drags), so its grey guide
+	 * lines and axis labels don't clutter the chart while dragging line tools. The crosshair
+	 * still appears on long-press (tracking mode), where it can be moved to inspect values and
+	 * is dismissed on the next tap.
+	 *
+	 * @defaultValue `true`
+	 */
+	disableCrosshair: boolean;
+
+	/**
+	 * Draw larger line-tool drag handles (anchor points) while the active input is touch, making
+	 * them easier to grab with a finger. The hit area grows together with the handle.
+	 *
+	 * @defaultValue `true`
+	 */
+	enlargeHandles: boolean;
+
+	/**
+	 * Radius of a line-tool drag handle, in logical pixels, used when {@link enlargeHandles} is
+	 * enabled and the active input is touch. The normal (mouse) handle radius is `6`.
+	 *
+	 * @defaultValue `11`
+	 */
+	handleRadius: number;
+}
+
+/**
  * Structure describing options of the chart. Series options are to be set separately
  */
 export interface ChartOptions {
@@ -307,6 +341,11 @@ export interface ChartOptions {
 	 */
 	trackingMode: TrackingModeOptions;
 
+	// eslint-disable-next-line tsdoc/syntax
+	/** @inheritDoc TouchInteractionOptions
+	 */
+	touch: TouchInteractionOptions;
+
 }
 
 export type ChartOptionsInternal =
@@ -354,6 +393,10 @@ export class ChartModel implements IDestroyable {
 	private _backgroundTopColor: string;
 	private _backgroundBottomColor: string;
 	private _gradientColorsCache: GradientColorsCache | null = null;
+	// Whether the most recent pointer interaction came from touch (vs mouse). Driven by the
+	// pane widget from per-event `isTouch`; read for touch-specific rendering (e.g. larger
+	// line-tool drag handles). Per-event, not device capability, so hybrid devices adapt.
+	private _touchInput: boolean = false;
 
 	public constructor(invalidateHandler: InvalidateHandler, options: ChartOptionsInternal) {
 		this._invalidateHandler = invalidateHandler;
@@ -681,7 +724,17 @@ export class ChartModel implements IDestroyable {
 		return this._serieses;
 	}
 
-	public setAndSaveCurrentPosition(x: Coordinate, y: Coordinate, pane: Pane): void {
+	public touchInput(): boolean {
+		return this._touchInput;
+	}
+
+	public setTouchInput(value: boolean): void {
+		this._touchInput = value;
+	}
+
+	// `renderHidden` keeps the crosshair position tracked internally (line tools read the applied
+	// position) while suppressing its rendering — used to hide the crosshair during normal touch.
+	public setAndSaveCurrentPosition(x: Coordinate, y: Coordinate, pane: Pane, renderHidden: boolean = false): void {
 		this._crosshair.saveOriginCoord(x, y);
 		let price = NaN;
 		let index = this._timeScale.coordinateToIndex(x);
@@ -698,7 +751,7 @@ export class ChartModel implements IDestroyable {
 		}
 		price = this._magnet.align(price, index, pane);
 
-		this._crosshair.setPosition(index, price, pane);
+		this._crosshair.setPosition(index, price, pane, renderHidden);
 
 		this.cursorUpdate();
 		this._crosshairMoved.fire(this._crosshair.appliedIndex(), new Point(x, y));

@@ -252,6 +252,7 @@ export class PaneWidget implements IDestroyable, MouseEventHandlers {
 			return;
 		}
 		this._onMouseEvent();
+		this._model().setTouchInput(false);
 
 		const x = event.localX;
 		const y = event.localY;
@@ -261,6 +262,7 @@ export class PaneWidget implements IDestroyable, MouseEventHandlers {
 
 	public mouseDownEvent(event: MouseEventHandlerMouseEvent): void {
 		this._onMouseEvent();
+		this._model().setTouchInput(false);
 		this._mouseTouchDownEvent();
 		this._setCrosshairPosition(event.localX, event.localY);
 		this._propagateEvent(InputEventType.MouseDown, event);
@@ -271,6 +273,7 @@ export class PaneWidget implements IDestroyable, MouseEventHandlers {
 			return;
 		}
 		// this._onMouseEvent();
+		this._model().setTouchInput(false);
 
 		const x = event.localX;
 		const y = event.localY;
@@ -386,6 +389,7 @@ export class PaneWidget implements IDestroyable, MouseEventHandlers {
 	public touchStartEvent(event: MouseEventHandlerTouchEvent): void {
 		this._longTap = false;
 		this._exitTrackingModeOnNextTry = this._startTrackPoint !== null;
+		this._model().setTouchInput(true);
 
 		this._mouseTouchDownEvent();
 
@@ -394,8 +398,10 @@ export class PaneWidget implements IDestroyable, MouseEventHandlers {
 		// applied (crosshair) position, not the raw event — without this a touch
 		// tap places points at the stale crosshair location, so drawing appears
 		// not to work. Skip while tracking mode owns the crosshair.
+		// `renderHidden` keeps that position but suppresses the crosshair's grey guide
+		// lines/labels during normal touch (still shown in tracking mode).
 		if (this._startTrackPoint === null) {
-			this._setCrosshairPosition(event.localX, event.localY);
+			this._setCrosshairPosition(event.localX, event.localY, this._hideCrosshairForTouch(event));
 		}
 
 		this._propagateEvent(InputEventType.MouseDown, event);
@@ -411,6 +417,7 @@ export class PaneWidget implements IDestroyable, MouseEventHandlers {
 		if (this._state === null) {
 			return;
 		}
+		this._model().setTouchInput(true);
 
 		const x = event.localX;
 		const y = event.localY;
@@ -423,7 +430,7 @@ export class PaneWidget implements IDestroyable, MouseEventHandlers {
 			this._setCrosshairPosition(newX, newY);
 			// return;
 		} else if (!this._preventCrosshairMove()) {
-			this._setCrosshairPosition(x, y);
+			this._setCrosshairPosition(x, y, this._hideCrosshairForTouch(event));
 		}
 
 		this._pressedMouseTouchMoveEvent(event);
@@ -753,8 +760,15 @@ export class PaneWidget implements IDestroyable, MouseEventHandlers {
 		return Math.max(0, Math.min(y, this._size.h - 1)) as Coordinate;
 	}
 
-	private _setCrosshairPosition(x: Coordinate, y: Coordinate): void {
-		this._model().setAndSaveCurrentPosition(this._correctXCoord(x), this._correctYCoord(y), ensureNotNull(this._state));
+	private _setCrosshairPosition(x: Coordinate, y: Coordinate, renderHidden: boolean = false): void {
+		this._model().setAndSaveCurrentPosition(this._correctXCoord(x), this._correctYCoord(y), ensureNotNull(this._state), renderHidden);
+	}
+
+	// True when the crosshair set by the active touch interaction should be hidden: touch input,
+	// the `disableCrosshair` option is on, and we're not in tracking mode (long-press), where the
+	// crosshair is the deliberate feature.
+	private _hideCrosshairForTouch(event: TouchMouseEvent): boolean {
+		return event.isTouch && this._startTrackPoint === null && this._chart.options().touch.disableCrosshair;
 	}
 
 	private _clearCrosshairPosition(): void {
@@ -894,7 +908,9 @@ export class PaneWidget implements IDestroyable, MouseEventHandlers {
 			this._setCrosshairPosition(newX, newY);
 			// } else if (!this._preventCrosshairMove()) { // in case of mouse event, always return false in drawings repo
 		} else {
-			this._setCrosshairPosition(x, y);
+			// Drives line-tool edits while dragging (mouse or touch). On touch, hide the crosshair
+			// so its grey guide lines don't follow the finger while moving e.g. a stop loss.
+			this._setCrosshairPosition(x, y, this._hideCrosshairForTouch(event));
 		}
 
 		if (this._startScrollingPos === null) {

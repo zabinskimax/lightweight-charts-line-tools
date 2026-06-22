@@ -70,6 +70,13 @@ export class CrosshairMarksPaneView implements IUpdatablePaneView {
 		const timePointIndex = this._crosshair.appliedIndex();
 		const timeScale = this._chartModel.timeScale();
 
+		// Hide the crosshair marks while the crosshair is visually suppressed (e.g. on touch),
+		// even though it still has a position driving line-tool edits.
+		if (this._crosshair.visible() && !this._crosshair.renderVisible()) {
+			this._markersData.forEach((data: MarksRendererData) => { data.visibleRange = null; });
+			return;
+		}
+
 		serieses.forEach((s: Series, index: number) => {
 			const data = this._markersData[index];
 			const seriesData = s.markerDataAtIndex(timePointIndex);

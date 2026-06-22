@@ -47,6 +47,12 @@ export class CrosshairTimeAxisView implements ITimeAxisView {
 		const data = this._rendererData;
 		data.visible = false;
 
+		// Hide the crosshair time label while the crosshair is visually suppressed (e.g. on
+		// touch), even though it still has a position driving line-tool edits.
+		if (this._crosshair.visible() && !this._crosshair.renderVisible()) {
+			return;
+		}
+
 		const options = this._crosshair.options().vertLine;
 
 		if (!options.labelVisible) {
