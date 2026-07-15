@@ -4,7 +4,7 @@ import { applyAlpha } from '../../helpers/color';
 import { defaultFontFamily } from '../../helpers/make-font';
 import { clone, merge } from '../../helpers/strict-type-checks';
 
-import { BoxHorizontalAlignment, BoxVerticalAlignment, BrushToolOptions, CalloutToolOptions, CircleToolOptions, CrossLineToolOptions, FibCirclesToolOptions, FibRetracementLevel, FibRetracementToolOptions, FibSpiralToolOptions, FixedRangeVolumeProfileToolOptions, HighlighterToolOptions, HorizontalLineToolOptions, LineJoin, LongShortPositionToolOptions, MarketDepthToolOptions, ParallelChannelToolOptions, PathToolOptions, PriceRangeToolOptions, RectangleToolOptions, TextAlignment, TextOptions, TextToolOptions, TradeEntryLineToolOptions, TradePendingOrderLineToolOptions, TradeStopLossLineToolOptions, TradeTakeProfitLineToolOptions, TrendLineToolOptions, TriangleToolOptions, VerticalLineToolOptions, TrendBasedFibExtensionToolOptions, FibChannelToolOptions, FibTimeZoneToolOptions, FibSpeedResistanceFanToolOptions, TrendBasedFibTimeToolOptions, FibWedgeToolOptions, PitchfanToolOptions, FibSpeedResistanceArcsToolOptions, EmojiToolOptions, VisibleRangeVolumeProfileToolOptions } from '../../model/line-tool-options';
+import { BoxHorizontalAlignment, BoxVerticalAlignment, BrushToolOptions, CalloutToolOptions, CircleToolOptions, CrossLineToolOptions, CyclicLinesToolOptions, DateRangeToolOptions, EllipseToolOptions, FibCirclesToolOptions, FibRetracementLevel, FibRetracementToolOptions, FibSpiralToolOptions, FixedRangeVolumeProfileToolOptions, GannBoxToolOptions, GannFanToolOptions, HighlighterToolOptions, HorizontalLineToolOptions, LineJoin, LongShortPositionToolOptions, MarketDepthToolOptions, ParallelChannelToolOptions, PathToolOptions, PatternToolOptions, PitchforkToolOptions, PriceLabelToolOptions, PriceRangeToolOptions, RectangleToolOptions, TextAlignment, TextOptions, TextToolOptions, TradeEntryLineToolOptions, TradePendingOrderLineToolOptions, TradeStopLossLineToolOptions, TradeTakeProfitLineToolOptions, TrendLineToolOptions, TriangleToolOptions, VerticalLineToolOptions, TrendBasedFibExtensionToolOptions, FibChannelToolOptions, FibTimeZoneToolOptions, FibSpeedResistanceFanToolOptions, TrendBasedFibTimeToolOptions, FibWedgeToolOptions, PitchfanToolOptions, FibSpeedResistanceArcsToolOptions, EmojiToolOptions, VisibleRangeVolumeProfileToolOptions } from '../../model/line-tool-options';
 
 import { LineEnd, LineStyle } from '../..';
 
@@ -467,6 +467,161 @@ export const FibSpeedResistanceArcsOptionDefaults: FibSpeedResistanceArcsToolOpt
 export const FibWedgeOptionDefaults: FibWedgeToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as FibWedgeToolOptions;
 export const PitchfanOptionDefaults: PitchfanToolOptions = merge(clone(FibRetracementOptionDefaults), { extend: { left: false, right: false } }) as unknown as PitchfanToolOptions;
 
+export const TrendAngleOptionDefaults: TrendLineToolOptions = merge(clone(TrendLineOptionDefaults), {
+	line: { color: '#089981' },
+}) as TrendLineToolOptions;
+
+export const InfoLineOptionDefaults: TrendLineToolOptions = clone(TrendLineOptionDefaults);
+
+export const PitchforkOptionDefaults: PitchforkToolOptions = {
+	visible: true,
+	editable: true,
+	locked: false,
+	line: { width: 1, style: LineStyle.Solid },
+	median: { color: '#f23645', width: 1, style: LineStyle.Solid },
+	extend: { left: false, right: true },
+	variant: 'original',
+	levels: [
+		{ color: '#f23645', coeff: 0.25, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: false },
+		{ color: '#81c784', coeff: 0.382, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: false },
+		{ color: '#089981', coeff: 0.5, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#64b5f6', coeff: 0.618, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: false },
+		{ color: '#2962ff', coeff: 0.75, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: false },
+		{ color: '#f23645', coeff: 1, opacity: 0.1, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#9c27b0', coeff: 1.5, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: false },
+		{ color: '#e91e63', coeff: 2, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: false },
+	],
+};
+
+export const GannBoxOptionDefaults: GannBoxToolOptions = {
+	visible: true,
+	editable: true,
+	locked: false,
+	line: { width: 1, style: LineStyle.Solid },
+	extend: { left: false, right: false },
+	showLabels: true,
+	priceLevels: [
+		{ color: '#787b86', coeff: 0, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#f23645', coeff: 0.25, opacity: 0.05, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#089981', coeff: 0.5, opacity: 0.05, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#2962ff', coeff: 0.75, opacity: 0.05, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#787b86', coeff: 1, opacity: 0.05, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+	],
+	timeLevels: [
+		{ color: '#787b86', coeff: 0, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#f23645', coeff: 0.25, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#089981', coeff: 0.5, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#2962ff', coeff: 0.75, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#787b86', coeff: 1, opacity: 0, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+	],
+};
+
+export const GannFanOptionDefaults: GannFanToolOptions = {
+	visible: true,
+	editable: true,
+	locked: false,
+	line: { width: 1, style: LineStyle.Solid },
+	showLabels: true,
+	levels: [
+		{ color: '#f23645', coeff: 8, opacity: 0.05, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#81c784', coeff: 4, opacity: 0.05, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#089981', coeff: 3, opacity: 0.05, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#64b5f6', coeff: 2, opacity: 0.05, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#2962ff', coeff: 1, opacity: 0.05, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#64b5f6', coeff: 0.5, opacity: 0.05, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#089981', coeff: 1 / 3, opacity: 0.05, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#81c784', coeff: 0.25, opacity: 0.05, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+		{ color: '#f23645', coeff: 0.125, opacity: 0.05, distanceFromCoeffEnabled: false, distanceFromCoeff: 0, visible: true },
+	],
+};
+
+export const EllipseOptionDefaults: EllipseToolOptions = {
+	visible: true,
+	editable: true,
+	locked: false,
+	ellipse: {
+		extend: { left: false, right: false },
+		background: { color: applyAlpha('#9c27b0', 0.2) },
+		border: { width: 1, style: LineStyle.Solid, color: '#9c27b0' },
+	},
+	text: TextDefaults,
+};
+
+export const DateRangeOptionDefaults: DateRangeToolOptions = {
+	visible: true,
+	editable: true,
+	locked: false,
+	priceRange: {
+		extend: { left: false, right: false },
+		background: { color: applyAlpha('#2962ff', 0.1) },
+		border: { width: 1, style: LineStyle.Solid, color: '#2962ff' },
+		showCenterHorizontalLine: false,
+		showCenterVerticalLine: true,
+		centerHorizontalLineWidth: 1,
+		centerHorizontalLineStyle: LineStyle.Dotted,
+	},
+	text: merge(clone(TextDefaults), {
+		font: { color: '#ffffff', size: 12 },
+		box: {
+			alignment: { vertical: BoxVerticalAlignment.Bottom, horizontal: BoxHorizontalAlignment.Center },
+			background: { color: applyAlpha('#2962ff', 0.9), inflation: { x: 8, y: 6 } },
+		},
+	}) as TextOptions,
+};
+
+export const DateAndPriceRangeOptionDefaults: DateRangeToolOptions = merge(clone(DateRangeOptionDefaults), {
+	priceRange: {
+		showCenterHorizontalLine: true,
+		showCenterVerticalLine: true,
+	},
+}) as DateRangeToolOptions;
+
+const patternDefaultsBase: PatternToolOptions = {
+	visible: true,
+	editable: true,
+	locked: false,
+	line: { width: 2, color: '#2962ff', style: LineStyle.Solid },
+	background: { color: applyAlpha('#2962ff', 0.15) },
+	showLabels: true,
+};
+
+export const XABCDPatternOptionDefaults: PatternToolOptions = clone(patternDefaultsBase);
+export const ABCDPatternOptionDefaults: PatternToolOptions = merge(clone(patternDefaultsBase), {
+	line: { color: '#089981' },
+	background: { color: applyAlpha('#089981', 0) },
+}) as PatternToolOptions;
+export const ElliottImpulseWaveOptionDefaults: PatternToolOptions = merge(clone(patternDefaultsBase), {
+	line: { width: 1, color: '#2962ff' },
+	background: { color: applyAlpha('#2962ff', 0) },
+}) as PatternToolOptions;
+export const ElliottCorrectionWaveOptionDefaults: PatternToolOptions = merge(clone(patternDefaultsBase), {
+	line: { width: 1, color: '#f23645' },
+	background: { color: applyAlpha('#f23645', 0) },
+}) as PatternToolOptions;
+
+export const CyclicLinesOptionDefaults: CyclicLinesToolOptions = {
+	visible: true,
+	editable: true,
+	locked: false,
+	line: { width: 1, color: '#2962ff', style: LineStyle.Solid },
+};
+
+export const PriceLabelOptionDefaults: PriceLabelToolOptions = {
+	visible: true,
+	editable: true,
+	locked: false,
+	text: merge(clone(TextDefaults), {
+		font: { color: '#131722', size: 12 },
+		box: {
+			// Top alignment puts the bubble fully above the anchor point.
+			alignment: { vertical: BoxVerticalAlignment.Top, horizontal: BoxHorizontalAlignment.Center },
+			offset: { x: 0, y: 14 },
+			background: { color: 'rgba(255, 255, 255, 0.9)', inflation: { x: 8, y: 5 } },
+			border: { color: '#2962ff', width: 1, radius: 10, highlight: false, style: LineStyle.Solid },
+		},
+	}) as TextOptions,
+};
+
 export const FixedRangeVolumeProfileOptionDefaults: FixedRangeVolumeProfileToolOptions = {
 	visible: true,
 	editable: true,
@@ -508,6 +663,21 @@ export const LineToolsOptionDefaults = {
 	Arrow: merge(clone(TrendLineOptionDefaults), { line: { end: { right: LineEnd.Arrow } } }),
 	ExtendedLine: merge(clone(TrendLineOptionDefaults), { line: { extend: { right: true, left: true } } }),
 	HorizontalRay: merge(clone(HorizontalLineOptionDefaults), { line: { extend: { left: false } } }),
+	TrendAngle: TrendAngleOptionDefaults,
+	InfoLine: InfoLineOptionDefaults,
+
+	Pitchfork: PitchforkOptionDefaults,
+	GannBox: GannBoxOptionDefaults,
+	GannFan: GannFanOptionDefaults,
+	Ellipse: EllipseOptionDefaults,
+	DateRange: DateRangeOptionDefaults,
+	DateAndPriceRange: DateAndPriceRangeOptionDefaults,
+	XABCDPattern: XABCDPatternOptionDefaults,
+	ABCDPattern: ABCDPatternOptionDefaults,
+	ElliottImpulseWave: ElliottImpulseWaveOptionDefaults,
+	ElliottCorrectionWave: ElliottCorrectionWaveOptionDefaults,
+	CyclicLines: CyclicLinesOptionDefaults,
+	PriceLabel: PriceLabelOptionDefaults,
 
 	FibRetracement: FibRetracementOptionDefaults,
 	TrendBasedFibExtension: TrendBasedFibExtensionOptionDefaults,

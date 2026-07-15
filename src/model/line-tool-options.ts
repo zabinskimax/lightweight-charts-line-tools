@@ -1431,6 +1431,165 @@ export interface LineToolPitchfanOptions {
 }
 
 /**
+ * Pitchfork drawing variants.
+ * - `original`: Andrews' pitchfork — median starts at point 1.
+ * - `schiff`: median starts halfway between point 1 and point 2 prices, at point 1's time.
+ * - `modifiedSchiff`: median starts at the midpoint (time and price) of points 1 and 2.
+ */
+export type PitchforkVariant = 'original' | 'schiff' | 'modifiedSchiff';
+
+/**
+ * Represents style options for a pitchfork (Andrews' pitchfork and Schiff variants).
+ */
+export interface LineToolPitchforkOptions {
+	/**
+	 * Shared line config (width/style) for the level lines.
+	 */
+	line: Omit<LineOptions, 'extend' | 'join' | 'color' | 'cap' | 'end'>;
+
+	/**
+	 * Median line config.
+	 */
+	median: Pick<LineOptions, 'color' | 'width' | 'style'>;
+
+	/**
+	 * Lines extend.
+	 */
+	extend: ExtendOptions;
+
+	/**
+	 * Level lines drawn parallel to the median. Coeff 1 passes through points 2 and 3.
+	 */
+	levels: FibRetracementLevel[];
+
+	/**
+	 * Which pitchfork variant to draw.
+	 */
+	variant: PitchforkVariant;
+}
+
+/**
+ * Represents style options for a Gann box.
+ */
+export interface LineToolGannBoxOptions {
+	/**
+	 * Shared line config (width/style).
+	 */
+	line: Omit<LineOptions, 'extend' | 'join' | 'color' | 'cap' | 'end'>;
+
+	/**
+	 * Lines extend.
+	 */
+	extend: ExtendOptions;
+
+	/**
+	 * Horizontal (price) levels, coeff 0..1 between the two anchor prices.
+	 */
+	priceLevels: FibRetracementLevel[];
+
+	/**
+	 * Vertical (time) levels, coeff 0..1 between the two anchor times.
+	 */
+	timeLevels: FibRetracementLevel[];
+
+	/**
+	 * Whether level coefficient labels are drawn.
+	 */
+	showLabels: boolean;
+}
+
+/**
+ * Represents style options for a Gann fan.
+ */
+export interface LineToolGannFanOptions {
+	/**
+	 * Shared line config (width/style).
+	 */
+	line: Omit<LineOptions, 'extend' | 'join' | 'color' | 'cap' | 'end'>;
+
+	/**
+	 * Fan rays. Coeff is the price/time slope ratio (1 = the 1/1 ray through both points).
+	 */
+	levels: FibRetracementLevel[];
+
+	/**
+	 * Whether ray ratio labels (8/1 … 1/8) are drawn.
+	 */
+	showLabels: boolean;
+}
+
+/**
+ * Represents style options for an ellipse.
+ */
+export interface LineToolEllipseOptions {
+	/**
+	 * Text config.
+	 */
+	text: TextOptions;
+	/**
+	 * Ellipse config (border/background); the two points define the bounding box.
+	 */
+	ellipse: CircleOptions;
+}
+
+/**
+ * Represents style options for a date range / date & price range measurement.
+ */
+export interface LineToolDateRangeOptions {
+	/**
+	 * Text config (font/box used by the stats label).
+	 */
+	text: TextOptions;
+	/**
+	 * Range box config — same shape as the price range tool.
+	 */
+	priceRange: PriceRangeOptions;
+}
+
+/**
+ * Represents style options for multi-point pattern tools
+ * (XABCD, ABCD, Elliott waves).
+ */
+export interface LineToolPatternOptions {
+	/**
+	 * Polyline config.
+	 */
+	line: Omit<LineOptions, 'extend' | 'join' | 'cap' | 'end'>;
+
+	/**
+	 * Fill config for pattern shapes (XABCD triangles). Use a transparent
+	 * color to disable.
+	 */
+	background: Omit<BackroundOptions, 'inflation'>;
+
+	/**
+	 * Whether vertex labels (X, A, B, C, D / wave numbers) are drawn.
+	 */
+	showLabels: boolean;
+}
+
+/**
+ * Represents style options for cyclic (repeating vertical) lines.
+ */
+export interface LineToolCyclicLinesOptions {
+	/**
+	 * Line config.
+	 */
+	line: Omit<LineOptions, 'extend' | 'join' | 'cap' | 'end'>;
+}
+
+/**
+ * Represents style options for a price label bubble.
+ */
+export interface LineToolPriceLabelOptions {
+	/**
+	 * Text config — the bubble uses the box background/border options; the
+	 * value is replaced with the formatted price of the anchor point.
+	 */
+	text: TextOptions;
+}
+
+/**
  * Represents the intersection of a series type `T`'s options and common line tool options.
  *
  * @see {@link LineToolOptionsCommon} for common options.
@@ -1537,6 +1696,30 @@ export type FibWedgeToolPartialOptions = LineToolPartialOptions<LineToolFibWedge
 export type PitchfanToolOptions = LineToolOptions<LineToolPitchfanOptions>;
 export type PitchfanToolPartialOptions = LineToolPartialOptions<LineToolPitchfanOptions>;
 
+export type PitchforkToolOptions = LineToolOptions<LineToolPitchforkOptions>;
+export type PitchforkToolPartialOptions = LineToolPartialOptions<LineToolPitchforkOptions>;
+
+export type GannBoxToolOptions = LineToolOptions<LineToolGannBoxOptions>;
+export type GannBoxToolPartialOptions = LineToolPartialOptions<LineToolGannBoxOptions>;
+
+export type GannFanToolOptions = LineToolOptions<LineToolGannFanOptions>;
+export type GannFanToolPartialOptions = LineToolPartialOptions<LineToolGannFanOptions>;
+
+export type EllipseToolOptions = LineToolOptions<LineToolEllipseOptions>;
+export type EllipseToolPartialOptions = LineToolPartialOptions<LineToolEllipseOptions>;
+
+export type DateRangeToolOptions = LineToolOptions<LineToolDateRangeOptions>;
+export type DateRangeToolPartialOptions = LineToolPartialOptions<LineToolDateRangeOptions>;
+
+export type PatternToolOptions = LineToolOptions<LineToolPatternOptions>;
+export type PatternToolPartialOptions = LineToolPartialOptions<LineToolPatternOptions>;
+
+export type CyclicLinesToolOptions = LineToolOptions<LineToolCyclicLinesOptions>;
+export type CyclicLinesToolPartialOptions = LineToolPartialOptions<LineToolCyclicLinesOptions>;
+
+export type PriceLabelToolOptions = LineToolOptions<LineToolPriceLabelOptions>;
+export type PriceLabelToolPartialOptions = LineToolPartialOptions<LineToolPriceLabelOptions>;
+
 export type FixedRangeVolumeProfileToolOptions = LineToolOptions<LineToolFixedRangeVolumeProfileOptions>;
 export type FixedRangeVolumeProfileToolPartialOptions = LineToolPartialOptions<LineToolFixedRangeVolumeProfileOptions>;
 
@@ -1583,6 +1766,21 @@ export interface LineToolOptionsMap {
 	Arrow: TrendLineToolOptions;
 	ExtendedLine: TrendLineToolOptions;
 	HorizontalRay: HorizontalLineToolOptions;
+	TrendAngle: TrendLineToolOptions;
+	InfoLine: TrendLineToolOptions;
+
+	Pitchfork: PitchforkToolOptions;
+	GannBox: GannBoxToolOptions;
+	GannFan: GannFanToolOptions;
+	Ellipse: EllipseToolOptions;
+	DateRange: DateRangeToolOptions;
+	DateAndPriceRange: DateRangeToolOptions;
+	XABCDPattern: PatternToolOptions;
+	ABCDPattern: PatternToolOptions;
+	ElliottImpulseWave: PatternToolOptions;
+	ElliottCorrectionWave: PatternToolOptions;
+	CyclicLines: CyclicLinesToolOptions;
+	PriceLabel: PriceLabelToolOptions;
 
 	MarketDepth: MarketDepthToolOptions;
 	FixedRangeVolumeProfile: FixedRangeVolumeProfileToolOptions;
@@ -1629,6 +1827,21 @@ export interface LineToolPartialOptionsMap {
 	Arrow: TrendLineToolPartialOptions;
 	ExtendedLine: TrendLineToolPartialOptions;
 	HorizontalRay: HorizontalLineToolPartialOptions;
+	TrendAngle: TrendLineToolPartialOptions;
+	InfoLine: TrendLineToolPartialOptions;
+
+	Pitchfork: PitchforkToolPartialOptions;
+	GannBox: GannBoxToolPartialOptions;
+	GannFan: GannFanToolPartialOptions;
+	Ellipse: EllipseToolPartialOptions;
+	DateRange: DateRangeToolPartialOptions;
+	DateAndPriceRange: DateRangeToolPartialOptions;
+	XABCDPattern: PatternToolPartialOptions;
+	ABCDPattern: PatternToolPartialOptions;
+	ElliottImpulseWave: PatternToolPartialOptions;
+	ElliottCorrectionWave: PatternToolPartialOptions;
+	CyclicLines: CyclicLinesToolPartialOptions;
+	PriceLabel: PriceLabelToolPartialOptions;
 
 	MarketDepth: MarketDepthToolPartialOptions;
 	FixedRangeVolumeProfile: FixedRangeVolumeProfileToolPartialOptions;
