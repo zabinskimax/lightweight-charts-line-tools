@@ -1,2 +1,5 @@
 TradingView Lightweight Charts
 Copyright (с) 2020 TradingView, Inc. https://www.tradingview.com/
+
+News-event flag artwork: flag-icons https://github.com/lipis/flag-icons
+Copyright (c) 2013 Panayiotis Lipiridis, MIT License (full text in src/renderers/news-event-flags.ts)

@@ -4,10 +4,11 @@ import { DeepPartial } from '../helpers/strict-type-checks';
 import { Coordinate } from '../model/coordinate';
 import { HitTestResult, HitTestType } from '../model/hit-test-result';
 import { distanceToSegment, pointInBox } from '../model/interesection';
-import { RectangleOptions } from '../model/line-tool-options';
+import { RectangleMiddleLineOptions, RectangleOptions } from '../model/line-tool-options';
 import { Box, equalPoints, Point, Segment } from '../model/point';
 
 import { LineStyle } from '..';
+import { drawHorizontalLine, setLineStyle } from './draw-line';
 import { fillRectWithBorder } from './draw-rect';
 import { IPaneRenderer } from './ipane-renderer';
 import { AnchorPoint } from './line-anchor-renderer';
@@ -48,6 +49,12 @@ export class RectangleRenderer implements IPaneRenderer {
 		const bottomLineHitResult = this._extendAndHitTestLineSegment(scaledPoint, bottomLeft, bottomRight, physicalWidth, tolerance);
 		if (bottomLineHitResult !== null) { return bottomLineHitResult; }
 
+		if (this._data.middleLine?.visible) {
+			const middleY = Math.round((topLeft.y + bottomRight.y) / 2);
+			const middleLineHitResult = this._extendAndHitTestLineSegment(scaledPoint, new Point(topLeft.x, middleY), new Point(bottomRight.x, middleY), physicalWidth, tolerance);
+			if (middleLineHitResult !== null) { return middleLineHitResult; }
+		}
+
 		// Vertical side segments extend to the pane top/bottom edges when extend.up/down are set.
 		const { up, down } = this._data.extend || {};
 		const sideTop = up ? 0 : topLeft.y;
@@ -69,8 +76,9 @@ export class RectangleRenderer implements IPaneRenderer {
 		const borderWidth = this._data?.border?.width || 0;
 		const borderColor = this._data?.border?.color;
 		const background = this._data?.background?.color;
+		const middleLine = this._data?.middleLine?.visible === true;
 
-		if (null === this._data || this._data.points.length < 2 || (borderWidth <= 0 && !background)) { return; }
+		if (null === this._data || this._data.points.length < 2 || (borderWidth <= 0 && !background && !middleLine)) { return; }
 
 		ctx.save();
 		const scaledBorderWidth = borderWidth ? Math.max(1, Math.floor(borderWidth * pixelRatio)) : 0;
@@ -81,7 +89,25 @@ export class RectangleRenderer implements IPaneRenderer {
 		const physicalWidth = ctx.canvas.width;
 		const physicalHeight = ctx.canvas.height;
 		fillRectWithBorder(ctx, point0, point1, background, borderColor, scaledBorderWidth, borderStyle, 'center', !!left, !!right, physicalWidth, !!up, !!down, physicalHeight);
+		if (middleLine) {
+			this._drawMiddleLine(ctx, pixelRatio, [point0, point1], physicalWidth);
+		}
 		ctx.restore();
+	}
+
+	// Halfway between the top and bottom edge, across the rectangle and its
+	// left / right extension (never up / down: it is horizontal).
+	protected _drawMiddleLine(ctx: CanvasRenderingContext2D, pixelRatio: number, [point0, point1]: Segment, physicalWidth: number): void {
+		const data = ensureNotNull(this._data);
+		const line: DeepPartial<RectangleMiddleLineOptions> = data.middleLine || {};
+		const y = Math.round((point0.y + point1.y) / 2);
+		const segment = this._extendAndClipLineSegment(new Point(point0.x, y), new Point(point1.x, y), physicalWidth);
+		if (segment === null) { return; }
+		// Unset, the middle line takes the border's color.
+		ctx.strokeStyle = line.color || data.border?.color || '#9c27b0';
+		ctx.lineWidth = Math.max(1, Math.floor((line.width || 1) * pixelRatio));
+		setLineStyle(ctx, line.style ?? LineStyle.Dashed);
+		drawHorizontalLine(ctx, y, segment[0].x, segment[1].x);
 	}
 
 	protected _getPointsInPhysicalSpace(pixelRatio: number): Segment {

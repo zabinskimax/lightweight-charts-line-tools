@@ -1,8 +1,9 @@
-import { convertTime } from '../../api/data-layer';
 import { Time } from '../../api/data-consumer';
+import { convertTime } from '../../api/data-layer';
 
 import { ChartModel } from '../../model/chart-model';
-import { Coordinate } from '../../model/coordinate';
+import { intersectLineSegmentAndBox } from '../../model/interesection';
+import { Box, Point, Segment } from '../../model/point';
 import { Series } from '../../model/series';
 import { LineStyle, LineWidth } from '../../renderers/draw-line';
 import { IPaneRenderer } from '../../renderers/ipane-renderer';
@@ -18,7 +19,11 @@ export interface OverlayLineInternalOptions {
 	color: string;
 	lineWidth: LineWidth;
 	lineStyle: LineStyle;
+	xOffsetBars: number;
 }
+
+// Pixels kept outside the pane when clipping, so line caps at the edge stay whole.
+const CLIP_MARGIN = 2;
 
 export class OverlayLinePaneView implements IUpdatablePaneView {
 	private readonly _model: ChartModel;
@@ -40,7 +45,7 @@ export class OverlayLinePaneView implements IUpdatablePaneView {
 		// no cache — coordinates resolved on each render
 	}
 
-	public renderer(_height: number, _width: number): IPaneRenderer | null {
+	public renderer(height: number, width: number): IPaneRenderer | null {
 		const timeScale = this._model.timeScale();
 		if (timeScale.isEmpty()) {
 			return null;
@@ -50,17 +55,30 @@ export class OverlayLinePaneView implements IUpdatablePaneView {
 			return null;
 		}
 
-		const x1 = timeScale.timeToCoordinate(convertTime(this._options.time1));
-		const x2 = timeScale.timeToCoordinate(convertTime(this._options.time2));
+		const shift = (this._options.xOffsetBars || 0) * timeScale.barSpacing();
+		const x1 = timeScale.timeToCoordinate(convertTime(this._options.time1)) + shift;
+		const x2 = timeScale.timeToCoordinate(convertTime(this._options.time2)) + shift;
 		const priceScale = this._series.priceScale();
 		const y1 = priceScale.priceToCoordinate(this._options.price1 as never, firstValue.value);
 		const y2 = priceScale.priceToCoordinate(this._options.price2 as never, firstValue.value);
 
+		// Stroke only the part inside the pane. A full-height marker (a session
+		// break) runs between prices far off screen, and stroked whole a dashed
+		// line that long costs the GPU millions of dashes on every frame.
+		const clipped = intersectLineSegmentAndBox(
+			[new Point(x1, y1), new Point(x2, y2)] as Segment,
+			new Box(new Point(-CLIP_MARGIN, -CLIP_MARGIN), new Point(width + CLIP_MARGIN, height + CLIP_MARGIN))
+		);
+		if (!Array.isArray(clipped)) {
+			return null;
+		}
+		const [start, end] = clipped;
+
 		const data: OverlayLineRendererData = {
-			x1: x1 as Coordinate,
-			y1: y1 as Coordinate,
-			x2: x2 as Coordinate,
-			y2: y2 as Coordinate,
+			x1: start.x,
+			y1: start.y,
+			x2: end.x,
+			y2: end.y,
 			color: this._options.color,
 			lineWidth: this._options.lineWidth,
 			lineStyle: this._options.lineStyle,

@@ -57,6 +57,8 @@ function minimalOptions(): VisibleRangeVolumeProfileToolOptions {
 			valueAreaVolume: 0.7,
 			showPOC: true,
 			showValueArea: true,
+			showValueAreaLines: true,
+			valueAreaLineColor: '#2962ff',
 			borderColor: '#888',
 			backgroundColor: '#222',
 			borderWidth: 0,

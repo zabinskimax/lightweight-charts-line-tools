@@ -44,6 +44,17 @@ export {
 	PriceLevelMarkerPartialOptions,
 } from './api/iprice-level-marker-api';
 export { PriceLevelMarkerShape } from './renderers/price-level-marker-renderer';
+export {
+	INewsEventsApi,
+	NewsEvent,
+	NewsEventImpact,
+	NewsEventsColors,
+	NewsEventsIcon,
+	NewsEventsIconHandler,
+	NewsEventsOptions,
+	NewsEventsPoint,
+} from './api/inews-events-api';
+export { newsFlagUrl } from './renderers/news-event-flags';
 
 /**
  * Returns the current version as a string. For example `'3.3.0'`.

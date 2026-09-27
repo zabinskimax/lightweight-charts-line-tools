@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>News events: flag icons</title>
+  <script src="./dist/lightweight-charts.standalone.development.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f6f8;
+      color: #1f2328;
+    }
+
+    .page {
+      width: 1100px;
+      margin: 24px auto;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .subtitle {
+      color: #59636e;
+      font-size: 13px;
+      margin: 0 0 14px;
+      line-height: 1.5;
+    }
+
+    .bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+
+    .group {
+      display: inline-flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .group-label {
+      color: #59636e;
+      margin-right: 2px;
+    }
+
+    button {
+      font: inherit;
+      padding: 5px 10px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    button.on {
+      background: #1f2328;
+      border-color: #1f2328;
+      color: #fff;
+    }
+
+    #clock {
+      color: #59636e;
+      min-width: 230px;
+    }
+
+    #chart {
+      width: 1100px;
+      height: 540px;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid #d0d7de;
+    }
+
+    .chart-wrap {
+      position: relative;
+    }
+
+    .news-card {
+      position: absolute;
+      z-index: 5;
+      width: 270px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(19, 23, 34, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.35;
+      pointer-events: none;
+      display: none;
+    }
+
+    .news-card.pinned {
+      pointer-events: auto;
+    }
+
+    .news-card.light {
+      background: #fff;
+      border-color: rgba(19, 23, 34, 0.14);
+      color: #131722;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .news-row + .news-row {
+      border-top: 1px solid rgba(128, 128, 128, 0.25);
+      margin-top: 7px;
+      padding-top: 7px;
+    }
+
+    .news-head {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .news-head img {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      box-shadow: 0 0 0 1px var(--impact);
+    }
+
+    .news-head .cur {
+      font-weight: 600;
+    }
+
+    .news-head .when {
+      margin-left: auto;
+      opacity: 0.6;
+      font-size: 11px;
+    }
+
+    .news-title {
+      margin-top: 2px;
+    }
+
+    .news-values {
+      margin-top: 2px;
+      font-size: 11px;
+    }
+
+    .news-values > span {
+      margin-right: 10px;
+    }
+
+    .news-values .label,
+    .news-more {
+      opacity: 0.6;
+    }
+
+    .news-values .soon {
+      color: var(--impact);
+    }
+
+    .news-row.upcoming img {
+      opacity: 0.55;
+    }
+
+    ul.notes {
+      margin: 12px 0 0;
+      padding-left: 18px;
+      color: #59636e;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <h1>News events: flag icons</h1>
+    <p class="subtitle">
+      Economic-calendar events drawn with <code>chart.addNewsEvents()</code>. Real events from 3–14 July 2023
+      (UTC); the EURUSD prices are made up. The replay stops before Friday's US jobs report, so it shows as upcoming.
+    </p>
+    <div class="bar">
+      <span class="group"><span class="group-label">Chart</span>
+        <button data-theme="dark" class="on">Dark</button><button data-theme="light">Light</button></span>
+      <span class="group"><span class="group-label">Currencies</span>
+        <button data-cur="all" class="on">All</button><button data-cur="pair">EUR + USD</button></span>
+      <span class="group"><span class="group-label">Impact</span>
+        <button data-imp="high" class="on">High</button><button data-imp="medium" class="on">Medium</button><button data-imp="low">Low</button></span>
+      <span class="group"><span class="group-label">Replay</span>
+        <button id="step">Next bar</button><button id="play">Play</button><button id="reset">Reset</button></span>
+      <span id="clock"></span>
+    </div>
+    <div class="chart-wrap">
+      <div id="chart"></div>
+      <div id="card" class="news-card"></div>
+    </div>
+    <ul class="notes">
+      <li>Hover an icon for its card; click to keep it open, click anywhere else to close it. On touch screens, tap. The card is plain page HTML built from the chart's hover and click events, the way an app would do it.</li>
+      <li>The outline color is the impact: red high, orange medium, blue low. A number means several events share the icon.</li>
+      <li>Faded icons have not happened yet: the card shows a countdown and keeps the actual value hidden until the replay passes them.</li>
+      <li>Zoom out and icons that would overlap merge into one.</li>
+    </ul>
+  </div>
+  <script>
+    const EVENTS = [{"time":1688341800,"impact":"low","title":"Tankan Manufacturing Index","currency":"JPY","actual":"5","forecast":"3","previous":"1"},{"time":1688341800,"impact":"low","title":"Tankan Non-Manufacturing Index","currency":"JPY","actual":"23","forecast":"22","previous":"20"},{"time":1688344200,"impact":"low","title":"Final Manufacturing PMI","currency":"JPY","actual":"49.8","forecast":"49.8","previous":"49.8"},{"time":1688346000,"impact":"low","title":"MI Inflation Gauge m/m","currency":"AUD","actual":"0.1%","previous":"0.9%"},{"time":1688347800,"impact":"low","title":"ANZ Job Advertisements m/m","currency":"AUD","actual":"-2.5%","previous":"0.1%"},{"time":1688347800,"impact":"low","title":"Building Approvals m/m","currency":"AUD","actual":"20.6%","forecast":"3.1%","previous":"-6.8%"},{"time":1688348700,"impact":"medium","title":"Caixin Manufacturing PMI","currency":"CNY","actual":"50.5","forecast":"50","previous":"50.9"},{"time":1688365800,"impact":"low","title":"Commodity Prices y/y","currency":"AUD","actual":"-21.5%","previous":"-21.5%"},{"time":1688365800,"impact":"high","title":"CPI m/m","currency":"CHF","actual":"0.1%","forecast":"0.2%","previous":"0.3%"},{"time":1688366700,"impact":"low","title":"French Gov Budget Balance","currency":"EUR","actual":"-107.2B","previous":"-83.7B"},{"time":1688368500,"impact":"medium","title":"Spanish Manufacturing PMI","currency":"EUR","actual":"48","forecast":"48","previous":"48.4"},{"time":1688369400,"impact":"low","title":"Manufacturing PMI","currency":"CHF","actual":"44.9","forecast":"42.8","previous":"43.2"},{"time":1688370300,"impact":"low","title":"Italian Manufacturing PMI","currency":"EUR","actual":"43.8","forecast":"45.4","previous":"45.9"},{"time":1688370600,"impact":"low","title":"French Final Manufacturing PMI","currency":"EUR","actual":"46","forecast":"45.5","previous":"45.5"},{"time":1688370900,"impact":"low","title":"German Final Manufacturing PMI","currency":"EUR","actual":"40.6","forecast":"41","previous":"41"},{"time":1688371200,"impact":"low","title":"Final Manufacturing PMI","currency":"EUR","actual":"43.4","forecast":"43.6","previous":"43.6"},{"time":1688373000,"impact":"low","title":"Final Manufacturing PMI","currency":"GBP","actual":"46.5","forecast":"46.2","previous":"46.2"},{"time":1688391900,"impact":"low","title":"Final Manufacturing PMI","currency":"USD","actual":"46.3","forecast":"46.3","previous":"46.3"},{"time":1688392800,"impact":"high","title":"ISM Manufacturing PMI","currency":"USD","actual":"46","forecast":"47.2","previous":"46.9"},{"time":1688392800,"impact":"medium","title":"ISM Manufacturing Prices","currency":"USD","actual":"41.8","forecast":"44","previous":"44.2"},{"time":1688392800,"impact":"low","title":"Construction Spending m/m","currency":"USD","actual":"0.9%","forecast":"0.4%","previous":"0.4%"},{"time":1688421600,"impact":"low","title":"NZIER Business Confidence","currency":"NZD","actual":"-63","previous":"-66"},{"time":1688428200,"impact":"low","title":"Monetary Base y/y","currency":"JPY","actual":"-1.0%","forecast":"-0.7%","previous":"-1.1%"},{"time":1688441700,"impact":"low","title":"10-y Bond Auction","currency":"JPY","actual":"0.43|4.0","previous":"0.44|3.7"},{"time":1688445000,"impact":"high","title":"Cash Rate","currency":"AUD","actual":"4.10%","forecast":"4.10%","previous":"4.10%"},{"time":1688445000,"impact":"high","title":"RBA Rate Statement","currency":"AUD"},{"time":1688450400,"impact":"low","title":"German Trade Balance","currency":"EUR","actual":"14.4B","forecast":"17.3B","previous":"16.5B"},{"time":1688454000,"impact":"low","title":"Spanish Unemployment Change","currency":"EUR","actual":"-50.3K","forecast":"-63.5K","previous":"-49.3K"},{"time":1688461380,"impact":"low","title":"30-y Bond Auction","currency":"GBP","actual":"4.39|2.6","previous":"4.48|2.6"},{"time":1688477400,"impact":"low","title":"Manufacturing PMI","currency":"CAD","actual":"48.8","previous":"49"},{"time":1688480100,"impact":"low","title":"GDT Price Index","currency":"NZD","actual":"-3.3%","previous":"0.0%"},{"time":1688511660,"impact":"low","title":"Wards Total Vehicle Sales","currency":"USD","actual":"15.7M","forecast":"15.3M","previous":"15.1M"},{"time":1688518800,"impact":"low","title":"ANZ Commodity Prices m/m","currency":"NZD","actual":"-2.3%","previous":"0.4%"},{"time":1688520600,"impact":"low","title":"Retail Sales m/m","currency":"AUD","actual":"0.7%","forecast":"0.7%","previous":"0.7%"},{"time":1688521500,"impact":"medium","title":"Caixin Services PMI","currency":"CNY","actual":"53.9","forecast":"56.2","previous":"57.1"},{"time":1688539500,"impact":"low","title":"French Industrial Production m/m","currency":"EUR","actual":"1.2%","forecast":"-0.3%","previous":"0.8%"},{"time":1688541300,"impact":"low","title":"Spanish Services PMI","currency":"EUR","actual":"53.4","forecast":"55.8","previous":"56.7"},{"time":1688543100,"impact":"low","title":"Italian Services PMI","currency":"EUR","actual":"52.2","forecast":"53","previous":"54"},{"time":1688543400,"impact":"low","title":"French Final Services PMI","currency":"EUR","actual":"48","forecast":"48","previous":"48"},{"time":1688543700,"impact":"low","title":"German Final Services PMI","currency":"EUR","actual":"54.1","forecast":"54.1","previous":"54.1"},{"time":1688544000,"impact":"low","title":"Final Services PMI","currency":"EUR","actual":"52","forecast":"52.4","previous":"52.4"},{"time":1688545800,"impact":"low","title":"Final Services PMI","currency":"GBP","actual":"53.7","forecast":"53.7","previous":"53.7"},{"time":1688547600,"impact":"low","title":"PPI m/m","currency":"EUR","actual":"-1.9%","forecast":"-1.7%","previous":"-3.2%"},{"time":1688549580,"impact":"low","title":"German 10-y Bond Auction","currency":"EUR","actual":"2.39|2.2","previous":"2.43|1.9"},{"time":1688565600,"impact":"low","title":"Factory Orders m/m","currency":"USD","actual":"0.3%","forecast":"0.7%","previous":"0.3%"},{"time":1688580000,"impact":"high","title":"FOMC Meeting Minutes","currency":"USD"},{"time":1688587200,"impact":"low","title":"FOMC Member Williams Speaks","currency":"USD"},{"time":1688607000,"impact":"medium","title":"Trade Balance","currency":"AUD","actual":"11.79B","forecast":"10.85B","previous":"10.45B"},{"time":1688614500,"impact":"low","title":"30-y Bond Auction","currency":"JPY","actual":"1.22|3.0","previous":"1.26|3.1"},{"time":1688623200,"impact":"low","title":"German Factory Orders m/m","currency":"EUR","actual":"6.4%","forecast":"1.1%","previous":"0.2%"},{"time":1688632200,"impact":"low","title":"Construction PMI","currency":"GBP","actual":"48.9","forecast":"50.9","previous":"51.6"},{"time":1688632200,"impact":"low","title":"Housing Equity Withdrawal q/q","currency":"GBP","actual":"-22.9B","previous":"-15.3B"},{"time":1688633220,"impact":"low","title":"Spanish 10-y Bond Auction","currency":"EUR","actual":"3.55|1.5","previous":"3.51|1.4"},{"time":1688633880,"impact":"low","title":"French 10-y Bond Auction","currency":"EUR","actual":"3.04|1.9","previous":"2.85|1.9"},{"time":1688634000,"impact":"low","title":"Retail Sales m/m","currency":"EUR","actual":"0.0%","forecast":"0.2%","previous":"0.0%"},{"time":1688643000,"impact":"low","title":"Challenger Job Cuts y/y","currency":"USD","actual":"25.2%","previous":"286.7%"},{"time":1688645700,"impact":"high","title":"ADP Non-Farm Employment Change","currency":"USD","actual":"497K","forecast":"226K","previous":"267K"},{"time":1688646600,"impact":"low","title":"Trade Balance","currency":"CAD","actual":"-3.4B","forecast":"1.4B","previous":"0.9B"},{"time":1688646600,"impact":"high","title":"Unemployment Claims","currency":"USD","actual":"248K","forecast":"247K","previous":"236K"},{"time":1688646600,"impact":"low","title":"Trade Balance","currency":"USD","actual":"-69.0B","forecast":"-68.9B","previous":"-74.4B"},{"time":1688647500,"impact":"low","title":"FOMC Member Logan Speaks","currency":"USD"},{"time":1688651100,"impact":"low","title":"Final Services PMI","currency":"USD","actual":"54.4","forecast":"54.1","previous":"54.1"},{"time":1688652000,"impact":"high","title":"ISM Services PMI","currency":"USD","actual":"53.9","forecast":"51.3","previous":"50.3"},{"time":1688652000,"impact":"high","title":"JOLTS Job Openings","currency":"USD","actual":"9.82M","forecast":"9.93M","previous":"10.32M"},{"time":1688655600,"impact":"low","title":"Crude Oil Inventories","currency":"USD","actual":"-1.5M","forecast":"-2.0M","previous":"-9.6M"},{"time":1688686200,"impact":"low","title":"Average Cash Earnings y/y","currency":"JPY","actual":"2.5%","forecast":"1.2%","previous":"0.8%"},{"time":1688686200,"impact":"low","title":"Household Spending y/y","currency":"JPY","actual":"-4.0%","forecast":"-2.4%","previous":"-4.4%"},{"time":1688706000,"impact":"low","title":"Leading Indicators","currency":"JPY","actual":"109.5%","forecast":"97.5%","previous":"96.8%"},{"time":1688708700,"impact":"low","title":"Unemployment Rate","currency":"CHF","actual":"2.0%","forecast":"2.0%","previous":"2.0%"},{"time":1688709600,"impact":"low","title":"German Industrial Production m/m","currency":"EUR","actual":"-0.2%","forecast":"0.0%","previous":"0.3%"},{"time":1688709600,"impact":"low","title":"Halifax HPI m/m","currency":"GBP","actual":"-0.1%","forecast":"0.1%","previous":"-0.2%"},{"time":1688712300,"impact":"low","title":"French Trade Balance","currency":"EUR","actual":"-8.4B","forecast":"-9.5B","previous":"-10.6B"},{"time":1688713200,"impact":"medium","title":"Foreign Currency Reserves","currency":"CHF","actual":"725B","previous":"734B"},{"time":1688716800,"impact":"low","title":"Italian Retail Sales m/m","currency":"EUR","actual":"0.7%","forecast":"-0.2%","previous":"0.2%"},{"time":1688731200,"impact":"low","title":"German Buba President Nagel Speaks","currency":"EUR"},{"time":1688733000,"impact":"high","title":"Employment Change","currency":"CAD","actual":"59.9K","forecast":"19.8K","previous":"-17.3K"},{"time":1688733000,"impact":"high","title":"Unemployment Rate","currency":"CAD","actual":"5.4%","forecast":"5.3%","previous":"5.2%"},{"time":1688733000,"impact":"high","title":"Average Hourly Earnings m/m","currency":"USD","actual":"0.4%","forecast":"0.3%","previous":"0.4%"},{"time":1688733000,"impact":"high","title":"Non-Farm Employment Change","currency":"USD","actual":"209K","forecast":"224K","previous":"306K"},{"time":1688733000,"impact":"high","title":"Unemployment Rate","currency":"USD","actual":"3.6%","forecast":"3.6%","previous":"3.7%"},{"time":1688738400,"impact":"medium","title":"Ivey PMI","currency":"CAD","actual":"50.2","forecast":"51.5","previous":"53.5"},{"time":1688740200,"impact":"low","title":"MPC Member Mann Speaks","currency":"GBP"},{"time":1688740200,"impact":"low","title":"Natural Gas Storage","currency":"USD","actual":"72B","forecast":"65B","previous":"76B"},{"time":1688748300,"impact":"medium","title":"ECB President Lagarde Speaks","currency":"EUR"},{"time":1688887800,"impact":"high","title":"BOE Gov Bailey Speaks","currency":"GBP"},{"time":1688946600,"impact":"low","title":"Bank Lending y/y","currency":"JPY","actual":"3.2%","forecast":"3.5%","previous":"3.4%"},{"time":1688946600,"impact":"low","title":"Current Account","currency":"JPY","actual":"1.70T","forecast":"1.87T","previous":"1.90T"},{"time":1688952600,"impact":"medium","title":"CPI y/y","currency":"CNY","actual":"0.0%","forecast":"0.2%","previous":"0.2%"},{"time":1688952600,"impact":"medium","title":"PPI y/y","currency":"CNY","actual":"-5.4%","forecast":"-5.0%","previous":"-4.6%"},{"time":1688965200,"impact":"low","title":"Economy Watchers Sentiment","currency":"JPY","actual":"53.6","forecast":"54.8","previous":"55"},{"time":1688977800,"impact":"low","title":"Sentix Investor Confidence","currency":"EUR","actual":"-22.5","forecast":"-18","previous":"-17"},{"time":1688992200,"impact":"low","title":"Building Permits m/m","currency":"CAD","actual":"10.5%","forecast":"7.3%","previous":"-21.0%"},{"time":1688997600,"impact":"low","title":"FOMC Member Barr Speaks","currency":"USD"},{"time":1688997600,"impact":"low","title":"Final Wholesale Inventories m/m","currency":"USD","actual":"0.0%","forecast":"-0.1%","previous":"-0.1%"},{"time":1689001200,"impact":"high","title":"BOE Gov Bailey Speaks","currency":"GBP"},{"time":1689004800,"impact":"low","title":"German Buba President Nagel Speaks","currency":"EUR"},{"time":1689015600,"impact":"low","title":"Consumer Credit m/m","currency":"USD","actual":"7.2B","forecast":"21.1B","previous":"20.3B"},{"time":1689030060,"impact":"low","title":"BRC Retail Sales Monitor y/y","currency":"GBP","actual":"4.2%","forecast":"4.6%","previous":"3.7%"},{"time":1689033000,"impact":"low","title":"M2 Money Stock y/y","currency":"JPY","actual":"2.6%","forecast":"2.7%","previous":"2.6%"},{"time":1689035400,"impact":"low","title":"Westpac Consumer Sentiment","currency":"AUD","actual":"2.7%","previous":"0.2%"},{"time":1689039000,"impact":"medium","title":"NAB Business Confidence","currency":"AUD","actual":"0","previous":"-3"},{"time":1689055140,"impact":"low","title":"Prelim Machine Tool Orders y/y","currency":"JPY","actual":"-21.7%","previous":"-22.1%"},{"time":1689055200,"impact":"low","title":"German Final CPI m/m","currency":"EUR","actual":"0.3%","forecast":"0.3%","previous":"0.3%"},{"time":1689055200,"impact":"high","title":"Claimant Count Change","currency":"GBP","actual":"25.7K","forecast":"20.5K","previous":"-22.5K"},{"time":1689055200,"impact":"medium","title":"Average Earnings Index 3m/y","currency":"GBP","actual":"6.9%","forecast":"6.8%","previous":"6.7%"},{"time":1689055200,"impact":"low","title":"Unemployment Rate","currency":"GBP","actual":"4.0%","forecast":"3.8%","previous":"3.8%"},{"time":1689062400,"impact":"low","title":"Italian Industrial Production m/m","currency":"EUR","actual":"1.6%","forecast":"0.6%","previous":"-2.0%"},{"time":1689066000,"impact":"medium","title":"German ZEW Economic Sentiment","currency":"EUR","actual":"-14.7","forecast":"-10.7","previous":"-8.5"},{"time":1689066000,"impact":"low","title":"ZEW Economic Sentiment","currency":"EUR","actual":"-12.2","forecast":"-10.2","previous":"-10"},{"time":1689067800,"impact":"medium","title":"New Loans","currency":"CNY","actual":"3050B","forecast":"2300B","previous":"1360B"},{"time":1689067800,"impact":"low","title":"M2 Money Supply y/y","currency":"CNY","actual":"11.3%","forecast":"11.2%","previous":"11.6%"},{"time":1689069000,"impact":"low","title":"NFIB Small Business Index","currency":"USD","actual":"91","forecast":"89.9","previous":"89.4"},{"time":1689084000,"impact":"low","title":"IBD/TIPP Economic Optimism","currency":"USD","actual":"41.3","forecast":"45.3","previous":"41.7"},{"time":1689115500,"impact":"low","title":"Visitor Arrivals m/m","currency":"NZD","actual":"-27.5%","previous":"-16.9%"},{"time":1689119400,"impact":"low","title":"Core Machinery Orders m/m","currency":"JPY","actual":"-7.6%","forecast":"0.9%","previous":"5.5%"},{"time":1689119400,"impact":"low","title":"PPI y/y","currency":"JPY","actual":"4.1%","forecast":"4.3%","previous":"5.2%"},{"time":1689127200,"impact":"high","title":"Official Cash Rate","currency":"NZD","actual":"5.50%","forecast":"5.50%","previous":"5.50%"},{"time":1689127200,"impact":"high","title":"RBNZ Rate Statement","currency":"NZD"},{"time":1689131400,"impact":"high","title":"RBA Gov Lowe Speaks","currency":"AUD"},{"time":1689141600,"impact":"low","title":"BOE Financial Stability Report","currency":"GBP"},{"time":1689141600,"impact":"low","title":"Bank Stress Test Results","currency":"GBP"},{"time":1689141600,"impact":"low","title":"FPC Meeting Minutes","currency":"GBP"},{"time":1689141600,"impact":"low","title":"FPC Statement","currency":"GBP"},{"time":1689148800,"impact":"high","title":"BOE Gov Bailey Speaks","currency":"GBP"},{"time":1689152580,"impact":"low","title":"10-y Bond Auction","currency":"GBP","actual":"4.60|2.7","previous":"4.35|2.3"},{"time":1689154500,"impact":"low","title":"German 10-y Bond Auction","currency":"EUR","actual":"2.64|1.9","previous":"2.39|2.2"},{"time":1689165000,"impact":"high","title":"CPI m/m","currency":"USD","actual":"0.2%","forecast":"0.3%","previous":"0.1%"},{"time":1689165000,"impact":"high","title":"CPI y/y","currency":"USD","actual":"3.0%","forecast":"3.1%","previous":"4.0%"},{"time":1689165000,"impact":"high","title":"Core CPI m/m","currency":"USD","actual":"0.2%","forecast":"0.3%","previous":"0.4%"},{"time":1689168600,"impact":"low","title":"CB Leading Index m/m","currency":"GBP","actual":"-0.4%","previous":"-0.6%"},{"time":1689169500,"impact":"low","title":"FOMC Member Kashkari Speaks","currency":"USD"},{"time":1689170400,"impact":"high","title":"BOC Monetary Policy Report","currency":"CAD"},{"time":1689170400,"impact":"high","title":"BOC Rate Statement","currency":"CAD"},{"time":1689170400,"impact":"high","title":"Overnight Rate","currency":"CAD","actual":"5.00%","forecast":"5.00%","previous":"4.75%"},{"time":1689172200,"impact":"low","title":"Crude Oil Inventories","currency":"USD","actual":"5.9M","forecast":"-1.1M","previous":"-1.5M"},{"time":1689174000,"impact":"high","title":"BOC Press Conference","currency":"CAD"},{"time":1689181260,"impact":"medium","title":"10-y Bond Auction","currency":"USD","actual":"3.86|2.5","previous":"3.79|2.4"},{"time":1689184800,"impact":"low","title":"Beige Book","currency":"USD"},{"time":1689201000,"impact":"low","title":"BusinessNZ Manufacturing Index","currency":"NZD","actual":"47.5","previous":"48.7"},{"time":1689201900,"impact":"low","title":"FPI m/m","currency":"NZD","actual":"1.6%","previous":"0.3%"},{"time":1689202860,"impact":"low","title":"RICS House Price Balance","currency":"GBP","actual":"-46%","forecast":"-35%","previous":"-30%"},{"time":1689202860,"impact":"low","title":"Eurogroup Meetings","currency":"EUR"},{"time":1689210000,"impact":"low","title":"MI Inflation Expectations","currency":"AUD","actual":"5.2%","previous":"5.2%"},{"time":1689220140,"impact":"low","title":"Trade Balance","currency":"CNY","actual":"491B","forecast":"470B","previous":"452B"},{"time":1689220200,"impact":"low","title":"USD-Denominated Trade Balance","currency":"CNY","actual":"70.6B","forecast":"74.0B","previous":"65.8B"},{"time":1689228000,"impact":"high","title":"GDP m/m","currency":"GBP","actual":"-0.1%","forecast":"-0.3%","previous":"0.2%"},{"time":1689228000,"impact":"low","title":"Construction Output m/m","currency":"GBP","actual":"-0.2%","forecast":"-0.5%","previous":"-0.9%"},{"time":1689228000,"impact":"low","title":"Goods Trade Balance","currency":"GBP","actual":"-18.7B","forecast":"-14.9B","previous":"-14.6B"},{"time":1689228000,"impact":"low","title":"Index of Services 3m/3m","currency":"GBP","actual":"0.0%","forecast":"-0.2%","previous":"0.0%"},{"time":1689228000,"impact":"low","title":"Industrial Production m/m","currency":"GBP","actual":"-0.6%","forecast":"-0.4%","previous":"-0.2%"},{"time":1689228000,"impact":"low","title":"Manufacturing Production m/m","currency":"GBP","actual":"-0.2%","forecast":"-0.5%","previous":"-0.1%"},{"time":1689230700,"impact":"low","title":"French Final CPI m/m","currency":"EUR","actual":"0.2%","forecast":"0.2%","previous":"0.2%"},{"time":1689237000,"impact":"low","title":"BOE Credit Conditions Survey","currency":"GBP"},{"time":1689238800,"impact":"low","title":"Industrial Production m/m","currency":"EUR","actual":"0.2%","forecast":"0.3%","previous":"1.0%"},{"time":1689247800,"impact":"low","title":"ECB Monetary Policy Meeting Accounts","currency":"EUR"},{"time":1689250800,"impact":"low","title":"NIESR GDP Estimate","currency":"GBP","actual":"0.0%","previous":"0.0%"},{"time":1689251400,"impact":"high","title":"Core PPI m/m","currency":"USD","actual":"0.1%","forecast":"0.2%","previous":"0.1%"},{"time":1689251400,"impact":"high","title":"PPI m/m","currency":"USD","actual":"0.1%","forecast":"0.2%","previous":"-0.4%"},{"time":1689251400,"impact":"high","title":"Unemployment Claims","currency":"USD","actual":"237K","forecast":"251K","previous":"249K"},{"time":1689258600,"impact":"low","title":"Natural Gas Storage","currency":"USD","actual":"49B","forecast":"49B","previous":"72B"},{"time":1689267660,"impact":"low","title":"30-y Bond Auction","currency":"USD","actual":"3.91|2.4","previous":"3.91|2.5"},{"time":1689271200,"impact":"low","title":"Federal Budget Balance","currency":"USD","actual":"-227.8B","forecast":"-173.5B","previous":"-240.3B"},{"time":1689288300,"impact":"medium","title":"FOMC Member Waller Speaks","currency":"USD"},{"time":1689289260,"impact":"low","title":"ECOFIN Meetings","currency":"EUR"},{"time":1689309000,"impact":"low","title":"Revised Industrial Production m/m","currency":"JPY","actual":"-2.2%","forecast":"-1.6%","previous":"-1.6%"},{"time":1689314400,"impact":"low","title":"German WPI m/m","currency":"EUR","actual":"-0.2%","forecast":"-0.5%","previous":"-1.1%"},{"time":1689316200,"impact":"low","title":"PPI m/m","currency":"CHF","actual":"0.0%","forecast":"0.2%","previous":"-0.3%"},{"time":1689321600,"impact":"low","title":"Italian Trade Balance","currency":"EUR","actual":"4.71B","forecast":"1.45B","previous":"0.36B"},{"time":1689325200,"impact":"low","title":"Trade Balance","currency":"EUR","actual":"-0.9B","forecast":"-10.3B","previous":"-8.0B"},{"time":1689337800,"impact":"low","title":"Manufacturing Sales m/m","currency":"CAD","actual":"1.2%","forecast":"0.8%","previous":"-0.1%"},{"time":1689337800,"impact":"low","title":"Import Prices m/m","currency":"USD","actual":"-0.2%","forecast":"-0.1%","previous":"-0.4%"},{"time":1689343200,"impact":"high","title":"Prelim UoM Consumer Sentiment","currency":"USD","actual":"72.6","forecast":"65.5","previous":"64.4"},{"time":1689343200,"impact":"medium","title":"Prelim UoM Inflation Expectations","currency":"USD","actual":"3.4%","previous":"3.3%"}];
+
+    const HOUR = 3600;
+    const THEMES = {
+      dark: {
+        chart: { layout: { background: { type: 'solid', color: '#1e1e1e' }, textColor: '#d1d4dc' }, grid: { vertLines: { color: '#2e2e2e' }, horzLines: { color: '#2e2e2e' } } },
+      },
+      light: {
+        chart: { layout: { background: { type: 'solid', color: '#ffffff' }, textColor: '#191919' }, grid: { vertLines: { color: '#eaeaea' }, horzLines: { color: '#eaeaea' } } },
+      },
+    };
+
+    function rng(seed) {
+      let a = seed;
+      return () => {
+        a |= 0; a = a + 0x6D2B79F5 | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    // Made-up hourly EURUSD, closed at the weekend, with bigger candles where EUR/USD high-impact news hit.
+    const shocks = new Map();
+    for (const e of EVENTS) {
+      if (e.impact === 'high' && (e.currency === 'USD' || e.currency === 'EUR')) {
+        const bar = Math.floor(e.time / HOUR) * HOUR;
+        shocks.set(bar, (shocks.get(bar) || 0) + 1);
+      }
+    }
+    const rnd = rng(7);
+    const bars = [];
+    let price = 1.0905;
+    for (let t = Date.UTC(2023, 6, 3) / 1000; t <= Date.UTC(2023, 6, 14, 20) / 1000; t += HOUR) {
+      const d = new Date(t * 1000);
+      const day = d.getUTCDay();
+      const hour = d.getUTCHours();
+      if (day === 6 || (day === 5 && hour >= 21) || (day === 0 && hour < 21)) {
+        continue;
+      }
+      const quiet = hour >= 21 || hour < 6;
+      const v = quiet ? 0.00035 : 0.0007;
+      const shock = shocks.has(t) ? (rnd() - 0.35) * 0.0032 * Math.min(2, shocks.get(t)) : 0;
+      const open = price;
+      const close = open + 0.00006 + (rnd() - 0.5) * 2 * v + shock;
+      const ext = v * 0.8 + Math.abs(shock) * 0.4;
+      bars.push({
+        time: t, open, close,
+        high: Math.max(open, close) + rnd() * ext,
+        low: Math.min(open, close) - rnd() * ext,
+        volume: Math.round((400 + rnd() * 600) * (quiet ? 0.5 : 1) + Math.abs(shock) * 900000),
+      });
+      price = close;
+    }
+    const replayStart = bars.findIndex(b => b.time === Date.UTC(2023, 6, 7, 9) / 1000);
+
+    const chartEl = document.getElementById('chart');
+    const chart = LightweightCharts.createChart(chartEl, {
+      width: 1100,
+      height: 540,
+      localization: { locale: 'en-GB' },
+      rightPriceScale: { scaleMargins: { top: 0.08, bottom: 0.24 } },
+      timeScale: { timeVisible: true, secondsVisible: false, rightOffset: 14, barSpacing: 9 },
+    });
+    const candles = chart.addCandlestickSeries({
+      upColor: '#26a69a', downColor: '#ef5350', borderVisible: false, wickUpColor: '#26a69a', wickDownColor: '#ef5350',
+      priceFormat: { type: 'price', precision: 5, minMove: 0.00001 },
+    });
+    const volume = chart.addHistogramSeries({
+      priceFormat: { type: 'volume' }, priceScaleId: 'volume', scaleMargins: { top: 0.8, bottom: 0 }, lastValueVisible: false, priceLineVisible: false,
+    });
+    const volumeBar = b => ({ time: b.time, value: b.volume, color: b.close >= b.open ? 'rgba(38, 166, 154, 0.4)' : 'rgba(239, 83, 80, 0.4)' });
+
+    const news = chart.addNewsEvents();
+
+    // ---- The card: page HTML driven by the chart's hover and click events ----
+    const card = document.getElementById('card');
+    const IMPACT_COLORS = { high: '#ef5350', medium: '#ffa726', low: '#29b6f6' };
+    const shown = { icon: null, pinned: false };
+
+    const replayNow = () => bars[state.cursor].time + HOUR - 1;
+    const formatWhen = t => new Date(t * 1000).toLocaleString('en-GB', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const countdown = seconds => {
+      const m = Math.max(1, Math.round(seconds / 60));
+      if (m < 60) return 'in ' + m + 'm';
+      const h = Math.floor(m / 60);
+      if (h < 24) return m % 60 ? 'in ' + h + 'h ' + (m % 60) + 'm' : 'in ' + h + 'h';
+      return 'in ' + Math.floor(h / 24) + 'd ' + (h % 24) + 'h';
+    };
+    const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
+    const esc = s => String(s).replace(/[&<>"]/g, c => ESCAPES[c]);
+
+    function renderCard() {
+      const icon = shown.icon;
+      if (icon === null) {
+        card.style.display = 'none';
+        return;
+      }
+      const now = replayNow();
+      const rows = icon.events.slice(0, 6).map(e => {
+        const upcoming = e.time > now;
+        const values = [];
+        if (upcoming) values.push('<span class="soon">' + countdown(e.time - now) + '</span>');
+        else if (e.actual) values.push('<span><span class="label">Actual</span> ' + esc(e.actual) + '</span>');
+        if (e.forecast) values.push('<span><span class="label">Forecast</span> ' + esc(e.forecast) + '</span>');
+        if (e.previous) values.push('<span><span class="label">Prior</span> ' + esc(e.previous) + '</span>');
+        const flag = LightweightCharts.newsFlagUrl(e.currency || '');
+        return '<div class="news-row' + (upcoming ? ' upcoming' : '') + '" style="--impact:' + IMPACT_COLORS[e.impact] + '">'
+          + '<div class="news-head">' + (flag ? '<img src="' + flag + '" alt="">' : '')
+          + '<span class="cur">' + esc(e.currency || '') + '</span><span class="when">' + formatWhen(e.time) + '</span></div>'
+          + '<div class="news-title">' + esc(e.title) + '</div>'
+          + (values.length ? '<div class="news-values">' + values.join('') + '</div>' : '')
+          + '</div>';
+      });
+      const more = icon.events.length - 6;
+      card.innerHTML = rows.join('') + (more > 0 ? '<div class="news-more">+' + more + ' more</div>' : '');
+      card.classList.toggle('pinned', shown.pinned);
+      card.style.display = 'block';
+      placeCard();
+    }
+
+    function placeCard() {
+      if (shown.icon === null) return;
+      const pos = news.iconPosition(shown.icon.id);
+      if (pos === null) {
+        closeCard();
+        return;
+      }
+      const width = card.offsetWidth;
+      const paneWidth = chartEl.clientWidth - chart.priceScale('right').width();
+      let left = pos.x + 12;
+      if (left + width > paneWidth - 4) left = pos.x - 12 - width;
+      card.style.left = Math.max(4, left) + 'px';
+      card.style.top = Math.max(4, pos.y - shown.icon.radius - 8 - card.offsetHeight) + 'px';
+    }
+
+    function closeCard() {
+      shown.icon = null;
+      shown.pinned = false;
+      news.setActive(null);
+      renderCard();
+    }
+
+    news.subscribeHover(icon => {
+      if (shown.pinned) return;
+      shown.icon = icon;
+      renderCard();
+    });
+    news.subscribeClick(icon => {
+      if (icon === null || (shown.pinned && shown.icon && shown.icon.id === icon.id)) {
+        closeCard();
+        return;
+      }
+      shown.icon = icon;
+      shown.pinned = true;
+      news.setActive(icon.id);
+      renderCard();
+    });
+    chart.timeScale().subscribeVisibleLogicalRangeChange(() => placeCard());
+
+    const state = { theme: 'dark', cur: 'all', impacts: new Set(['high', 'medium']), cursor: replayStart, timer: null };
+
+    function applyTheme() {
+      const theme = THEMES[state.theme];
+      chart.applyOptions(theme.chart);
+      card.classList.toggle('light', state.theme === 'light');
+    }
+
+    function applyFilters() {
+      news.setEvents(EVENTS.filter(e =>
+        state.impacts.has(e.impact) && (state.cur === 'all' || e.currency === 'EUR' || e.currency === 'USD')
+      ));
+    }
+
+    function updateClock() {
+      const end = new Date((bars[state.cursor].time + HOUR) * 1000);
+      const text = end.toLocaleString('en-GB', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      document.getElementById('clock').textContent = `Replay at ${text} UTC`;
+    }
+
+    function resetReplay() {
+      stop();
+      state.cursor = replayStart;
+      candles.setData(bars.slice(0, state.cursor + 1));
+      volume.setData(bars.slice(0, state.cursor + 1).map(volumeBar));
+      chart.timeScale().setVisibleLogicalRange({ from: state.cursor - 100, to: state.cursor + 14 });
+      updateClock();
+      closeCard();
+    }
+
+    function step() {
+      if (state.cursor >= bars.length - 1) {
+        stop();
+        return;
+      }
+      state.cursor++;
+      candles.update(bars[state.cursor]);
+      volume.update(volumeBar(bars[state.cursor]));
+      updateClock();
+      renderCard();
+    }
+
+    function stop() {
+      if (state.timer !== null) {
+        clearInterval(state.timer);
+        state.timer = null;
+      }
+      document.getElementById('play').textContent = 'Play';
+    }
+
+    document.querySelectorAll('[data-theme]').forEach(btn => btn.addEventListener('click', () => {
+      state.theme = btn.dataset.theme;
+      document.querySelectorAll('[data-theme]').forEach(b => b.classList.toggle('on', b === btn));
+      applyTheme();
+    }));
+    document.querySelectorAll('[data-cur]').forEach(btn => btn.addEventListener('click', () => {
+      state.cur = btn.dataset.cur;
+      document.querySelectorAll('[data-cur]').forEach(b => b.classList.toggle('on', b === btn));
+      applyFilters();
+    }));
+    document.querySelectorAll('[data-imp]').forEach(btn => btn.addEventListener('click', () => {
+      const imp = btn.dataset.imp;
+      if (state.impacts.has(imp)) {
+        state.impacts.delete(imp);
+      } else {
+        state.impacts.add(imp);
+      }
+      btn.classList.toggle('on', state.impacts.has(imp));
+      applyFilters();
+    }));
+    document.getElementById('step').addEventListener('click', () => { stop(); step(); });
+    document.getElementById('reset').addEventListener('click', resetReplay);
+    document.getElementById('play').addEventListener('click', () => {
+      if (state.timer !== null) {
+        stop();
+        return;
+      }
+      state.timer = setInterval(step, 350);
+      document.getElementById('play').textContent = 'Pause';
+    });
+
+    applyTheme();
+    applyFilters();
+    resetReplay();
+  </script>
+</body>
+
+</html>

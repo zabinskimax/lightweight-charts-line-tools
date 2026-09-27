@@ -285,6 +285,10 @@ export class TimeScale {
 		return this._points[index]?.time || null;
 	}
 
+	public points(): readonly TimeScalePoint[] {
+		return this._points;
+	}
+
 	public floatIndexToTime(index: TimePointIndex): TimePoint | null {
 		if (this._points.length < 2) {
 			return this._points.length === 1

@@ -31,6 +31,8 @@ function getConfig(inputFile, type, isProd) {
  * TradingView Lightweight Charts v${currentVersion}
  * Copyright (c) 2020 TradingView, Inc.
  * Licensed under Apache License 2.0 https://www.apache.org/licenses/LICENSE-2.0
+ * Includes flag artwork from flag-icons https://github.com/lipis/flag-icons
+ * Copyright (c) 2013 Panayiotis Lipiridis, MIT License
  */`.trim(),
 		},
 		plugins: [

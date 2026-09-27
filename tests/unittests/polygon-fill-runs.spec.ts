@@ -98,12 +98,13 @@ describe('buildPolygonFillRuns', () => {
 		expect(result.truncated).to.equal(true);
 	});
 
-	it('does not flag truncation when colors is shorter than items', () => {
+	it('does not flag truncation when colors is shorter than items, and fills the uncolored tail with the fallback', () => {
 		const colors = ['#a', '#a'];
 		const result = buildPolygonFillRuns(colors, '#000', 5, 5);
 		expect(result.truncated).to.equal(false);
 		expect(result.runs).to.deep.equal([
 			{ fromIndex: 0, toIndex: 1, color: '#a' },
+			{ fromIndex: 1, toIndex: 4, color: '#000' },
 		]);
 	});
 

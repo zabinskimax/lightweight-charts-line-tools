@@ -43,6 +43,9 @@ export interface FixedRangeVolumeProfileRendererData {
 	pocColor: string;
 	showPOC: boolean;
 	showValueArea: boolean;
+	/** Draw VAH / VAL lines at the top and bottom edge of the value-area bars. */
+	showValueAreaLines: boolean;
+	valueAreaLineColor: string;
 	borderColor: string;
 	borderWidth: number;
 	backgroundColor?: string;
@@ -50,6 +53,18 @@ export interface FixedRangeVolumeProfileRendererData {
 	barWidthRatio: number;
 	/** Which side of the box bars hang from. */
 	barAnchorSide: 'left' | 'right';
+	/**
+	 * Only the histogram's own strip is clickable, not the whole box. For a
+	 * profile whose box spans the chart, so it doesn't swallow clicks meant for
+	 * the candles under it.
+	 */
+	hitTestBarsOnly?: boolean;
+	/**
+	 * Where the POC and VAH / VAL lines start (CSS px) when not at the box's
+	 * left edge: the anchored profile's box is the whole pane, its lines start
+	 * at the anchor bar.
+	 */
+	linesStartX?: number;
 }
 
 export class FixedRangeVolumeProfileRenderer implements IPaneRenderer {
@@ -66,18 +81,13 @@ export class FixedRangeVolumeProfileRenderer implements IPaneRenderer {
 		const pixelRatio = ctx.canvas.ownerDocument?.defaultView?.devicePixelRatio ?? 1;
 		const scaledPt = new Point(x * pixelRatio, y * pixelRatio);
 		const [p0, p1] = this._getBoundsPhysical(pixelRatio);
-		const tolerance = 4;
 
-		if (
-			Math.abs(scaledPt.x - p0.x) <= tolerance ||
-			Math.abs(scaledPt.x - p1.x) <= tolerance ||
-			Math.abs(scaledPt.y - p0.y) <= tolerance ||
-			Math.abs(scaledPt.y - p1.y) <= tolerance
-		) {
-			if (scaledPt.x >= p0.x - tolerance && scaledPt.x <= p1.x + tolerance &&
-				scaledPt.y >= p0.y - tolerance && scaledPt.y <= p1.y + tolerance) {
-				return this._hitTestResult;
-			}
+		if (this._data.hitTestBarsOnly) {
+			return this._hitTestBarsStrip(scaledPt, p0, p1, this._data);
+		}
+
+		if (this._onBorder(scaledPt, p0, p1)) {
+			return this._hitTestResult;
 		}
 
 		if (pointInBox(scaledPt, new Box(p0, p1))) {
@@ -118,8 +128,9 @@ export class FixedRangeVolumeProfileRenderer implements IPaneRenderer {
 		};
 
 		for (const bar of data.bars) {
+			// Round both edges, not the height, so touching rows leave no gap.
 			const barY = Math.round(bar.y * pixelRatio);
-			const barH = Math.max(1, Math.round(bar.h * pixelRatio));
+			const barH = Math.max(1, Math.round((bar.y + bar.h) * pixelRatio) - barY);
 			if (data.isTwoTone) {
 				this._drawTwoTone(drawCtx, bar, barY, barH);
 			} else {
@@ -127,11 +138,33 @@ export class FixedRangeVolumeProfileRenderer implements IPaneRenderer {
 			}
 		}
 
+		const linesX0 = data.linesStartX === undefined ? x0 : Math.round(data.linesStartX * pixelRatio);
+
+		if (data.showValueArea && data.showValueAreaLines) {
+			this._drawValueAreaLines(ctx, pixelRatio, linesX0, x1, data);
+		}
+
 		if (data.showPOC) {
-			this._drawPOC(ctx, pixelRatio, x0, x1, data);
+			this._drawPOC(ctx, pixelRatio, linesX0, x1, data);
 		}
 
 		ctx.restore();
+	}
+
+	// Within 4px of the box outline.
+	private _onBorder(pt: Point, p0: Point, p1: Point): boolean {
+		const tolerance = 4;
+		const nearEdge = Math.abs(pt.x - p0.x) <= tolerance || Math.abs(pt.x - p1.x) <= tolerance ||
+			Math.abs(pt.y - p0.y) <= tolerance || Math.abs(pt.y - p1.y) <= tolerance;
+		return nearEdge && pt.x >= p0.x - tolerance && pt.x <= p1.x + tolerance &&
+			pt.y >= p0.y - tolerance && pt.y <= p1.y + tolerance;
+	}
+
+	private _hitTestBarsStrip(pt: Point, p0: Point, p1: Point, data: FixedRangeVolumeProfileRendererData): HitTestResult<void> | null {
+		const strip = (p1.x - p0.x) * data.barWidthRatio;
+		const left = data.barAnchorSide === 'right' ? p1.x - strip : p0.x;
+		const inside = pointInBox(pt, new Box(new Point(left, p0.y), new Point(left + strip, p1.y)));
+		return inside ? this._backHitTestResult : null;
 	}
 
 	private _drawTwoTone(dc: DrawContext, bar: RenderedVolumeBar, barY: number, barH: number): void {
@@ -178,6 +211,36 @@ export class FixedRangeVolumeProfileRenderer implements IPaneRenderer {
 		ctx.beginPath();
 		ctx.moveTo(lineX0, pocCenterY);
 		ctx.lineTo(lineX1, pocCenterY);
+		ctx.stroke();
+	}
+
+	// VAH / VAL span the profile box. The value area is contiguous, so its
+	// high is the top of the highest value-area bar and its low the bottom of
+	// the lowest. Works in two-tone mode too, where the bars carry no tint.
+	private _drawValueAreaLines(
+		ctx: CanvasRenderingContext2D,
+		pixelRatio: number,
+		x0: number,
+		x1: number,
+		data: FixedRangeVolumeProfileRendererData
+	): void {
+		let top = Infinity;
+		let bottom = -Infinity;
+		for (const bar of data.bars) {
+			if (!bar.isInValueArea) { continue; }
+			top = Math.min(top, bar.y);
+			bottom = Math.max(bottom, bar.y + bar.h);
+		}
+		if (!isFinite(top) || !isFinite(bottom)) { return; }
+		const vahY = Math.round(top * pixelRatio);
+		const valY = Math.round(bottom * pixelRatio);
+		ctx.strokeStyle = data.valueAreaLineColor;
+		ctx.lineWidth = Math.max(1, Math.round(pixelRatio));
+		ctx.beginPath();
+		ctx.moveTo(x0, vahY);
+		ctx.lineTo(x1, vahY);
+		ctx.moveTo(x0, valY);
+		ctx.lineTo(x1, valY);
 		ctx.stroke();
 	}
 

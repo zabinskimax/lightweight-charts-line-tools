@@ -10,6 +10,14 @@ export interface OverlayLineOptions {
 	color: string;
 	lineWidth: LineWidth;
 	lineStyle: LineStyle;
+	/**
+	 * Shifts both ends sideways by this many bar widths. `-0.5` puts a vertical
+	 * line on the left edge of its candle, between it and the previous one
+	 * (a session break) instead of through the candle's middle.
+	 *
+	 * @defaultValue `0`
+	 */
+	xOffsetBars: number;
 }
 
 export type OverlayLinePartialOptions = Partial<OverlayLineOptions>;

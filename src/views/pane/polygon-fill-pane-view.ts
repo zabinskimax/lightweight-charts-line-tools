@@ -58,6 +58,16 @@ export function buildPolygonFillRuns(
 		}
 	}
 	runs.push({ fromIndex: runStart, toIndex: maxLen - 1, color: currentColor });
+	// Hardening (BTM patch): a colors array SHORTER than the item count
+	// used to leave the tail segments [maxLen-1 .. itemsLen-1] with no
+	// run at all — silently unpainted background at the newest bars
+	// whenever the caller's colors drifted a slot short (the playback
+	// Kumo dark-slice artifact). Degrade gracefully instead: cover the
+	// uncolored tail with the fallback fill color.
+	// eslint-disable-next-line @typescript-eslint/tslint/config
+	if (itemsLen > maxLen && fallbackColor !== undefined && fallbackColor !== null) {
+		runs.push({ fromIndex: maxLen - 1, toIndex: itemsLen - 1, color: fallbackColor });
+	}
 	return { runs, truncated };
 }
 

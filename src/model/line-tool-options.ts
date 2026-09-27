@@ -306,6 +306,38 @@ export interface TextOptions {
 	forceCalculateMaxLineWidth: boolean;
 }
 
+/**
+ * TradingView's "Middle line": a horizontal line halfway between a rectangle's
+ * top and bottom, across the rectangle and any left / right extension.
+ */
+export interface RectangleMiddleLineOptions {
+	/**
+	 * Show the middle line.
+	 *
+	 * @defaultValue `false`
+	 */
+	visible: boolean;
+
+	/**
+	 * Line color. Unset, the line takes the border's color.
+	 */
+	color?: string;
+
+	/**
+	 * Line width.
+	 *
+	 * @defaultValue `1`
+	 */
+	width: LineWidth;
+
+	/**
+	 * Line style.
+	 *
+	 * @defaultValue {@link LineStyle.Dashed}
+	 */
+	style: LineStyle;
+}
+
 export interface RectangleOptions {
 	/**
 	 * Rectangle background.
@@ -321,6 +353,11 @@ export interface RectangleOptions {
 	 * Rectangle extend sides.
 	 */
 	extend: ExtendOptions;
+
+	/**
+	 * Middle line. Only the Rectangle tool sets it.
+	 */
+	middleLine?: RectangleMiddleLineOptions;
 }
 
 export interface LongShortPositionOptions {
@@ -508,6 +545,21 @@ export interface FixedRangeVolumeProfileOptions {
 	showValueArea: boolean;
 
 	/**
+	 * Whether to draw the value area high (VAH) and value area low (VAL) lines across the
+	 * profile box. Only drawn while `showValueArea` is on.
+	 *
+	 * @defaultValue `true`
+	 */
+	showValueAreaLines: boolean;
+
+	/**
+	 * Color of the VAH and VAL lines.
+	 *
+	 * @defaultValue `'rgba(41,98,255,1)'`
+	 */
+	valueAreaLineColor: string;
+
+	/**
 	 * Border color of the profile rectangle.
 	 *
 	 * @defaultValue `'rgba(150,150,150,0.8)'`
@@ -572,6 +624,14 @@ export interface LineToolFixedRangeVolumeProfileOptions {
  * and re-anchors on pan, zoom, and during playback.
  */
 export interface LineToolVisibleRangeVolumeProfileOptions extends LineToolFixedRangeVolumeProfileOptions {}
+
+/**
+ * Options for the anchored variant: one anchor point, and the profile of
+ * everything from that bar to the last bar (the host supplies `bars` for that
+ * range). Shape matches the fixed-range tool; the histogram hangs from the
+ * chart's right edge, like TradingView's Anchored Volume Profile.
+ */
+export interface LineToolAnchoredVolumeProfileOptions extends LineToolFixedRangeVolumeProfileOptions {}
 
 export interface MarketDepthSingleAggregatesData {
 	EarliestTime: string;
@@ -1726,6 +1786,9 @@ export type FixedRangeVolumeProfileToolPartialOptions = LineToolPartialOptions<L
 export type VisibleRangeVolumeProfileToolOptions = LineToolOptions<LineToolVisibleRangeVolumeProfileOptions>;
 export type VisibleRangeVolumeProfileToolPartialOptions = LineToolPartialOptions<LineToolVisibleRangeVolumeProfileOptions>;
 
+export type AnchoredVolumeProfileToolOptions = LineToolOptions<LineToolAnchoredVolumeProfileOptions>;
+export type AnchoredVolumeProfileToolPartialOptions = LineToolPartialOptions<LineToolAnchoredVolumeProfileOptions>;
+
 /**
  * Represents the type of options for each line tool type.
  */
@@ -1785,6 +1848,7 @@ export interface LineToolOptionsMap {
 	MarketDepth: MarketDepthToolOptions;
 	FixedRangeVolumeProfile: FixedRangeVolumeProfileToolOptions;
 	VisibleRangeVolumeProfile: VisibleRangeVolumeProfileToolOptions;
+	AnchoredVolumeProfile: AnchoredVolumeProfileToolOptions;
 }
 
 /**
@@ -1846,6 +1910,7 @@ export interface LineToolPartialOptionsMap {
 	MarketDepth: MarketDepthToolPartialOptions;
 	FixedRangeVolumeProfile: FixedRangeVolumeProfileToolPartialOptions;
 	VisibleRangeVolumeProfile: VisibleRangeVolumeProfileToolPartialOptions;
+	AnchoredVolumeProfile: AnchoredVolumeProfileToolPartialOptions;
 }
 
 /**

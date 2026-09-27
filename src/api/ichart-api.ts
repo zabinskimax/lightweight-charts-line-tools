@@ -21,6 +21,7 @@ import { Time } from './data-consumer';
 import { IBackgroundBandApi } from './ibackground-band-api';
 import { BarColorOverlayPair, BarColorOverlayPartialOptions, IBarColorOverlayApi } from './ibar-color-overlay-api';
 import { ILineToolApi } from './iline-tool-api';
+import { INewsEventsApi, NewsEvent, NewsEventsOptions } from './inews-events-api';
 import { IOverlayBoxApi, OverlayBoxPartialOptions } from './ioverlay-box-api';
 import { IOverlayLineApi, OverlayLinePartialOptions } from './ioverlay-line-api';
 import { IPolygonFillApi, PolygonFillOptions } from './ipolygon-fill-api';
@@ -244,8 +245,10 @@ export interface IChartApi {
 
     /**
      * Apply new provided options to lineTool specified in the id field.
+     * Without `points` only the options change, which leaves a tool that is
+     * still being drawn alone.
      */
-	applyLineToolOptions(newLineTool: LineToolExport<LineToolType>): boolean;
+	applyLineToolOptions(newLineTool: Omit<LineToolExport<LineToolType>, 'points'> & { points?: LineToolPoint[] }): boolean;
 
 	/**
 		 * Creates or updates a line tool with the specified ID.
@@ -595,6 +598,25 @@ export interface IChartApi {
 	 * Removes a price-level marker.
 	 */
 	removePriceLevelMarker(marker: IPriceLevelMarkerApi): void;
+
+	/**
+	 * Adds economic-calendar news as flag icons along the bottom of the main pane. Each icon sits on
+	 * the bar its event belongs to (events still to come sit past the last bar, faded), with a thin
+	 * outline in the event's impact color. Hovers and clicks are reported through the returned API
+	 * so the caller can show its own card.
+	 *
+	 * @param events - Events to show, in any order.
+	 * @param options - Icon and card options.
+	 * @returns An interface to replace the events or change the options.
+	 */
+	addNewsEvents(events?: readonly NewsEvent[], options?: DeepPartial<NewsEventsOptions>): INewsEventsApi;
+
+	/**
+	 * Removes news icons created with {@link addNewsEvents}.
+	 *
+	 * @param newsEvents - The icons to remove.
+	 */
+	removeNewsEvents(newsEvents: INewsEventsApi): void;
 
 	/**
 	 * Creates a polygon fill between two line series.

@@ -13,6 +13,7 @@ import { ChartOptions, ChartOptionsInternal } from '../model/chart-model';
 import { ColorType } from '../model/layout-options';
 import { LineTool, LineToolExport, LineToolPoint } from '../model/line-tool';
 import { LineToolOptionsMap, LineToolPartialOptionsMap, LineToolType } from '../model/line-tool-options';
+import { NewsEventsDataSource } from '../model/news-events-data-source';
 import { OverlayBoxDataSource } from '../model/overlay-box-data-source';
 import { OverlayLineDataSource } from '../model/overlay-line-data-source';
 import { Pane } from '../model/pane';
@@ -49,6 +50,7 @@ import { DataUpdatesConsumer, SeriesDataItemTypeMap, Time } from './data-consume
 import { DataLayer, DataUpdateResponse, SeriesChanges, convertTime } from './data-layer';
 import { IBackgroundBandApi } from './ibackground-band-api';
 import { IBarColorOverlayApi, BarColorOverlayPair, BarColorOverlayPartialOptions } from './ibar-color-overlay-api';
+import { INewsEventsApi, NewsEvent, NewsEventsOptions } from './inews-events-api';
 import { IChartApi, LineToolsAfterEditEventHandler, LineToolsAfterEditEventParams, LineToolsButtonClickEventHandler, LineToolsButtonClickEventParams, LineToolsDoubleClickEventHandler, LineToolsDoubleClickEventParams, LineToolsDuringEditEventHandler, LineToolsDuringEditEventParams, MouseEventHandler, MouseEventParams } from './ichart-api';
 import { IOverlayBoxApi, OverlayBoxPartialOptions } from './ioverlay-box-api';
 import { IOverlayLineApi, OverlayLinePartialOptions } from './ioverlay-line-api';
@@ -58,6 +60,7 @@ import { ISeriesApi } from './iseries-api';
 import { ITextLabelApi, TextLabelPartialOptions } from './itext-label-api';
 import { ITimeScaleApi } from './itime-scale-api';
 import { LineToolApi } from './line-tool-api';
+import { NewsEventsApi } from './news-events-api';
 import { IPriceLevelMarkerApi, PriceLevelMarkerPartialOptions } from './iprice-level-marker-api';
 import { OverlayBoxApi } from './overlay-box-api';
 import { OverlayLineApi } from './overlay-line-api';
@@ -66,6 +69,7 @@ import { PriceLevelMarkerApi } from './price-level-marker-api';
 import { TextLabelApi } from './text-label-api';
 import { chartOptionsDefaults } from './options/chart-options-defaults';
 import { LineToolsOptionDefaults } from './options/line-tools-options-defaults';
+import { newsEventsOptionsDefaults } from './options/news-events-options-defaults';
 import {
 	areaStyleDefaults,
 	barStyleDefaults,
@@ -193,6 +197,7 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 	private readonly _overlayLineMap: Map<OverlayLineApi, OverlayLineDataSource> = new Map();
 	private readonly _overlayBoxMap: Map<OverlayBoxApi, OverlayBoxDataSource> = new Map();
 	private readonly _priceLevelMarkerMap: Map<PriceLevelMarkerApi, PriceLevelMarkerDataSource> = new Map();
+	private readonly _newsEventsMap: Map<NewsEventsApi, NewsEventsDataSource> = new Map();
 
 	private readonly _clickedDelegate: Delegate<MouseEventParams> = new Delegate();
 	private readonly _crosshairMovedDelegate: Delegate<MouseEventParams> = new Delegate();
@@ -559,6 +564,7 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 			color: options.color ?? '#2962ff',
 			lineWidth: options.lineWidth ?? 1,
 			lineStyle: options.lineStyle ?? LineStyle.Solid,
+			xOffsetBars: options.xOffsetBars ?? 0,
 		};
 		const source = new OverlayLineDataSource(model, series, internalOptions);
 		const pane = this._getPane();
@@ -681,6 +687,42 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 		}
 		this._priceLevelMarkerMap.delete(api);
 		this._chartWidget.model().lightUpdate();
+	}
+
+	public addNewsEvents(events: readonly NewsEvent[] = [], options: DeepPartial<NewsEventsOptions> = {}): INewsEventsApi {
+		const model = this._chartWidget.model();
+		const fullOptions = clone(newsEventsOptionsDefaults);
+		merge(fullOptions, options);
+		const source = new NewsEventsDataSource(model, fullOptions);
+		const pane = this._getPane();
+		if (pane !== null) {
+			// Above series and drawings, so the icons are never hidden under candles or volume.
+			pane.addDataSource(source, model.defaultVisiblePriceScaleId(), 1100);
+		}
+		const api = new NewsEventsApi(source);
+		this._newsEventsMap.set(api, source);
+		api.setEvents(events);
+		return api;
+	}
+
+	public removeNewsEvents(newsEventsApi: INewsEventsApi): void {
+		const api = newsEventsApi as NewsEventsApi;
+		const source = this._newsEventsMap.get(api);
+		if (source === undefined) {
+			return;
+		}
+		const model = this._chartWidget.model();
+		const hovered = model.hoveredSource();
+		if (hovered !== null && hovered.source === source) {
+			model.setHoveredSource(null);
+		}
+		const pane = this._getPane();
+		if (pane !== null) {
+			pane.removeDataSource(source);
+		}
+		source.destroy();
+		this._newsEventsMap.delete(api);
+		model.lightUpdate();
 	}
 
 	public addPolygonFill(series1Api: SeriesApi<'Line'>, series2Api: SeriesApi<'Line'>, options: PolygonFillOptions): IPolygonFillApi {
@@ -809,7 +851,7 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 		return true;
 	}
 
-	public applyLineToolOptions(newLineTool: LineToolExport<LineToolType>): boolean {
+	public applyLineToolOptions(newLineTool: Omit<LineToolExport<LineToolType>, 'points'> & { points?: LineToolPoint[] }): boolean {
 		const pane = this._getPane();
 		if (pane === null) {
 			return false;
@@ -820,7 +862,9 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 			return false;
 		}
 
-		lineTool.setPoints(newLineTool.points);
+		if (newLineTool.points) {
+			lineTool.setPoints(newLineTool.points);
+		}
 		const lineToolApi = new LineToolApi(lineTool);
 		lineToolApi.applyOptions(newLineTool.options);
 

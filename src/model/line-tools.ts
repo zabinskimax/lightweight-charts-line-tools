@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { LineTool } from './line-tool';
 import { LineToolABCDPattern } from './line-tool-abcd-pattern';
+import { LineToolAnchoredVolumeProfile } from './line-tool-anchored-volume-profile';
 import { LineToolArrow } from './line-tool-arrow';
 import { LineToolBrush } from './line-tool-brush';
 import { LineToolCallout } from './line-tool-callout';
@@ -41,11 +42,11 @@ import { LineToolPriceRange } from './line-tool-price-range';
 import { LineToolRay } from './line-tool-ray';
 import { LineToolRectangle } from './line-tool-rectangle';
 import { LineToolText } from './line-tool-text';
-import { LineToolTrendAngle } from './line-tool-trend-angle';
 import { LineToolTradeEntryLine } from './line-tool-trade-entry-line';
 import { LineToolTradePendingOrderLine } from './line-tool-trade-pending-order-line';
 import { LineToolTradeStopLossLine } from './line-tool-trade-stop-loss-line';
 import { LineToolTradeTakeProfitLine } from './line-tool-trade-take-profit-line';
+import { LineToolTrendAngle } from './line-tool-trend-angle';
 import { LineToolTrendBasedFibExtension } from './line-tool-trend-based-fib-extension';
 import { LineToolTrendBasedFibTime } from './line-tool-trend-based-fib-time';
 import { LineToolTrendLine } from './line-tool-trend-line';
@@ -111,4 +112,5 @@ export const LineTools: Record<LineToolType, new (...args: any) => LineTool<Line
 	MarketDepth: LineToolMarketDepth,
 	FixedRangeVolumeProfile: LineToolFixedRangeVolumeProfile,
 	VisibleRangeVolumeProfile: LineToolVisibleRangeVolumeProfile,
+	AnchoredVolumeProfile: LineToolAnchoredVolumeProfile,
 };
