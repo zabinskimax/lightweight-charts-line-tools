@@ -327,6 +327,18 @@ export const LongShortPositionOptionDefaults: LongShortPositionToolOptions = {
 	editable: true,
 	locked: false,
 	showAutoText: true,
+	stats: {
+		target: { price: true, distance: true, percent: true, amount: true },
+		stop: { price: true, distance: true, percent: true, amount: true },
+		entryPrice: true,
+		pnl: true,
+		qty: true,
+		riskReward: true,
+		compact: false,
+		alwaysShow: true,
+	},
+	lockRiskReward: false,
+	riskRewardRatio: 2,
 	entryStopLossRectangle: {
 		background: { color: applyAlpha('red', 0.2) },
 		border: { width: 1, style: LineStyle.Solid, color: 'red' },
@@ -337,8 +349,9 @@ export const LongShortPositionOptionDefaults: LongShortPositionToolOptions = {
 		border: { width: 1, style: LineStyle.Solid, color: 'green' },
 		extend: { left: false, right: false, up: false, down: false },
 	},
-	entryStopLossText: clone(TextDefaults),
-	entryTpText: clone(TextDefaults),
+	// White text: the stats sit on solid target/stop coloured labels
+	entryStopLossText: { ...clone(TextDefaults), font: { ...TextDefaults.font, color: 'rgba(255, 255, 255, 1)' } },
+	entryTpText: { ...clone(TextDefaults), font: { ...TextDefaults.font, color: 'rgba(255, 255, 255, 1)' } },
 };
 
 export const CircleOptionDefaults: CircleToolOptions = {

@@ -837,7 +837,16 @@ export class PriceScale {
 	 * @returns The {@link IPriceDataSource} that will be used as the "formatter source" (take minMove for formatter).
 	 */
 	private _formatterSource(): IPriceDataSource | null {
-		return this._dataSources[0] || null;
+		// The first SERIES, not simply the first source. Overlays share this
+		// scale (news flags, background bands, fills, drawings) but can't
+		// format prices: most have a minMove of 0 ("unexpected base") and a
+		// drawing has no formatter (endless recursion). They end up first
+		// when the app swaps its main series, e.g. on a chart type change.
+		// Told apart by seriesType(), which only Series has: importing Series
+		// here would be an import cycle (series.ts imports this file).
+		return this._dataSources.find(
+			(source: IPriceDataSource) => typeof (source as Partial<{ seriesType: unknown }>).seriesType === 'function'
+		) || null;
 	}
 
 	private _topMarginPx(): number {

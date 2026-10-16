@@ -5,6 +5,7 @@ import { ChartOptionsInternal, TrackingModeExitMode } from '../../model/chart-mo
 import { crosshairOptionsDefaults } from './crosshair-options-defaults';
 import { gridOptionsDefaults } from './grid-options-defaults';
 import { layoutOptionsDefaults } from './layout-options-defaults';
+import { positionToolOptionsDefaults } from './position-tool-options-defaults';
 import { priceScaleOptionsDefaults } from './price-scale-options-defaults';
 import { timeScaleOptionsDefaults } from './time-scale-options-defaults';
 import { touchOptionsDefaults } from './touch-options-defaults';
@@ -56,4 +57,5 @@ export const chartOptionsDefaults: ChartOptionsInternal = {
 		exitMode: TrackingModeExitMode.OnNextTap,
 	},
 	touch: touchOptionsDefaults,
+	positionTool: positionToolOptionsDefaults,
 };

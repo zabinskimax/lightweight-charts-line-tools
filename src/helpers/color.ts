@@ -238,7 +238,26 @@ const rgbRe = /^rgb\(\s*(-?\d{1,10})\s*,\s*(-?\d{1,10})\s*,\s*(-?\d{1,10})\s*\)$
  */
 const rgbaRe = /^rgba\(\s*(-?\d{1,10})\s*,\s*(-?\d{1,10})\s*,\s*(-?\d{1,10})\s*,\s*(-?[\d]{0,10}(?:\.\d+)?)\s*\)$/;
 
+// Parsed colors by input string. Every frame re-parses the same handful of
+// colors (axis labels, line tools), so parse each one once. Bounded so
+// generated color strings can't grow it forever. Results are only read.
+const rgbaCache = new Map<string, Rgba>();
+const colorCacheLimit = 1000;
+
 function colorStringToRgba(colorString: string): Rgba {
+	const cached = rgbaCache.get(colorString);
+	if (cached !== undefined) {
+		return cached;
+	}
+	const rgba = parseColorString(colorString);
+	if (rgbaCache.size >= colorCacheLimit) {
+		rgbaCache.clear();
+	}
+	rgbaCache.set(colorString, rgba);
+	return rgba;
+}
+
+function parseColorString(colorString: string): Rgba {
 	colorString = colorString.toLowerCase();
 
 	// eslint-disable-next-line no-restricted-syntax
@@ -315,13 +334,25 @@ export interface ContrastColors {
 	background: string;
 }
 
-export function generateContrastColors(backgroundColor: string): ContrastColors {
-	const rgb = colorStringToRgba(backgroundColor);
+// Contrast colors by background color (the per-frame axis label work).
+// A fresh object is still returned on every call, so callers can't share
+// or mutate a cached one.
+const contrastCache = new Map<string, ContrastColors>();
 
-	return {
-		background: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`,
-		foreground: rgbaToGrayscale(rgb) > 160 ? 'black' : 'white',
-	};
+export function generateContrastColors(backgroundColor: string): ContrastColors {
+	let colors = contrastCache.get(backgroundColor);
+	if (colors === undefined) {
+		const rgb = colorStringToRgba(backgroundColor);
+		colors = {
+			background: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`,
+			foreground: rgbaToGrayscale(rgb) > 160 ? 'black' : 'white',
+		};
+		if (contrastCache.size >= colorCacheLimit) {
+			contrastCache.clear();
+		}
+		contrastCache.set(backgroundColor, colors);
+	}
+	return { background: colors.background, foreground: colors.foreground };
 }
 
 export function gradientColorAtPercent(topColor: string, bottomColor: string, percent: number): string {

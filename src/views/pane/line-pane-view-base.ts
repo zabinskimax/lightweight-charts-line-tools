@@ -7,7 +7,6 @@ import { PlotRowValueIndex } from '../../model/plot-data';
 import { PricedValue, PriceScale } from '../../model/price-scale';
 import { Series } from '../../model/series';
 import { SeriesBarColorer } from '../../model/series-bar-colorer';
-import { SeriesPlotRow } from '../../model/series-data';
 import { TimedValue, TimePointIndex } from '../../model/time-data';
 import { TimeScale } from '../../model/time-scale';
 
@@ -38,9 +37,17 @@ export abstract class LinePaneViewBase<TSeriesType extends 'Line' | 'Area' | 'Ba
 
 	protected _fillRawPoints(): void {
 		const colorer = this._series.barColorer();
-		this._items = this._series.bars().rows().map((row: SeriesPlotRow<TSeriesType>) => {
+		const rows = this._series.bars().rows();
+		const items = this._items;
+
+		const keptCount = this._keptItemCount(rows, items);
+		items.length = keptCount;
+		for (let i = keptCount; i < rows.length; i++) {
+			const row = rows[i];
 			const value = row.value[PlotRowValueIndex.Close] as BarPrice;
-			return this._createRawItem(row.index, value, colorer);
-		});
+			items.push(this._createRawItem(row.index, value, colorer));
+		}
+
+		this._rememberItemRows(rows, keptCount);
 	}
 }

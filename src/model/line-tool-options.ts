@@ -360,6 +360,79 @@ export interface RectangleOptions {
 	middleLine?: RectangleMiddleLineOptions;
 }
 
+/**
+ * Numbers shown on the target or the stop label of a position tool.
+ */
+export interface LongShortPositionSideStats {
+	/**
+	 * The level itself, e.g. `1.08900`.
+	 */
+	price: boolean;
+
+	/**
+	 * Distance from entry in pips/points (see the chart's `positionTool.pipSize`), e.g. `40 pips`.
+	 */
+	distance: boolean;
+
+	/**
+	 * Distance from entry as a percent of the entry price.
+	 */
+	percent: boolean;
+
+	/**
+	 * Money won or lost at this level (needs the chart's `positionTool` sizing).
+	 */
+	amount: boolean;
+}
+
+/**
+ * Stats shown by a position tool.
+ */
+export interface LongShortPositionStatsOptions {
+	/**
+	 * Target label contents.
+	 */
+	target: LongShortPositionSideStats;
+
+	/**
+	 * Stop label contents.
+	 */
+	stop: LongShortPositionSideStats;
+
+	/**
+	 * Entry price on the center label.
+	 */
+	entryPrice: boolean;
+
+	/**
+	 * Open / closed P&L on the center label. The position opens on the first bar
+	 * that trades through the entry and closes on the first later bar that reaches
+	 * the stop or the target (the stop wins when a bar reaches both).
+	 */
+	pnl: boolean;
+
+	/**
+	 * Position size on the center label (needs the chart's `positionTool` sizing).
+	 */
+	qty: boolean;
+
+	/**
+	 * Risk/reward ratio on the center label.
+	 */
+	riskReward: boolean;
+
+	/**
+	 * Shorter labels: no titles, one line.
+	 */
+	compact: boolean;
+
+	/**
+	 * Show the labels all the time. When false they show only while the tool is
+	 * hovered or selected.
+	 */
+	alwaysShow: boolean;
+}
+
 export interface LongShortPositionOptions {
 	/**
 	 * Rectangle config for the Entry to Stop Loss area.
@@ -385,6 +458,26 @@ export interface LongShortPositionOptions {
 	 * Info about stop and tp will be displayed as text automatically
 	 */
 	showAutoText: boolean;
+
+	/**
+	 * Which numbers the auto-text labels show (TradingView-style stats).
+	 */
+	stats: LongShortPositionStatsOptions;
+
+	/**
+	 * Keep the target at `riskRewardRatio` times the stop distance. Dragging the
+	 * stop or entry moves the target; dragging the target moves the stop.
+	 *
+	 * @defaultValue `false`
+	 */
+	lockRiskReward: boolean;
+
+	/**
+	 * Reward multiple used while `lockRiskReward` is on (2 means 1:2).
+	 *
+	 * @defaultValue `2`
+	 */
+	riskRewardRatio: number;
 }
 
 export interface CircleOptions {

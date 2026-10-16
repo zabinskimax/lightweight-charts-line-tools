@@ -54,27 +54,27 @@ export class SeriesHistogramPaneView extends SeriesPaneViewBase<'Histogram', Tim
 
 	protected _fillRawPoints(): void {
 		const barSpacing = this._model.timeScale().barSpacing();
+		const rows = this._series.bars().rows();
+		const items = this._histogramData.items;
 
-		this._histogramData = createEmptyHistogramData(barSpacing);
-
-		let targetIndex = 0;
-		let itemIndex = 0;
+		const keptCount = this._keptItemCount(rows, items);
+		items.length = keptCount;
 
 		const defaultColor = this._series.options().color;
 
-		for (const row of this._series.bars().rows()) {
+		for (let i = keptCount; i < rows.length; i++) {
+			const row = rows[i];
 			const value = row.value[PlotRowValueIndex.Close] as BarPrice;
 
 			const color = row.color !== undefined ? row.color : defaultColor;
-			const item = createRawItem(row.index, value, color);
-			targetIndex++;
-			if (targetIndex < this._histogramData.items.length) {
-				this._histogramData.items[targetIndex] = item;
-			} else {
-				this._histogramData.items.push(item);
-			}
-			this._items[itemIndex++] = { time: row.index, x: 0 as Coordinate };
+			items.push(createRawItem(row.index, value, color));
+			this._items[i] = { time: row.index, x: 0 as Coordinate };
 		}
+
+		this._rememberItemRows(rows, keptCount);
+
+		this._histogramData = createEmptyHistogramData(barSpacing);
+		this._histogramData.items = items;
 
 		this._renderer.setData(this._histogramData);
 		this._compositeRenderer.setRenderers([this._renderer]);

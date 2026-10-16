@@ -247,6 +247,63 @@ export interface TouchInteractionOptions {
 }
 
 /**
+ * Instrument and account numbers behind the Long/Short Position stats. Chart-wide
+ * because they belong to the symbol and the account, not to a drawing.
+ */
+export interface PositionToolOptions {
+	/**
+	 * Price size of one distance unit (0.0001 for a forex pip, 0.01 on JPY pairs,
+	 * 1 for points). 0 shows distances as a plain price offset.
+	 *
+	 * @defaultValue `0`
+	 */
+	pipSize: number;
+
+	/**
+	 * Unit name shown after a distance, e.g. `pips` or `pts`.
+	 *
+	 * @defaultValue `'pips'`
+	 */
+	pipLabel: string;
+
+	/**
+	 * Money lost if the stop is hit, e.g. 1% of the balance. 0 hides Qty, Amount
+	 * and money P&L.
+	 *
+	 * @defaultValue `0`
+	 */
+	riskAmount: number;
+
+	/**
+	 * Money per 1.0 price move per 1 unit of quantity.
+	 *
+	 * @defaultValue `0`
+	 */
+	pointValue: number;
+
+	/**
+	 * Quantity grid, e.g. 0.1 contracts. 0 keeps 4 significant digits.
+	 *
+	 * @defaultValue `0`
+	 */
+	qtyStep: number;
+
+	/**
+	 * Quantity unit, e.g. `lots` or `contracts`.
+	 *
+	 * @defaultValue `'lots'`
+	 */
+	qtyUnit: string;
+
+	/**
+	 * Currency symbol for money values.
+	 *
+	 * @defaultValue `'$'`
+	 */
+	currency: string;
+}
+
+/**
  * Structure describing options of the chart. Series options are to be set separately
  */
 export interface ChartOptions {
@@ -345,6 +402,11 @@ export interface ChartOptions {
 	/** @inheritDoc TouchInteractionOptions
 	 */
 	touch: TouchInteractionOptions;
+
+	// eslint-disable-next-line tsdoc/syntax
+	/** @inheritDoc PositionToolOptions
+	 */
+	positionTool: PositionToolOptions;
 
 }
 
@@ -482,6 +544,11 @@ export class ChartModel implements IDestroyable {
 
 		this._backgroundTopColor = this._getBackgroundColor(BackgroundColorSide.Top);
 		this._backgroundBottomColor = this._getBackgroundColor(BackgroundColorSide.Bottom);
+
+		// Position tools read these while building their labels
+		if (options.positionTool !== undefined) {
+			this._panes.forEach((p: Pane) => p.updateAllSources());
+		}
 
 		this.fullUpdate();
 	}

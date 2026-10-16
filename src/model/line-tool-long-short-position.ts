@@ -1,12 +1,13 @@
 /* eslint-disable complexity */
 /* eslint-disable @typescript-eslint/tslint/config */
 import { ChartModel } from './chart-model';
-import { LineTool, LineToolPoint } from './line-tool';
-import { LongShortPositionToolOptions, LineToolType } from './line-tool-options';
+import { LineTool, LineToolPartialOptionsInternal, LineToolPoint } from './line-tool';
+import { LineToolOptionsCommon, LongShortPositionToolOptions, LineToolType } from './line-tool-options';
 import { LongShortPositionPaneView } from '../views/pane/long-short-position-pane-view';
 import { UTCTimestamp } from './time-data';
 import { Point } from './point';
 import { ensureNotNull } from '../helpers/assertions';
+import { DeepPartial } from '../helpers/strict-type-checks';
 
 export class LineToolLongShortPosition extends LineTool<'LongShortPosition'> {
     public onFinalized: ((orderID: string) => void) | null = null; // Callback property to help fire getSelectedAndFireAfterEdit
@@ -105,6 +106,20 @@ export class LineToolLongShortPosition extends LineTool<'LongShortPosition'> {
         // Update the point in the _points array
         super.setPoint(index, point);
 
+        // RR lock: a dragged target keeps the ratio by moving the stop instead
+        // (the target itself is re-derived from the stop just below).
+        const lockedRatio = this.lockedRiskRewardRatio();
+        if (index === 2 && lockedRatio !== null && this._points.length === 3) {
+            const entryPrice = this._points[0].price;
+            const isLong = this.isCurrentLong();
+            const reward = isLong ? point.price - entryPrice : entryPrice - point.price;
+            const stopPrice = Number(priceScale.formatPrice(isLong ? entryPrice - reward / lockedRatio : entryPrice + reward / lockedRatio, firstValue));
+            // Skip when the stop would land on (or past) the entry: that would flip the side.
+            if (isLong ? stopPrice < entryPrice : stopPrice > entryPrice) {
+                this._points[1].price = stopPrice;
+            }
+        }
+
         // 5. Handle updates to the TP point during drags of ANY anchor
         if (index === 0 || index === 1 || index === 2) {
             if (this._points.length === 3) {
@@ -166,6 +181,23 @@ export class LineToolLongShortPosition extends LineTool<'LongShortPosition'> {
         return flipDetected;
     }
 
+    // Locked reward multiple, or null when the RR lock is off (or the ratio is unusable).
+    public lockedRiskRewardRatio(): number | null {
+        const options = this.options();
+        const ratio = Number(options.riskRewardRatio);
+        return options.lockRiskReward && Number.isFinite(ratio) && ratio > 0 ? ratio : null;
+    }
+
+    // Turning the lock on (or changing the ratio) snaps the target to it straight away.
+    public override applyOptions(options: LineToolPartialOptionsInternal<'LongShortPosition'> | DeepPartial<LineToolOptionsCommon>): void {
+        super.applyOptions(options);
+        if (this.lockedRiskRewardRatio() !== null && this._points.length === 3 && this.priceScale()?.firstValue() != null) {
+            this.updateTP();
+            this.model().updateSource(this);
+            this._updateAllPaneViews();
+        }
+    }
+
     // Update the TP anchor point to reflect changes to Entry or Stop Loss.
     public updateTP(): void {
         if (this._points.length === 3) {
@@ -200,13 +232,20 @@ export class LineToolLongShortPosition extends LineTool<'LongShortPosition'> {
         const currentDistance = Math.abs(entryPrice - stopLossPrice);
 
         let ptPrice = Number(priceScale.formatPrice(ptPoint.price, firstValue));
+        const lockedRatio = this.lockedRiskRewardRatio();
 
-        // upon 1st click you are in a "preview" mode, so 3x the TP
+        // upon 1st click you are in a "preview" mode, so 3x the TP (or the locked RR)
         if (initialCreation) {
             // Calculate TP price for initial creation based on _isLong
+            const multiple = lockedRatio ?? 3;
             ptPrice = this._previewIsLong
-                ? entryPrice + (currentDistance * 3)
-                : entryPrice - (currentDistance * 3);
+                ? entryPrice + (currentDistance * multiple)
+                : entryPrice - (currentDistance * multiple);
+        } else if (lockedRatio !== null) {
+            // RR lock: the target always sits at ratio x the stop distance
+            ptPrice = Number(priceScale.formatPrice(this.isCurrentLong()
+                ? entryPrice + (currentDistance * lockedRatio)
+                : entryPrice - (currentDistance * lockedRatio), firstValue));
         } else {
             // not preview mode, so already created, check for ifSlipped or not
             const isFlipped = (this._paneViews[0] as LongShortPositionPaneView).isFlipped;
